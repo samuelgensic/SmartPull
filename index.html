@@ -16,9 +16,9 @@
 html,body{height:100%}
 body{background:radial-gradient(120% 90% at 50% 40%, var(--bg) 0%, var(--bg2) 100%); background-color:var(--bg); color:var(--ink); font-family:var(--body); overflow:hidden; -webkit-user-select:none; user-select:none}
 .app{position:relative; height:100%; display:flex; flex-direction:column}
-header{display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:12px; padding:14px 16px 0; position:relative; z-index:2}
+header{display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:start; gap:12px; padding:14px 16px 0; position:relative; z-index:2}
 /* top bar: name on the left, the level chooser centered, tools on the right */
-.topspace{justify-self:start; min-width:0; display:flex; align-items:center}
+.topspace{justify-self:end; min-width:0; display:flex; align-items:center}
 /* Neon's Blacklight switch lives in the top-left corner; on narrow phones it shrinks to just its glowing bulb */
 /* Blacklight: a round flashlight button in the top bar, with its label underneath (the label hides with the button) */
 /* the Black Light switch sits in the lower right of the play area, label underneath */
@@ -36,10 +36,10 @@ html.immersive .brandbox.foot{display:none}
 .mark span{color:var(--accent)}
 /* small caps: a full-height S and P, with the rest of each word in shorter capitals */
 .mark small{font-size:.76em; letter-spacing:.05em}
-.controls{display:flex; align-items:center; gap:6px; justify-self:end}
+.controls{display:flex; align-items:center; gap:6px; justify-self:start}
 /* tools tuck into the menu button: tap it and they drop out from underneath, down the right side; tap again and they slide back up into it */
 .controls{position:relative; --step:48px}
-.tools{position:absolute; top:calc(100% + 10px); right:0; display:flex; flex-direction:column; gap:10px; z-index:3}
+.tools{position:absolute; top:calc(100% + 10px); left:0; display:flex; flex-direction:column; gap:10px; z-index:3}
 button.more{position:relative; z-index:4}
 button.more .dots circle{fill:currentColor; stroke:none}
 button.more .x{display:none}
@@ -52,7 +52,7 @@ button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .controls:not(.open) .tools{pointer-events:none}
 .controls:not(.open) .tools button{opacity:0; transform:translateY(calc(var(--i) * var(--step) * -1)) scale(.55); transition-delay:calc((4 - var(--i)) * 30ms)}
 /* while the tools are out, the settings and themes panels open beside them */
-html.toolsopen .panel:not(.levels){right:66px; max-width:calc(100% - 82px)}
+html.toolsopen .panel:not(.levels){left:66px; max-width:calc(100% - 82px)}
 @media (prefers-reduced-motion: reduce){.tools button{transition:opacity .15s ease; transition-delay:0s!important}}
 .lvl{font-family:var(--display); font-variant-numeric:tabular-nums; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; min-width:86px; text-align:center}
 button{font:inherit; color:var(--ink); background:var(--chip); border:0; border-radius:999px; width:38px; height:38px; display:grid; place-items:center; cursor:pointer; box-shadow:0 1px 0 rgba(0,0,0,.06)}
@@ -63,7 +63,7 @@ button:disabled{opacity:.3; cursor:default}
 /* Neon theme: a dark, glow-in-the-dark room. Higher specificity so it wins over the light/dark tokens. */
 html:root.neon{--bg:#000000; --bg2:#000000; --ink:#F4ECFF; --muted:#9A8FB0; --accent:#FF2E97; --chip:#15101E; color-scheme:dark}
 .app{position:relative}
-.panel{position:absolute; z-index:5; top:64px; right:16px; left:auto; max-width:calc(100% - 32px); background:var(--chip); border-radius:16px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.14); display:flex; flex-direction:column; gap:14px}
+.panel{position:absolute; z-index:5; top:64px; left:16px; right:auto; max-width:calc(100% - 32px); background:var(--chip); border-radius:16px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.14); display:flex; flex-direction:column; gap:14px}
 .prow{display:flex; flex-direction:column; gap:8px}
 .plab{font-family:var(--display); font-weight:500; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
 .opts{display:flex; flex-wrap:wrap; gap:6px}
@@ -160,8 +160,9 @@ canvas{display:block; width:100%; height:100%}
 
 .timebox .clock{font-family:var(--display); font-weight:300; font-size:12px; letter-spacing:.08em; font-variant-numeric:tabular-nums; color:var(--muted); opacity:.7}
 /* full screen (web only; iPhone and iPad don't get it): a small button in the top-right corner of the play area */
-button.fsbtn{position:absolute; top:8px; right:16px; z-index:4; width:32px; height:32px; background:var(--chip); box-shadow:none; color:var(--muted)}
-button.fsbtn svg{width:16px; height:16px} button.fsbtn .fs-out{display:none}
+button.fsbtn{position:absolute; top:14px; right:16px; z-index:6; width:38px; height:38px; background:var(--chip); box-shadow:none; color:var(--muted)}
+button.fsbtn svg{width:18px; height:18px}
+.app:has(#fsBtn:not([hidden])) .topspace{padding-right:46px} button.fsbtn .fs-out{display:none}
 button.fsbtn[aria-pressed="true"] .fs-in{display:none} button.fsbtn[aria-pressed="true"] .fs-out{display:inline}
 /* iPhone and iPad in landscape: "immersive" hides the header so the puzzle fills the whole screen (and a TV, when mirrored) */
 html.immersive,html.immersive body{height:100vh; height:100dvh}
@@ -172,7 +173,7 @@ button.ttoggle svg{width:18px; height:18px}
 button.ttoggle[aria-pressed="true"]{color:var(--ink); box-shadow:0 0 0 2px var(--accent)}
 @media (max-width:430px){.left{font-size:11px; letter-spacing:.08em}}
 /* small phones: tighter top bar so all the buttons fit beside the wider title font */
-@media (max-width:400px){header{gap:8px} button.ttoggle{width:34px; height:34px} .controls{--step:44px} .tools{gap:8px} .controls,.levelnav{gap:4px} .controls button,.levelnav button:not(.lvl){width:34px; height:34px} button.lvl{padding:0 4px; min-width:0} .lvl{font-size:11px; letter-spacing:.02em}}
+@media (max-width:400px){header{gap:8px} button.fsbtn,.blbox .blacklight{width:34px; height:34px} button.ttoggle{width:34px; height:34px} .controls{--step:44px} .tools{gap:8px} .controls,.levelnav{gap:4px} .controls button,.levelnav button:not(.lvl){width:34px; height:34px} button.lvl{padding:0 4px; min-width:0} .lvl{font-size:11px; letter-spacing:.02em}}
 .credit{font-family:"Quicksand", system-ui, sans-serif; font-weight:500; font-size:11px; white-space:nowrap; letter-spacing:0; color:var(--muted); opacity:.85} /* small, thin and tight under the wordmark */
 .hint{font-size:14px; color:var(--muted); transition:opacity .4s; max-width:36ch}
 .done{position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; opacity:0; transition:opacity .5s}
@@ -216,12 +217,6 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
 
 <div class="app">
   <header>
-    <div class="topspace"><div class="blbox"><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></button><span class="bllabel">Black Light</span></div></div>
-    <div class="levelnav">
-      <button id="prev" aria-label="Previous level"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe up or down, or tap for the wheel"><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
-      <button id="next" aria-label="Next level"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
-    </div>
     <div class="controls" id="controls">
       <div class="tools" id="tools" inert>
       <button id="sound" aria-label="Music" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
@@ -231,7 +226,14 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
       </div>
       <button id="more" class="more" type="button" aria-expanded="false" aria-controls="tools" aria-label="Show buttons"><svg viewBox="0 0 24 24"><g class="dots"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></g><path class="x" d="M7 7l10 10M17 7L7 17"/></svg></button>
     </div>
+    <div class="levelnav">
+      <button id="prev" aria-label="Previous level"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe up or down, or tap for the wheel"><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
+      <button id="next" aria-label="Next level"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="topspace"><div class="blbox"><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></button><span class="bllabel">Black Light</span></div></div>
   </header>
+  <button class="fsbtn" id="fsBtn" type="button" hidden aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   <div class="panel" id="themes" hidden>
     <div class="prow"><div class="plab">Themes</div><div class="topts" id="optTheme"></div></div>
   </div>
@@ -278,7 +280,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
     <div class="wheelbox"><div class="wband"></div><div class="wheel" id="wheel"></div></div>
     <button class="opt wgo" id="wheelGo" type="button">Select</button>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><button class="fsbtn" id="fsBtn" type="button" hidden aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
