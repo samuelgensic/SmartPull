@@ -2207,37 +2207,42 @@ function spin(b){
   unit.forEach(u=>{u.busy=true;const q0=u.mesh.quaternion.clone(),q1=qa.clone().multiply(q0);u.d=turn(u.d,ax);
     tweens.push({t:0,dur:.28,step:k=>THREE.Quaternion.slerp(q0,q1,u.mesh.quaternion,ease(k)),end:()=>{u.mesh.quaternion.copy(q1);u.busy=false}})});
 }
-const CHEERS=['Smooth moves.','The cubes never stood a chance.','Tidy. Very tidy.','Somebody’s been practicing.',
-  'Not a block left standing.','Spatial genius, clearly.','Okay, show-off.','That one fought back. You won.',
-  'Your brain says thanks.','Easy, right? Don’t answer that.','Took that apart like a pro.','Gone. Every last one.',
-  'Clean sweep.','Now you’re just bragging.','Cube whisperer.','Flawless dismantling.',
-  'Pulled it off. Nailed it.','Did you even break a sweat?','The cubes have filed a complaint.','Someone call IKEA. They need you.',
-  'Spatial reasoning: unlocked.','Smooth as butter.','Pure pull power.','Look at you go.',
-  'Took you long enough. Kidding!','Gravity is jealous.','Not even close. In a good way.','Tidy mind, tidy cubes.',
-  'Cubes: 0. You: 1.','You make it look easy.','Somewhere, a Rubik’s Cube is nervous.','Is that a new record? Probably.',
-  'Brains AND good looks.','Ten out of ten. No notes.','That was oddly satisfying.','You and cubes? Iconic.',
-  'Physics teachers everywhere: impressed.','Unboxed. Literally.','Show those cubes who’s boss.','Absolutely unbothered.',
-  'Big brain energy.','The puzzle never saw it coming.','Is there anything you can’t take apart?','Main character moment.',
-  'Every cube accounted for.','Legend status: confirmed.','Cubes, meet your match.','That’s how it’s done.',
-  'Speed? Style? Both.','Okay, genius.'];
+const CHEERS={"tiny": ["One pull. Huge talent.", "Warm-up complete. Stretch those thumbs.", "Arrows: understood.", "Easy start. Don't get cocky.", "Baby steps, big brain.", "The cubes went quietly.", "Tutorial? You ate it.", "Off to a flying start."], "twist": ["You turned that around nicely.", "Twist and shout.", "Dot. Turn. Pull. Done.", "Spin doctor.", "A quarter turn of genius.", "That dot never stood a chance.", "Round and round, then gone.", "Turning heads. And cubes.", "Plot twist: you won.", "You saw that turn coming.", "Dizzy? The cubes are.", "Rotation station."], "big": ["That was a lot of cubes. Was.", "Big pile, bigger brain.", "Demolition crew of one.", "Order matters. You knew that.", "So many cubes. Now none.", "You untangled a whole block party.", "Layer by layer. Chef's kiss.", "Who ordered the big one? You did.", "Peeled like an onion.", "Heavy lifting, light touch.", "The cube count blinked first.", "Bigger shape, same result."], "link": ["Partners in crime, pulled apart.", "Two cubes, one exit.", "Breaking up is easy for you.", "Buddy system: dismantled.", "Those pairs had nowhere to hide.", "Double trouble, handled.", "Linked up. Pulled out.", "Teamwork makes the cubes leave.", "Both paths clear. Both cubes gone.", "Couples therapy: complete.", "Joined at the hip. Gone at the hip.", "Two for one. Nice deal."], "drop": ["Gravity tried. You tried harder.", "What goes up, you pull out.", "Thud. Thud. Victory.", "Down they came. Out they went.", "Newton would be proud.", "You let gravity do the chores.", "Falling for you, those cubes.", "Floor's clear. Mic drop.", "Stacked, dropped, handled.", "Nothing left standing. Literally.", "Sir Isaac is taking notes.", "Even the floor is relieved."], "lock": ["Keys first. Obviously.", "Unlocked like a locksmith.", "Who needs a key ring? You do.", "Padlocks: zero. You: all.", "Cracked it.", "The vault is empty.", "Click. Clink. Clear.", "You had the key all along.", "Security breach: successful.", "Locked out? Not you.", "Master of keys.", "Lock, stock, and pulled."], "mix": ["Juggling rules like a pro.", "All the rules. All the wins.", "Rule after rule. Easy.", "That was a whole rule salad.", "Multitasking legend.", "A few rules walk into a bar. You win.", "Combo breaker.", "Rules stacked. Brain unbothered.", "You read the fine print.", "Every rule, one result.", "Chaos, organized.", "The rulebook surrenders."], "fuse": ["Matchmaker, matchmaker.", "Same colors, same fate.", "You fused it and used it.", "Color theory: mastered.", "Stuck together. Pulled together.", "Orange met orange. You won.", "Fusion cuisine, served.", "Best friends forever. Then gone.", "You planned every pairing.", "Teal and teal? Big deal.", "Melted into victory.", "That fusion had a plan. Yours."], "hard": ["That one had teeth. You pulled them.", "Okay, that was legitimately tough.", "Professional cube wrangler.", "The hard ones bow to you.", "Brain fully warmed up now.", "You don't play. You dismantle.", "That level wanted a rematch. Denied.", "Expert mode: you."]};
+// which kind of level this was: its rules, its size and how late it sits, so the line fits what you just did
+function cheerPool(){
+  const pr=blocks.some(b=>b.partner),lk=blocks.some(b=>b.lockKey),dt=blocks.some(b=>b.axis),rules=[pr&&'link',gravity&&'drop',lk&&'lock'].filter(Boolean);
+  let p;
+  if(fusion)p=['fuse'];
+  else if(rules.length>1)p=['mix',...rules];
+  else if(rules.length)p=rules;
+  else if(startBlocks<=3)p=['tiny'];
+  else if(startBlocks>=12)p=dt?['big','twist']:['big'];
+  else p=dt?['twist']:['big'];
+  if(startBlocks>=24||levelIdx>=39)p.push('hard');
+  return p.flatMap(k=>CHEERS[k]);
+}
+// a random line from that pool, skipping the last 20 shown so repeats are rare
+let cheerRecent=[];try{cheerRecent=JSON.parse(localStorage.getItem('pa3_cheers')||'[]')}catch(e){}
+function pickLine(pool){
+  let fresh=pool.filter(x=>!cheerRecent.includes(x));if(!fresh.length)fresh=pool;
+  const t=fresh[Math.floor(Math.random()*fresh.length)];
+  cheerRecent=[t,...cheerRecent.filter(x=>x!==t)].slice(0,20);try{localStorage.setItem('pa3_cheers',JSON.stringify(cheerRecent))}catch(e){}
+  return t;
+}
 let lastCheer=-1,bumps=0,startBlocks=1;
 // shown instead when a level took a lot of bumps: teasing, never mean
 const SASS=['Took the scenic route, huh?','Bump. Bump. Bump. Done!','Those cubes will need a nap.','Subtle. Very subtle.',
   'Bonk count: impressive.','Who needs a plan anyway?','Brute force is still a strategy.','The cubes felt every one of those.',
   'You won! The cubes are a little bruised.','Efficiency was optional, apparently.','Bumper cars champion.','Well, that’s one way to do it.'];
-// a fixed shuffle (same every time), so level 7 always says the same thing and old and new lines are mixed
-const CHEER_ORDER=(()=>{const r=rng(2026),o=CHEERS.map((_,i)=>i);for(let i=o.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[o[i],o[j]]=[o[j],o[i]]}return o})();
 function win(){
   // the gravity floor fades away as the level clears, so the message reads cleanly
   if(floorMesh){const f=floorMesh,mats=[...new Set(f.material)];mats.forEach(m=>{m.transparent=true;m.depthWrite=false});
     tweens.push({t:-.15,dur:.55,step:k=>{const o=1-ease(Math.max(0,k));mats.forEach(m=>m.opacity=o)},end:()=>{if(floorMesh===f){body.remove(f);floorMesh=null}}})}
-  // every puzzle has its own line: 50 lines, one per level, scattered by a fixed shuffle
-  const c=CHEER_ORDER[levelIdx%CHEER_ORDER.length];lastCheer=c;
   // lots of bumps on this level? a playful jab instead of the usual cheer
   // 3 bumps earns a sarcastic line on smaller levels; bigger levels allow about 1 bump per 8 cubes
   const bumpy=bumps>=Math.max(3,Math.ceil(startBlocks/8));
-  // level 1 always gets the same friendly line
-  document.querySelector('#done b').textContent=levelIdx===0?'Ooo, nice one.':bumpy?SASS[(levelIdx+bumps)%SASS.length]:CHEERS[c];
+  // level 1 always gets the same friendly line; every other level gets a random line that fits its rules and size
+  document.querySelector('#done b').textContent=levelIdx===0?'Ooo, nice one.':pickLine(bumpy?SASS:cheerPool());
   // the cheer takes a different color each time, from the current theme's palette (never the same twice in a row)
   {const pal=cheerPalette();cheerColorIdx=(cheerColorIdx+1+Math.floor(Math.random()*(pal.length-1)))%pal.length;document.querySelector('#done b').style.color=pal[cheerColorIdx]}
   // tap count for this clear, compared with the best so far on this level
@@ -2627,7 +2632,7 @@ function frame(now){
   {const cur=tweens;tweens=[];const keep=cur.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});tweens=keep.concat(tweens)}
   renderer.render(scene,camera);requestAnimationFrame(frame);
 }
-window.__test={buildLevel,firstHit,DIRS,turn,K,woosh,audio};
+window.__test={buildLevel,firstHit,DIRS,turn,K,woosh,audio,load,cheerPool,pickLine,cubes:()=>startBlocks};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
