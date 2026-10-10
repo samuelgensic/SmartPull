@@ -1554,7 +1554,7 @@ function soft(a,type,f0,f1,q,t,dur,vol,att){
 // the choices for the sound a cube makes when you pull it out (Air is the original)
 const PULLS=[
   {name:'Air',        play:(a,t)=>WOOSHES[0].play(a,t)},
-  {name:'Feather',    play:(a,t)=>soft(a,'lowpass',650,320,.4,t,.42,.05,.07)}, // the pull sound: a softer, darker, shorter whisper (was Whisper: 900→450 Hz, .5 s, .08)
+  {name:'Whisper',    play:(a,t)=>soft(a,'lowpass',900,450,.5,t,.5,.08,.09)}, // the pull sound (Feather, a softer 650→320 Hz version, was tried and set aside)
   {name:'Pillow slide',play:(a,t)=>{soft(a,'lowpass',420,300,.5,t,.36,.14,.05);tone(a,'sine',95,75,t,.25,.03,.04)}},
   {name:'Blend',      play:(a,t)=>{soft(a,'lowpass',900,450,.5,t,.5,.06,.08);soft(a,'lowpass',420,300,.5,t,.34,.1,.05);tone(a,'sine',95,75,t,.25,.025,.04)}},
   {name:'Breeze',     play:(a,t)=>WOOSHES[1].play(a,t)},
