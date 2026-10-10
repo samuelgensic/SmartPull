@@ -1414,6 +1414,9 @@ function unlockPlayback(){
 let mediaOut=null;
 function routeOut(){
   const direct=()=>{sfxBus.connect(actx.destination);musicBus.connect(actx.destination)};
+  // iOS 17+ (audioSession set to "playback" above) follows AirPlay and mirroring on its own. There, the <audio>-element
+  // route below can pin the sound to the phone, since iOS treats a live media stream like a call, so go direct.
+  if(navigator.audioSession)return direct();
   try{
     const md=actx.createMediaStreamDestination();
     if(!md||!window.Audio)return direct();
@@ -1504,10 +1507,18 @@ try{const m=localStorage.getItem('pa3_track');
 let bumpIdx=0,wooshIdx=0;
 try{bumpIdx=Math.min(BUMPS.length-1,+localStorage.getItem('pa3_bump')||0);wooshIdx=Math.min(WOOSHES.length-1,+localStorage.getItem('pa3_woosh')||0)}catch(e){}
 // the pull sound follows the choice in the Sound panel
-function woosh(fused){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
-  if(!fused){PULLS[pullIdx].play(a,t);return}
-  // a fused piece: the same Whisper, a touch lower and longer, with a faint low hum underneath so it feels heavier
-  soft(a,'lowpass',760,360,.5,t,.6,.085,.1);tone(a,'sine',150,95,t+.03,.45,.05,.06)}
+// smooth fade-outs (setTargetAtTime to zero) so the heavy pulls never end in a click
+function envSmooth(g,t,att,dur,peak){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+att);g.gain.setTargetAtTime(0,t+att,(dur-att)/6)}
+function heavyAir(a,f0,f1,q,t,dur,vol,att){const n=a.createBufferSource();n.buffer=softBuf;const f=a.createBiquadFilter();f.type='lowpass';f.Q.value=q;
+  f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur*.95);const g=a.createGain();envSmooth(g,t,att,dur,vol*1.6);
+  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.25)}
+function heavyBody(a,f0,f1,t,dur,peak,att){const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur*.7);
+  const g=a.createGain();envSmooth(g,t,att,dur,peak);o.connect(g).connect(sfxBus);o.start(t);o.stop(t+dur+.25)}
+// size = cubes in the piece (0 = a single cube). 2-3 fused cubes: Heavy. 4 or more: Heaviest.
+function woosh(size){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  if(!size||size<2){PULLS[pullIdx].play(a,t);return}
+  if(size<4){heavyAir(a,620,240,.6,t,.8,.09,.14);heavyBody(a,82,54,t+.03,.7,.08,.12);heavyBody(a,164,108,t+.03,.6,.03,.1);return}
+  heavyAir(a,500,180,.6,t,1,.1,.18);heavyAir(a,260,160,.5,t+.04,.9,.05,.2);heavyBody(a,70,46,t+.03,.9,.1,.15);heavyBody(a,140,92,t+.03,.75,.04,.13)}
 // bump = cube right next to another (Pillow); collide = it travelled to hit one farther away (Droplet). Pillow when the cube in the way is right next to it, Droplet when it had to travel to hit one
 const bumpSound=name=>BUMPS.find(b=>b.name===name);
 function thump(delay,far){if(!soundOn)return;const a=audio();if(!a)return;
@@ -1805,7 +1816,7 @@ function slide(b){
   if(hits.every(h=>!h)){
     saveUndo();
     if(!clearing){pulls++;addTotal('pulls')} // a successful pull
-    woosh(isFused(b)); // a fused piece gets its own, slightly heavier whisper
+    woosh(isFused(b)?b.group.members.filter(m=>m.alive).length:0); // fused pieces sound heavier: Heavy for 2-3 cubes, Heaviest for 4+
     unit.forEach(u=>{u.alive=false;occ.delete(K(...u.c));
       const dv=new THREE.Vector3(...b.d),start=u.mesh.position.clone(),dist=span+6;
       tweens.push({t:0,dur:.75,step:k=>{u.mesh.position.copy(start).addScaledVector(dv,dist*k*k);u.mesh.scale.setScalar(1-.6*Math.max(0,k-.5)*2)},end:()=>body.remove(u.mesh)});
@@ -2615,7 +2626,7 @@ function frame(now){
   tweens=tweens.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});
   renderer.render(scene,camera);requestAnimationFrame(frame);
 }
-window.__test={buildLevel,firstHit,DIRS,turn,K};
+window.__test={buildLevel,firstHit,DIRS,turn,K,woosh,audio};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
