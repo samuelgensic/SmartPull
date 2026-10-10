@@ -1,4 +1,6 @@
-<title>SmartPull · Demo</title>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}[hidden]{display:none!important}</style><title>SmartPull · Demo</title></head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@500&family=Manrope:wght@300;400;600;700&display=swap">
 <style>
@@ -15,12 +17,38 @@
 html,body{height:100%}
 body{background:radial-gradient(120% 90% at 50% 40%, var(--bg) 0%, var(--bg2) 100%); background-color:var(--bg); color:var(--ink); font-family:var(--body); overflow:hidden; -webkit-user-select:none; user-select:none}
 .app{position:relative; height:100%; display:flex; flex-direction:column}
-header{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px 0; position:relative; z-index:2}
+header{display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:12px; padding:14px 16px 0; position:relative; z-index:2}
+/* top bar: name on the left, the level chooser centered, tools on the right */
+.brandbox{justify-self:start; min-width:0}
+.levelnav{display:flex; align-items:center; gap:6px; justify-self:center}
 .mark{font-family:var(--display); font-weight:700; font-size:24px; letter-spacing:.06em; line-height:1.1; text-transform:uppercase}
 .mark span{color:var(--accent)}
 /* small caps: a full-height S and P, with the rest of each word in shorter capitals */
 .mark small{font-size:.76em; letter-spacing:.05em}
-.controls{display:flex; align-items:center; gap:6px}
+.controls{display:flex; align-items:center; gap:6px; justify-self:end}
+/* tools tuck into one button: tap to open them, tap again to fold them away */
+.tools{display:flex; align-items:center; gap:6px}
+button.more .dots circle{fill:currentColor; stroke:none}
+button.more .x{display:none}
+button.more[aria-expanded="true"] .dots{display:none}
+button.more[aria-expanded="true"] .x{display:inline}
+button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
+.tools button{transition:transform .22s cubic-bezier(.3,1.4,.5,1), opacity .18s ease}
+.controls:not(.open) .tools{pointer-events:none}
+.controls:not(.open) .tools button{opacity:0; transform:translateX(14px) scale(.6)}
+/* wide screens: the tools open in the top bar, beside the button */
+@media (min-width:640px){
+  .tools{overflow:hidden; max-width:0; transition:max-width .28s ease}
+  .controls.open .tools{max-width:220px}
+}
+/* phones: no room beside the centered level chooser, so the tools open as a row just under the top bar */
+@media (max-width:639px){
+  .tools{position:absolute; top:calc(100% + 8px); right:16px; padding:5px; border-radius:999px; background:var(--chip); box-shadow:0 6px 18px rgba(0,0,0,.12); transition:opacity .18s ease, transform .22s ease}
+  .tools button{background:var(--bg2); box-shadow:none}
+  .controls:not(.open) .tools{opacity:0; transform:translateY(-6px)}
+  html.toolsopen .panel:not(.levels){top:118px; max-height:calc(100% - 134px)}
+}
+@media (prefers-reduced-motion: reduce){.tools,.tools button{transition:none}}
 .lvl{font-family:var(--display); font-variant-numeric:tabular-nums; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; min-width:86px; text-align:center}
 button{font:inherit; color:var(--ink); background:var(--chip); border:0; border-radius:999px; width:38px; height:38px; display:grid; place-items:center; cursor:pointer; box-shadow:0 1px 0 rgba(0,0,0,.06)}
 button:disabled{opacity:.3; cursor:default}
@@ -108,7 +136,7 @@ button.topt[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
 .sw{display:flex; gap:3px; padding:4px; border-radius:7px; flex:none}
 .sw i{width:11px; height:11px; border-radius:3px; display:block}
 #paint[aria-expanded="true"],#tune[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
-header{flex-wrap:wrap; row-gap:8px}
+header{row-gap:8px}
 button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 button svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
 #stage{flex:1; min-height:0; position:relative; touch-action:none; cursor:grab}
@@ -137,7 +165,7 @@ button.ttoggle svg{width:15px; height:15px}
 button.ttoggle[aria-pressed="true"]{opacity:1; color:var(--ink)}
 @media (max-width:430px){.left{font-size:11px; letter-spacing:.08em}}
 /* small phones: tighter top bar so all the buttons fit beside the wider title font */
-@media (max-width:400px){.controls{gap:4px} .controls button:not(.lvl){width:34px; height:34px} button.lvl{padding:0 4px; min-width:0} .lvl{font-size:11px; letter-spacing:.02em}}
+@media (max-width:400px){header{gap:8px} .controls,.levelnav{gap:4px} .controls button,.levelnav button:not(.lvl){width:34px; height:34px} button.lvl{padding:0 4px; min-width:0} .lvl{font-size:11px; letter-spacing:.02em}}
 .credit{font-family:"Quicksand", system-ui, sans-serif; font-weight:500; font-size:11px; white-space:nowrap; letter-spacing:0; color:var(--muted); opacity:.85} /* small, thin and tight under the wordmark */
 .hint{font-size:14px; color:var(--muted); transition:opacity .4s; max-width:36ch}
 .done{position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; opacity:0; transition:opacity .5s}
@@ -178,14 +206,19 @@ html.neon .done small{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.
 <div class="app">
   <header>
     <div class="brandbox"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div>
-    <div class="controls">
+    <div class="levelnav">
       <button id="prev" aria-label="Previous level"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
       <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe up or down, or tap for the wheel"><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
       <button id="next" aria-label="Next level"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="controls" id="controls">
+      <div class="tools" id="tools" inert>
       <button id="sound" aria-label="Music" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
       <button id="tune" aria-label="Settings" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="14" r="2.2" style="fill:var(--chip)"/><circle cx="12" cy="8" r="2.2" style="fill:var(--chip)"/><circle cx="19" cy="15" r="2.2" style="fill:var(--chip)"/></svg></button>
       <button id="paint" aria-label="Themes" aria-expanded="false"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="#C0B50A" stroke="none"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="#007493" stroke="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="#F17B31" stroke="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="#ABABA8" stroke="none"/></svg></button>
       <button id="reset" aria-label="Restart level"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button>
+      </div>
+      <button id="more" class="more" type="button" aria-expanded="false" aria-controls="tools" aria-label="Show buttons"><svg viewBox="0 0 24 24"><g class="dots"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></g><path class="x" d="M7 7l10 10M17 7L7 17"/></svg></button>
     </div>
   </header>
   <div class="panel" id="themes" hidden>
@@ -1115,6 +1148,17 @@ function setTheme(t){
 }
 // the paint button opens the Themes panel
 const themesPanel=document.getElementById('themes');
+// the tools button: opens the four tools, and folds them (and any open panel) away again
+const ctrlBox=document.getElementById('controls'),toolsBox=document.getElementById('tools'),moreBtn=document.getElementById('more');
+function setTools(open){
+  ctrlBox.classList.toggle('open',open);document.documentElement.classList.toggle('toolsopen',open);
+  moreBtn.setAttribute('aria-expanded',String(open));moreBtn.setAttribute('aria-label',open?'Hide buttons':'Show buttons');
+  if(open)toolsBox.removeAttribute('inert');else{toolsBox.setAttribute('inert','');
+    const th=document.getElementById('themes'),pn=document.getElementById('panel');
+    if(th&&!th.hidden){th.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
+    if(pn&&!pn.hidden){pn.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}}
+}
+moreBtn.onclick=e=>{e.stopPropagation();setTools(!ctrlBox.classList.contains('open'))};
 paintBtn.onclick=e=>{e.stopPropagation();themesPanel.hidden=!themesPanel.hidden;paintBtn.setAttribute('aria-expanded',String(!themesPanel.hidden));
   const p=document.getElementById('panel');if(!themesPanel.hidden&&p){p.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}};
 document.addEventListener('pointerdown',e=>{if(!themesPanel.hidden&&!themesPanel.contains(e.target)&&!e.target.closest('#paint')){themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false')}});
@@ -2424,3 +2468,4 @@ window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
 </script>
+</body></html>
