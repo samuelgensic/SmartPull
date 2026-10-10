@@ -1322,7 +1322,6 @@ function updateLeft(){const n=occ.size;
   const el=document.getElementById('left');el.textContent='';
   const line=(txt,cls)=>{const d=document.createElement('div');d.textContent=txt;if(cls)d.className=cls;el.appendChild(d);return d};
   const sc=statColors(),col=(d,k)=>{d.style.color=sc[k];return d};
-  col(line(stat(n,'Block')),'blocks');
   col(line(stat(pulls,'Pull'),'tapc'),'pulls');
   // taps show on levels with dots; bumps show once there's been one
   if(taps||blocks.some(b=>b.dotFace))col(line(stat(taps,'Tap')),'taps');
