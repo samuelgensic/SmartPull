@@ -59,6 +59,7 @@ button{font:inherit; color:var(--ink); background:var(--chip); border:0; border-
 button:disabled{opacity:.3; cursor:default}
 #sound[aria-pressed="true"] .off,#sound[aria-pressed="false"] .on{display:none}
 #sound[aria-pressed="false"]{opacity:.55}
+#sound[aria-expanded="true"]{opacity:1; box-shadow:0 0 0 2px var(--accent)}
 
 /* Neon theme: a dark, glow-in-the-dark room. Higher specificity so it wins over the light/dark tokens. */
 html:root.neon{--bg:#000000; --bg2:#000000; --ink:#F4ECFF; --muted:#9A8FB0; --accent:#FF2E97; --chip:#15101E; color-scheme:dark}
@@ -219,7 +220,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
   <header>
     <div class="controls" id="controls">
       <div class="tools" id="tools" inert>
-      <button id="sound" aria-label="Music" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
+      <button id="sound" aria-label="Sound" aria-expanded="false" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
       <button id="tune" aria-label="Settings" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="14" r="2.2" style="fill:var(--chip)"/><circle cx="12" cy="8" r="2.2" style="fill:var(--chip)"/><circle cx="19" cy="15" r="2.2" style="fill:var(--chip)"/></svg></button>
       <button id="paint" aria-label="Modes" aria-expanded="false"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="#C0B50A" stroke="none"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="#007493" stroke="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="#F17B31" stroke="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="#ABABA8" stroke="none"/></svg></button>
       <button id="reset" aria-label="Restart level"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button>
@@ -237,10 +238,15 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
   <div class="panel" id="themes" hidden>
     <div class="prow"><div class="plab">Modes</div><div class="topts" id="optTheme"></div></div>
   </div>
-  <div class="panel" id="panel" hidden>
-    <div class="prow"><div class="plab">SFX</div><div class="opts" id="optSfx"></div></div>
-    <div class="prow"><label class="plab" for="sfxVol">SFX volume</label><input class="vol" id="sfxVol" type="range" min="0" max="100" step="1" value="70"></div>
+  <div class="panel" id="soundp" hidden>
+    <div class="prow"><div class="plab">Music</div><div class="opts" id="optMusic"></div></div>
     <div class="prow"><label class="plab" for="musicVol">Music volume</label><input class="vol" id="musicVol" type="range" min="0" max="100" step="1" value="70"></div>
+    <div class="prow"><div class="plab">Sound effects</div><div class="opts" id="optSfx"></div></div>
+    <div class="prow"><label class="plab" for="sfxVol">Effects volume</label><input class="vol" id="sfxVol" type="range" min="0" max="100" step="1" value="70"></div>
+    <div class="prow"><div class="plab">Pull sound</div><div class="opts" id="optPull"></div></div>
+    <div class="prow"><div class="plab">Bump sound</div><div class="opts" id="optBump"></div></div>
+  </div>
+  <div class="panel" id="panel" hidden>
     <div class="prow" id="tierRow"><div class="plab">Version (preview)</div><div class="opts" id="optTier"></div></div>
     <div class="prow"><div class="plab">Developer Mode</div><div class="opts" id="optDev"></div></div>
     <div class="prow" id="devFloor" hidden><div class="plab">Gravity floor</div><div class="opts" id="optFloor"></div></div>
@@ -1181,10 +1187,11 @@ function setTools(open){
   if(open)toolsBox.removeAttribute('inert');else{toolsBox.setAttribute('inert','');
     const th=document.getElementById('themes'),pn=document.getElementById('panel');
     if(th&&!th.hidden){th.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
-    if(pn&&!pn.hidden){pn.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}}
+    if(pn&&!pn.hidden){pn.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}
+    if(typeof closeSoundPanel==='function')closeSoundPanel()}
 }
 moreBtn.onclick=e=>{e.stopPropagation();const open=!ctrlBox.classList.contains('open');menuSound(open);setTools(open)};
-paintBtn.onclick=e=>{e.stopPropagation();themesPanel.hidden=!themesPanel.hidden;paintBtn.setAttribute('aria-expanded',String(!themesPanel.hidden));
+paintBtn.onclick=e=>{e.stopPropagation();if(typeof closeSoundPanel==='function')closeSoundPanel();themesPanel.hidden=!themesPanel.hidden;paintBtn.setAttribute('aria-expanded',String(!themesPanel.hidden));
   const p=document.getElementById('panel');if(!themesPanel.hidden&&p){p.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}};
 document.addEventListener('pointerdown',e=>{if(!themesPanel.hidden&&!themesPanel.contains(e.target)&&!e.target.closest('#paint')){themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false')}});
 (function(){const box=document.getElementById('optTheme');
@@ -1306,7 +1313,7 @@ const fmtTime=ms=>{const s=Math.max(1,Math.round(ms/1000));return Math.floor(s/6
 let timerPausedByHide=false;
 // opening the settings or Themes panel pauses the level timer; closing it picks up where it left off
 let timerPausedBySettings=false;
-const pausingPanels=['panel','themes'].map(id=>document.getElementById(id));
+const pausingPanels=['panel','themes','soundp'].map(id=>document.getElementById(id));
 const pauseObs=new MutationObserver(()=>{
   const open=pausingPanels.some(p=>!p.hidden);
   if(open&&timeStart!==null){pauseTimer();timerPausedBySettings=true}
@@ -1352,7 +1359,7 @@ let bestTaps={};try{bestTaps=JSON.parse(localStorage.getItem('pa2_besttaps')||'{
 const ease=k=>1-Math.pow(1-k,3);
 
 /* ---------- sound (synthesized, very quiet) ---------- */
-let actx=null,noiseBuf=null,soundOn=true,mus=null,musicOn=false,sfxBus=null,musicBus=null;
+let actx=null,noiseBuf=null,softBuf=null,soundOn=true,mus=null,musicOn=false,sfxBus=null,musicBus=null;
 try{musicOn=localStorage.getItem('pa2_music')==='1'}catch(e){}
 // volume sliders run 0–100; 70 is the original loudness, so there's room to go up as well as down
 let sfxVol=70,musicVol=70;
@@ -1403,6 +1410,7 @@ function audio(){
     // when the audio route changes (AirPlay connects, a call comes in), iOS pauses the sound; pick it back up
     actx.onstatechange=()=>{if(actx.state!=='running'&&!document.hidden)actx.resume().catch(()=>{})};
     noiseBuf=actx.createBuffer(1,actx.sampleRate,actx.sampleRate);const ch=noiseBuf.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
+    softBuf=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate);{const sd=softBuf.getChannelData(0);let last=0;for(let i=0;i<sd.length;i++){const w=Math.random()*2-1;last=(last+.04*w)/1.04;sd[i]=w*.45+last*5}} // a rounder, lower noise for the soft sounds
     sfxBus=actx.createGain();sfxBus.gain.value=volGain(sfxVol);
     musicBus=actx.createGain();musicBus.gain.value=volGain(musicVol);
     routeOut(); // sound goes out through a media element, which AirPlay and screen mirroring follow
@@ -1455,13 +1463,34 @@ const WOOSHES=[
   // rises, then settles back, like something floating away
   {name:'Drift', play:(a,t)=>drift(a,t,400,1700,650,.8,.09)},
 ];
+// soft filtered noise for the quieter pull sounds (rounder than hiss; volumes are scaled to match the soft preview)
+function soft(a,type,f0,f1,q,t,dur,vol,att){
+  const n=a.createBufferSource();n.buffer=softBuf;const f=a.createBiquadFilter();f.type=type;f.Q.value=q;
+  f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur*.95);
+  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol*1.6,t+att);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.05);
+}
+// the choices for the sound a cube makes when you pull it out (Air is the original)
+const PULLS=[
+  {name:'Air',        play:(a,t)=>WOOSHES[0].play(a,t)},
+  {name:'Whisper',    play:(a,t)=>soft(a,'lowpass',900,450,.5,t,.5,.08,.09)},
+  {name:'Pillow slide',play:(a,t)=>{soft(a,'lowpass',420,300,.5,t,.36,.14,.05);tone(a,'sine',95,75,t,.25,.03,.04)}},
+  {name:'Blend',      play:(a,t)=>{soft(a,'lowpass',900,450,.5,t,.5,.06,.08);soft(a,'lowpass',420,300,.5,t,.34,.1,.05);tone(a,'sine',95,75,t,.25,.025,.04)}},
+  {name:'Breeze',     play:(a,t)=>WOOSHES[1].play(a,t)},
+  {name:'Silk',       play:(a,t)=>WOOSHES[2].play(a,t)},
+];
+let pullIdx=1,bumpSel=0,musicIdx=0;
+try{const p=localStorage.getItem('pa3_pull2'),b=localStorage.getItem('pa3_bump2'),m=localStorage.getItem('pa3_track');
+  if(p!==null)pullIdx=Math.min(PULLS.length-1,Math.max(0,+p||0));if(b!==null)bumpSel=Math.max(0,+b||0);if(m!==null)musicIdx=Math.max(0,+m||0)}catch(e){}
 let bumpIdx=0,wooshIdx=0;
 try{bumpIdx=Math.min(BUMPS.length-1,+localStorage.getItem('pa3_bump')||0);wooshIdx=Math.min(WOOSHES.length-1,+localStorage.getItem('pa3_woosh')||0)}catch(e){}
-// slide-away is always Air
-function woosh(){if(!soundOn)return;const a=audio();if(a)WOOSHES[0].play(a,a.currentTime)}
+// the pull sound follows the choice in the Sound panel
+function woosh(){if(!soundOn)return;const a=audio();if(a)PULLS[pullIdx].play(a,a.currentTime)}
 // bumps: Pillow when the cube in the way is right next to it, Droplet when it had to travel to hit one
 const bumpSound=name=>BUMPS.find(b=>b.name===name);
-function thump(delay,far){if(!soundOn)return;const a=audio();if(a)bumpSound(far?'Droplet':'Pillow').play(a,a.currentTime+delay)}
+function thump(delay,far){if(!soundOn)return;const a=audio();if(!a)return;
+  if(bumpSel>0&&BUMPS[bumpSel-1]){BUMPS[bumpSel-1].play(a,a.currentTime+delay);return} // a chosen bump sound
+  bumpSound(far?'Droplet':'Pillow').play(a,a.currentTime+delay)} // standard: Pillow up close, Droplet from far away
 
 /* sound picker */
 const panel=document.getElementById('panel');
@@ -1488,20 +1517,28 @@ const CHORDS=[[50,57,64,66],[47,54,62,69],[43,50,59,66],[45,52,61,64]];
 const PENTA=[62,64,66,69,71,74,76]; // D major pentatonic, middle register, for the soft bell swells
 function impulse(a,sec){const len=Math.floor(a.sampleRate*sec),buf=a.createBuffer(2,len,a.sampleRate);
   for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6)}return buf}
+// the music choices: same soft engine, different chords, notes and mood (Calm is the original)
+const MUSICS=[
+  {name:'Calm',  chords:CHORDS,penta:PENTA,lp:650,bells:true,bellMin:5000,bellVar:7000,bellVol:.007},
+  {name:'Dusk',  chords:[[45,52,60,64],[41,48,57,60],[48,55,60,64],[43,50,59,62]],penta:[57,60,62,64,67,69,72],lp:520,bells:true,bellMin:7000,bellVar:8000,bellVol:.006},
+  {name:'Dawn',  chords:[[48,55,59,64],[53,60,64,69],[45,52,60,64],[55,62,64,69]],penta:[60,62,64,67,69,72,74],lp:900,bells:true,bellMin:3500,bellVar:4500,bellVol:.008},
+  {name:'Pads',  chords:CHORDS,penta:PENTA,lp:600,bells:false,bellMin:5000,bellVar:7000,bellVol:.007},
+];
 function startMusic(a){
+  const cfg=MUSICS[Math.min(musicIdx,MUSICS.length-1)];
   const t0=a.currentTime;
   const out=a.createGain();out.gain.setValueAtTime(0,t0);out.gain.linearRampToValueAtTime(1,t0+4);out.connect(musicBus);
   // mostly reverb, very little direct sound, so everything feels far away and spacious
   const bus=a.createGain();const dry=a.createGain();dry.gain.value=.35;bus.connect(dry).connect(out);
   const verb=a.createConvolver();verb.buffer=impulse(a,7);const wet=a.createGain();wet.gain.value=.95;bus.connect(verb);verb.connect(wet).connect(out);
   // a dark filter that slowly breathes open and closed
-  const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=650;lp.Q.value=.3;lp.connect(bus);
+  const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=cfg.lp;lp.Q.value=.3;lp.connect(bus);
   const lfo=a.createOscillator();lfo.frequency.value=.04;const lfoAmt=a.createGain();lfoAmt.gain.value=220;lfo.connect(lfoAmt).connect(lp.frequency);lfo.start(t0);
   // a faint bed of air underneath, like distant wind
   const air=a.createBufferSource();air.buffer=noiseBuf;air.loop=true;const airF=a.createBiquadFilter();airF.type='lowpass';airF.frequency.value=380;
   const airG=a.createGain();airG.gain.value=.012;air.connect(airF).connect(airG).connect(bus);air.start(t0);
   mus={a,out,ci:0,padT:0,bellT:0,srcs:[lfo,air]};
-  const pad=()=>{if(!mus)return;const t=a.currentTime,notes=CHORDS[mus.ci++%CHORDS.length];
+  const pad=()=>{if(!mus)return;const t=a.currentTime,notes=cfg.chords[mus.ci++%cfg.chords.length];
     notes.forEach((m,i)=>[-6,6].forEach(det=>{const o=a.createOscillator();o.type='triangle';o.frequency.value=MTOF(m);o.detune.value=det;
       const v=i===notes.length-1?.008:.014; // the top note sits back so nothing pokes out
       const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+6);g.gain.setValueAtTime(v,t+10);g.gain.linearRampToValueAtTime(0,t+17);
@@ -1509,12 +1546,12 @@ function startMusic(a){
     mus.padT=setTimeout(pad,12000)};
   // bells swell in softly instead of striking, through their own warm filter
   const bellF=a.createBiquadFilter();bellF.type='lowpass';bellF.frequency.value=900;bellF.connect(bus);
-  const bell=()=>{if(!mus)return;const t=a.currentTime,m=PENTA[Math.floor(Math.random()*PENTA.length)];
+  const bell=()=>{if(!mus)return;const t=a.currentTime,m=cfg.penta[Math.floor(Math.random()*cfg.penta.length)];
     const o=a.createOscillator();o.type='sine';o.frequency.value=MTOF(m);
-    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.007,t+.6);g.gain.exponentialRampToValueAtTime(.0003,t+6);
+    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(cfg.bellVol,t+.6);g.gain.exponentialRampToValueAtTime(.0003,t+6);
     o.connect(g).connect(bellF);o.start(t);o.stop(t+6.1);
-    mus.bellT=setTimeout(bell,5000+Math.random()*7000)};
-  pad();mus.bellT=setTimeout(bell,6000);
+    mus.bellT=setTimeout(bell,cfg.bellMin+Math.random()*cfg.bellVar)};
+  pad();if(cfg.bells)mus.bellT=setTimeout(bell,6000);
 }
 function stopMusic(){
   if(!mus)return;const m=mus;mus=null;clearTimeout(m.padT);clearTimeout(m.bellT);
@@ -1527,10 +1564,35 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMusic()
 function setMusic(val){
   musicOn=val;try{localStorage.setItem('pa2_music',val?'1':'0')}catch(e){}
   soundBtn.setAttribute('aria-pressed',val?'true':'false');
+  if(typeof refreshMusicOpts==='function')refreshMusicOpts();
   if(val){const a=audio();if(a&&!mus)startMusic(a)}else stopMusic();
 }
-soundBtn.onclick=()=>setMusic(!musicOn);
 soundBtn.setAttribute('aria-pressed',musicOn?'true':'false');
+const soundPanel=document.getElementById('soundp');
+function closeSoundPanel(){if(soundPanel&&!soundPanel.hidden){soundPanel.hidden=true;soundBtn.setAttribute('aria-expanded','false')}}
+soundBtn.onclick=e=>{e.stopPropagation();const open=soundPanel.hidden;
+  ['themes','panel'].forEach(id=>{const p=document.getElementById(id);if(p)p.hidden=true});
+  paintBtn.setAttribute('aria-expanded','false');document.getElementById('tune').setAttribute('aria-expanded','false');
+  soundPanel.hidden=!open;soundBtn.setAttribute('aria-expanded',String(open))};
+document.addEventListener('pointerdown',e=>{if(!soundPanel.hidden&&!soundPanel.contains(e.target)&&!e.target.closest('#sound'))closeSoundPanel()});
+function pressGroup(id,idx){document.querySelectorAll('#'+id+' .opt').forEach((b,j)=>b.setAttribute('aria-pressed',j===idx?'true':'false'))}
+function refreshMusicOpts(){pressGroup('optMusic',musicOn?musicIdx+1:0)}
+(function(){
+  const mbox=document.getElementById('optMusic');
+  ['Off',...MUSICS.map(m=>m.name)].forEach((label,i)=>{const b=document.createElement('button');b.className='opt';b.id='optMusic-'+i;b.textContent=label;
+    b.onclick=()=>{if(i===0){setMusic(false)}else{musicIdx=i-1;try{localStorage.setItem('pa3_track',musicIdx)}catch(e){}
+      if(mus)stopMusic();setMusic(true)}refreshMusicOpts()};mbox.appendChild(b)});
+  refreshMusicOpts();
+  const pbox=document.getElementById('optPull');
+  PULLS.forEach((s,i)=>{const b=document.createElement('button');b.className='opt';b.id='optPull-'+i;b.textContent=s.name;
+    b.onclick=()=>{pullIdx=i;try{localStorage.setItem('pa3_pull2',i)}catch(e){}pressGroup('optPull',i);const a=audio();if(a)s.play(a,a.currentTime+.02)};pbox.appendChild(b)});
+  pressGroup('optPull',pullIdx);
+  const bbox=document.getElementById('optBump');
+  ['Standard',...BUMPS.map(b=>b.name)].forEach((label,i)=>{const b=document.createElement('button');b.className='opt';b.id='optBump-'+i;b.textContent=label;
+    b.onclick=()=>{bumpSel=i;try{localStorage.setItem('pa3_bump2',i)}catch(e){}pressGroup('optBump',i);
+      const a=audio();if(a)(i>0?BUMPS[i-1]:bumpSound('Pillow')).play(a,a.currentTime+.02)};bbox.appendChild(b)});
+  pressGroup('optBump',Math.min(bumpSel,BUMPS.length));
+})();
 // sound effects on/off now lives in the settings panel
 (function(){const box=document.getElementById('optSfx');
   [['On',true],['Off',false]].forEach(([label,val],i)=>{const btn=document.createElement('button');btn.className='opt';btn.id='optSfx-'+i;btn.textContent=label;
@@ -1550,7 +1612,7 @@ function blSound(on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.c
   // just a click: one short, clean tick for on, a slightly lower, softer one for off
   if(on){hiss(a,'bandpass',2600,2600,5,t,.014,.14,.0005);tone(a,'sine',1100,800,t,.012,.04,.0005)}
   else{hiss(a,'bandpass',1900,1900,5,t,.014,.11,.0005);tone(a,'sine',800,560,t,.012,.035,.0005)}}
-document.getElementById('tune').onclick=e=>{e.stopPropagation();
+document.getElementById('tune').onclick=e=>{e.stopPropagation();closeSoundPanel();
   const tp=document.getElementById('themes');if(tp&&!tp.hidden){tp.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
   panel.hidden=!panel.hidden;document.getElementById('tune').setAttribute('aria-expanded',String(!panel.hidden))};
 document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!e.target.closest('#tune')){panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}});
@@ -2224,7 +2286,7 @@ try{document.fonts.ready.then(fitCredit);document.fonts.addEventListener('loadin
 /* ---------- scorecard ---------- */
 const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack · $0.99','Levels 11–25',10,25],['full','Complete · $1.99','Levels 26–50',25,50]];
 function openScorecard(){
-  [panel,themesPanel,lvPanel].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
+  [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   bankPlay(elapsed());if(timeStart!==null)timeStart=performance.now();timeMs=0; // count the time on the current level so far
   const sc=statColors(),pal={plain:['#007493','#D9661E','#8C8410'],brand:['#F17B31','#007493','#C0B50A'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007493','#D9661E','#8C8410'];
   const owned=v=>devMode||TIERS[tier].max>=TIERS[v].max;
@@ -2346,8 +2408,8 @@ document.getElementById('next').onclick=()=>{if(nextAllowed()){pageTurn();load(l
 /* upgrade screen: shows the paid versions you don't have yet */
 const upPanel=document.getElementById('upgrade');
 function openUpgrade(){
-  [panel,themesPanel,lvPanel].forEach(p=>{if(p)p.hidden=true});
-  ['tune','paint','lvl'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
+  [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});
+  ['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   document.getElementById('up-plus').hidden=tier!=='free';
   document.getElementById('up-full-note').hidden=tier!=='plus';
   upPanel.hidden=false;
