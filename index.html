@@ -695,7 +695,7 @@ function playFusionExact(lv,rand){
   return false;
 }
 // the layout each fusion level uses, found by the checker below (random play cleared these 200 of 200 times)
-const FUSION_PICK={45:6,46:14,47:13,48:6,49:155};
+const FUSION_PICK={45:6,46:14,47:13,48:6,49:1402};
 function buildFusionBest(L){
   if(FUSION_PICK[L]!==undefined){const lv=buildFusion(L,FUSION_PICK[L]);if(lv)return lv} // the layout already chosen for this level
   let bestSalt=0;
