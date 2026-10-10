@@ -1519,13 +1519,68 @@ function impulse(a,sec){const len=Math.floor(a.sampleRate*sec),buf=a.createBuffe
 // the music choices: same soft engine, different chords, notes and mood (Calm is the original)
 const MUSICS=[
   {name:'Calm',  chords:CHORDS,penta:PENTA,lp:650,bells:true,bellMin:5000,bellVar:7000,bellVol:.007},
-  {name:'Dusk',  chords:[[45,52,60,64],[41,48,57,60],[48,55,60,64],[43,50,59,62]],penta:[57,60,62,64,67,69,72],lp:520,bells:true,bellMin:7000,bellVar:8000,bellVol:.006},
-  {name:'Dawn',  chords:[[48,55,59,64],[53,60,64,69],[45,52,60,64],[55,62,64,69]],penta:[60,62,64,67,69,72,74],lp:900,bells:true,bellMin:3500,bellVar:4500,bellVol:.008},
+  {name:'Dusk',gen:'lofi'},      // warm keys with a soft kick and brushed hiss
+  {name:'Dawn',gen:'harp'},      // flowing rolled arpeggios
+  {name:'Music Box',gen:'musicbox'},
+  {name:'Kalimba',gen:'kalimba'},
+  {name:'Strings',gen:'strings'},
 ];
+
+// generative music tracks (soft plucks, keys and strings): each builds its own notes on a timer
+function genTrack(A,out,name){
+  const timers=[],srcs=[],M=MTOF;
+  const verb=A.createConvolver();verb.buffer=impulse(A,6);const vw=A.createGain();vw.gain.value=.6;verb.connect(vw).connect(out);
+  function dest(dry=.5,wet=.8){const g=A.createGain();g.connect(out);const d=A.createGain();d.gain.value=dry;g.connect(d).connect(out);const w=A.createGain();w.gain.value=wet;g.connect(w).connect(verb);return g}
+  function note(bus,type,m,t,dur,vol,atk=.01,det=0){const o=A.createOscillator();o.type=type;o.frequency.value=M(m);o.detune.value=det;const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+atk);g.gain.exponentialRampToValueAtTime(.0003,t+dur);o.connect(g).connect(bus);o.start(t);o.stop(t+dur+.1)}
+  function every(ms,fn){fn(0);let n=1;timers.push(setInterval(()=>fn(n++),ms))}
+  const S={
+musicbox(){const bus=dest(.5,.75);
+ // 8 chords x 8 beats = 64 steps before the chord loop returns, and the melody itself keeps changing
+ const C=[[0,4,7],[5,9,0],[9,0,4],[7,11,2],[2,5,9],[5,9,0],[7,11,2],[0,4,7]],sc=[0,2,4,5,7,9,11];
+ let last=7,rnd=()=>Math.random();
+ every(780,n=>{const bar=Math.floor(n/8)%8,beat=n%8,ch=C[bar],t=A.currentTime;
+  if(beat===0){note(bus,'sine',36+ch[0],t,4.5,.06,.05);note(bus,'sine',48+ch[0],t,3.2,.02,.05)}
+  if(beat===4&&bar%2===0)note(bus,'sine',48+ch[2],t,2.6,.02,.05);
+  if(rnd()<.2+(beat%2?0:.35)||beat===0){ // not every beat, so phrases breathe
+   const pool=[];for(let o=0;o<2;o++)sc.concat(ch).forEach(p=>pool.push(72+o*12+p-12));
+   const tones=ch.map(p=>72+p+(rnd()<.5?0:-12)); // lean on the chord notes, wander a little
+   let m=rnd()<.6?tones[Math.floor(rnd()*3)]:pool[Math.floor(rnd()*pool.length)];
+   if(Math.abs(m-last)>9)m=last+(m>last?4:-4); last=m;
+   note(bus,'sine',m,t,2.6,.05,.004);note(bus,'sine',m+12,t,1,.01,.004);
+   if(rnd()<.18)note(bus,'sine',m+7,t+.39,2,.03,.004)}})},
+kalimba(){const bus=dest(.5,.45);
+ // lo-fi: dark tone, slow pitch wobble, tape hiss and a little vinyl crackle
+ const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1700;lp.Q.value=.4;lp.connect(bus);
+ const wob=A.createOscillator();wob.frequency.value=.35;const wg=A.createGain();wg.gain.value=14;wob.frequency.value=.35;wob.connect(wg);wob.start();srcs.push(wob);
+ const nb=A.createBuffer(1,A.sampleRate*2,A.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(Math.random()<.0012?1:.05);
+ const hs=A.createBufferSource();hs.buffer=nb;hs.loop=true;const hf=A.createBiquadFilter();hf.type='highpass';hf.frequency.value=1200;const hg=A.createGain();hg.gain.value=.05;hs.connect(hf).connect(hg).connect(out);hs.start();srcs.push(hs);
+ const ch=[[57,60,64,67],[53,57,60,64],[48,52,55,60],[55,59,62,67]];
+ const nt=(m,t,dur,vol)=>{const o=A.createOscillator();o.type='triangle';o.frequency.value=M(m);wg.connect(o.detune);const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0003,t+dur);o.connect(g).connect(lp);o.start(t);o.stop(t+dur+.1)};
+ every(430,n=>{const c=ch[(n/16|0)%4],t=A.currentTime,k=[0,1,2,3,2,1,3,2][n%8],cyc=n%128;
+  if(n%16<15){nt(c[k]+12,t+(Math.random()*.012),1.1,.07);nt(c[k]+24,t,.2,.012)}
+  if(n%8==0)nt(c[0]-12,t,2.4,.1);
+  if(cyc>=48&&n%8==0){const o=A.createOscillator();o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(42,t+.18);const g=A.createGain();g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(g).connect(out);o.start(t);o.stop(t+.35)}})},
+lofi(){const bus=dest(.7,.35);const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1500;lp.connect(bus);
+ const ch=[[50,53,57,60],[46,50,53,57],[43,46,50,53],[45,49,52,55]];const beat=700;
+ every(beat,n=>{const t=A.currentTime;
+  if(n%4==0){const c=ch[(n/4|0)%4];c.forEach(m=>{note(lp,'sine',m,t,2.6,.03,.01);note(lp,'triangle',m+12,t,1.6,.012,.01,4)});note(lp,'sine',c[0]-12,t,2.4,.08,.02)}
+  if(n%4==0||n%4==2){const o=A.createOscillator();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(45,t+.15);const g=A.createGain();g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g).connect(out);o.start(t);o.stop(t+.3)}
+  if(n%2==1){const s=A.createBufferSource();const nb=A.createBuffer(1,A.sampleRate*.2,A.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;s.buffer=nb;const f=A.createBiquadFilter();f.type='bandpass';f.frequency.value=2500;const g=A.createGain();g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);s.connect(f).connect(g).connect(out);s.start(t)}})},
+strings(){const bus=dest(.3,1);const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;lp.Q.value=.5;lp.connect(bus);
+ const ch=[[45,52,57,61,64],[41,48,57,60,65],[48,55,60,64,67],[43,50,59,62,67]];
+ every(9000,n=>{const t=A.currentTime;ch[n%4].forEach((m,i)=>[-9,0,9].forEach(d=>{const o=A.createOscillator();o.type='sawtooth';o.frequency.value=M(m);o.detune.value=d;const lf=A.createOscillator();lf.frequency.value=5+i*.3;const la=A.createGain();la.gain.value=4;lf.connect(la).connect(o.detune);lf.start(t);lf.stop(t+11);const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.006,t+3.5);g.gain.setValueAtTime(.006,t+6);g.gain.linearRampToValueAtTime(0,t+10);o.connect(g).connect(lp);o.start(t);o.stop(t+10.1)}))})},
+harp(){const bus=dest(.45,.9);const ch=[[50,57,62,66,69,74],[47,54,59,62,66,71],[43,50,55,59,62,67],[45,52,57,61,64,69]];
+ every(260,n=>{const c=ch[(n/24|0)%4],t=A.currentTime,k=[0,1,2,3,4,5,4,3,2,1,0,1,2,3,4,3,2,1,0,2,4,3,1,2][n%24];if(n%24>=20&&n%2)return;
+  note(bus,'triangle',c[k]+(k>2?12:0),t,2.4,.035,.004,0);note(bus,'sine',c[k]+12,t,.8,.008,.004)})}
+};
+  S[name]();
+  return ()=>{timers.forEach(i=>{clearInterval(i);clearTimeout(i)});srcs.forEach(s=>{try{s.stop()}catch(e){}})};
+}
 function startMusic(a){
   const cfg=MUSICS[Math.min(musicIdx,MUSICS.length-1)];
   const t0=a.currentTime;
   const out=a.createGain();out.gain.setValueAtTime(0,t0);out.gain.linearRampToValueAtTime(1,t0+4);out.connect(musicBus);
+  if(cfg.gen){mus={a,out,srcs:[],stopGen:genTrack(a,out,cfg.gen)};return}
   // mostly reverb, very little direct sound, so everything feels far away and spacious
   const bus=a.createGain();const dry=a.createGain();dry.gain.value=.35;bus.connect(dry).connect(out);
   const verb=a.createConvolver();verb.buffer=impulse(a,7);const wet=a.createGain();wet.gain.value=.95;bus.connect(verb);verb.connect(wet).connect(out);
@@ -1552,7 +1607,7 @@ function startMusic(a){
   pad();if(cfg.bells)mus.bellT=setTimeout(bell,6000);
 }
 function stopMusic(){
-  if(!mus)return;const m=mus;mus=null;clearTimeout(m.padT);clearTimeout(m.bellT);
+  if(!mus)return;const m=mus;mus=null;clearTimeout(m.padT);clearTimeout(m.bellT);if(m.stopGen)m.stopGen();
   const t=m.a.currentTime;m.out.gain.cancelScheduledValues(t);m.out.gain.setValueAtTime(m.out.gain.value,t);m.out.gain.linearRampToValueAtTime(0,t+1.5);
   setTimeout(()=>{try{m.srcs.forEach(s=>s.stop());m.out.disconnect()}catch(e){}},1800);
 }
