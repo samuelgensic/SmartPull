@@ -22,7 +22,7 @@ header{display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); ali
 /* Neon's Blacklight switch lives in the top-left corner; on narrow phones it shrinks to just its glowing bulb */
 /* Blacklight: a round flashlight button in the top bar, with its label underneath (the label hides with the button) */
 /* the Black Light switch sits in the lower right of the play area, label underneath */
-.blbox{position:static; z-index:4; display:flex; flex-direction:column; align-items:center}
+.blbox{position:relative; z-index:4; display:flex; flex-direction:column; align-items:center}
 .blbox .blacklight{position:static; width:38px; height:38px; padding:0; gap:0; justify-content:center}
 .blacklight .flash{width:20px; height:20px; flex:none}
 .bllabel{display:block; margin-top:3px; text-align:center; font-family:var(--display); font-weight:500; font-size:10px; letter-spacing:.04em; color:var(--muted); white-space:nowrap}
@@ -107,7 +107,7 @@ button.upclose{align-self:center}
 button.lvl{width:auto; height:38px; padding:0 10px; background:transparent; box-shadow:none; color:var(--ink); font-family:var(--display); font-weight:700; font-size:12px}
 button.lvl::after{content:""; display:inline-block; width:5px; height:5px; margin-left:7px; border-right:1.6px solid currentColor; border-bottom:1.6px solid currentColor; transform:translateY(-2px) rotate(45deg); opacity:.55}
 button.lvl[aria-expanded="true"]{background:var(--chip)}
-.panel.levels{left:16px; right:16px; margin-inline:auto; width:min(280px,calc(100% - 32px))}
+.panel.levels{left:16px; right:16px; margin-inline:auto; width:min(200px,calc(100% - 32px))}
 button.lvl{touch-action:none; overflow:hidden; white-space:nowrap; display:inline-flex; flex-direction:row; align-items:center; justify-content:center}
 .lvtxt{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.1; transition:transform .12s ease-out}
 /* the level's group (Pull, Twist, Link...) in small letters under the number */
@@ -123,11 +123,11 @@ html.neon .lvsub{color:#FF2E97}
   -webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent); mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
 .wheel::-webkit-scrollbar{display:none}
 .wpad{height:88px}
-.wrow{height:44px; scroll-snap-align:center; display:flex; align-items:center; justify-content:space-between; padding-inline:16px; cursor:pointer;
+.wrow{height:44px; scroll-snap-align:center; display:flex; align-items:center; justify-content:center; position:relative; padding-inline:16px; cursor:pointer;
   font-family:var(--display); font-weight:500; font-size:15px; font-variant-numeric:tabular-nums; transform-origin:center}
-.wrow em{font-style:normal; font-size:12px; color:var(--muted)}
+.wrow em{position:absolute; right:14px; font-style:normal; font-size:12px; color:var(--muted)}
 /* the level's group (Pull, Twist...) under each level in the wheel: small and thin */
-.wlv{display:flex; flex-direction:column; line-height:1.1}
+.wlv{display:flex; flex-direction:column; align-items:center; line-height:1.1}
 .wlv small{font-family:var(--body); font-size:10px; font-weight:300; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:2px}
 .wrow.on{color:var(--accent)}
 .wrow.lock span{color:var(--muted)}
@@ -190,12 +190,14 @@ button.ttoggle[aria-pressed="true"]{color:var(--ink); box-shadow:0 0 0 2px var(-
   font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.04em; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .done.show{opacity:1; pointer-events:auto; cursor:pointer}
 /* tips: a small round button that only appears on the level where a new rule is first seen; tapping it opens a short explanation */
-button.tipbtn{position:absolute; top:12px; right:16px; z-index:4; width:38px; height:38px; background:var(--chip); color:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.12)}
+button.tipbtn{position:absolute; top:0; right:0; z-index:4; width:38px; height:38px; background:var(--chip); color:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.12)}
 button.tipbtn svg{width:20px; height:20px; stroke-width:2.2}
 button.tipbtn.new{animation:tippulse 2s ease-in-out infinite}
 @keyframes tippulse{0%,100%{box-shadow:0 0 0 0 rgba(241,123,49,.0),0 2px 8px rgba(0,0,0,.12)}50%{box-shadow:0 0 0 7px rgba(241,123,49,.22),0 2px 8px rgba(0,0,0,.12)}}
 @media (prefers-reduced-motion: reduce){button.tipbtn.new{animation:none}}
-html.neon button.tipbtn{color:#FF2E97}
+html.neon button.tipbtn{color:#FF2E97; top:calc(100% + 8px); right:auto; left:50%; transform:translateX(-50%)}
+html.neon .controls button,html.neon .levelnav button:not(.lvl),html.neon button.fsbtn,html.neon button.ttoggle,html.neon button.tipbtn{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
+html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .tipitem{display:flex; gap:14px; align-items:flex-start}
 .tipicon{flex:none; width:52px; height:52px; border-radius:14px; background:var(--bg2); color:var(--ink); display:grid; place-items:center}
 .tipicon svg{width:30px; height:30px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
@@ -244,7 +246,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
       <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe up or down, or tap for the wheel"><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
       <button id="next" aria-label="Next level"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
-    <div class="topspace"><div class="blbox"><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></button><span class="bllabel">Black Light</span></div></div>
+    <div class="topspace"><div class="blbox"><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></button><span class="bllabel">Black Light</span><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button></div></div>
   </header>
   <button class="fsbtn" id="fsBtn" type="button" hidden aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   <div class="panel" id="themes" hidden>
@@ -304,7 +306,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
     <div class="wheelbox"><div class="wband"></div><div class="wheel" id="wheel"></div></div>
     <button class="opt wgo" id="wheelGo" type="button">Select</button>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
