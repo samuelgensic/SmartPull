@@ -1,6 +1,5 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}[hidden]{display:none!important}</style><title>SmartPull · Demo</title></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>SmartPull · Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@500&family=Manrope:wght@300;400;600;700&display=swap">
 <style>
@@ -196,6 +195,10 @@ button.ttoggle[aria-pressed="true"]{opacity:1; color:var(--ink)}
   display:inline-block; margin-top:6px; padding:11px 22px; border-radius:999px; background:var(--accent); color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.15); max-width:calc(100vw - 48px); text-align:center}
 html.brandtheme .done small{background:#F17B31}
 html.neon .done small{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 14px rgba(255,46,151,.45)}
+/* Scorecard button takes the theme's color: accent in Classic and SmartPull, a pink outline in Neon */
+#scoreOpen{background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12)}
+html.brandtheme #scoreOpen{background:#F17B31}
+html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 12px rgba(255,46,151,.4)}
 @keyframes breathe{50%{opacity:.4}}
 .done:not(.ready) small{animation:none; opacity:0}
 .done.ready small{opacity:1}
@@ -2469,4 +2472,5 @@ window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
 </script>
+
 </body></html>
