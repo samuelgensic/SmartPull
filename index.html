@@ -468,7 +468,7 @@ function genOrder(cells,r,span,grav){
   }
   return {dirs,seq};
 }
-function buildLevelNewSeed(L,salt){
+function buildLevelNewSeed(L,salt,pairDots){
   const [shape,nPairs,grav,nLocks,,nChains=0]=PLAN[Math.min(L-NEW_FROM,PLAN.length-1)];
   let cells=shape();
   if(grav){const mnY=Math.min(...cells.map(c=>c[1]));cells=cells.map(c=>[c[0],c[1]-mnY,c[2]])} // sit on the floor
@@ -542,6 +542,23 @@ function buildLevelNewSeed(L,salt){
     }
     b.arrowFace=choose(i,uncov[i]);
   }
+  // pair dots (from level 19): a dot on the end of a linked pair turns BOTH cubes a quarter turn about the line
+  // through them, so the pair rolls as one piece. It uses its own random numbers, so the rest of the level is unchanged.
+  if(pairDots){
+    const pr=rng(L*4243+salt*17+11),want=nPairs>=3&&L>=34?2:1;let done=0;
+    const pairs=Object.keys(pairOf).map(Number).filter(i=>i<pairOf[i]).sort(()=>pr()-.5);
+    for(const i of pairs){
+      if(done>=want)break;const j=pairOf[i],D=DIRS[dirs[i]];
+      const a=[0,1,2].map(k=>cells[j][k]-cells[i][k]); // from i to j
+      const ends=[[i,neg(a)],[j,a]].filter(([m,f])=>has(m,f)).sort(()=>pr()-.5);if(!ends.length)continue;
+      const sides=m=>[crossV(a,D),neg(crossV(a,D))].filter(f=>has(m,f));
+      if(!sides(i).length||!sides(j).length)continue;
+      const [dc,df]=ends[0],k=1+Math.floor(pr()*3);
+      for(const m of [i,j]){const ff=sides(m);let d=D,f=ff[Math.floor(pr()*ff.length)];for(let t=0;t<k;t++){d=turn(d,a);f=turn(f,a)}
+        Object.assign(out[m],{d,arrowFace:f,pairDot:true})}
+      Object.assign(out[dc],{axis:a,dotFace:df,dotColor:DOT_COLORS[Math.floor(pr()*DOT_COLORS.length)]});done++;
+    }
+  }
   return {span,ext,blocks:out,gravity:!!grav};
 }
 // With gravity a careless order can leave a dead end. Try a few layouts and keep the one that
@@ -549,15 +566,16 @@ function buildLevelNewSeed(L,salt){
 function buildLevelNew(L){
   if(PLAN[Math.min(L-NEW_FROM,PLAN.length-1)][4])return buildFusionBest(L);
   const grav=PLAN[Math.min(L-NEW_FROM,PLAN.length-1)][2];
-  if(!grav)return buildLevelNewSeed(L,0);
-  let best=null,bestRate=-1;
+  const pd=L>=18; // pair dots start at level 19
+  if(!grav)return buildLevelNewSeed(L,0,pd);
+  let best=0,bestRate=-1;
   for(let salt=0;salt<6;salt++){
     const lv=buildLevelNewSeed(L,salt);let ok=0;const tries=12;
     for(let t=0;t<tries;t++)if(playout(lv,rng(L*31+salt*97+t)))ok++;
-    if(ok/tries>bestRate){best=lv;bestRate=ok/tries}
+    if(ok/tries>bestRate){best=salt;bestRate=ok/tries}
     if(bestRate>=.6)break;
   }
-  return best;
+  return buildLevelNewSeed(L,best,pd); // the same layout, now with its pair dots
 }
 // one quick game of random sensible moves on a level's starting layout; true if it clears
 function playout(lv,rand){
@@ -574,7 +592,7 @@ function playout(lv,rand){
       const ks=b.axis&&!cov(b,b.dotFace)?[0,1,2,3]:[0];
       for(const k of ks){let d=b.d,f=b.arrowFace;for(let t=0;t<k;t++){d=turn(d,b.axis);f=turn(f,b.axis)}
         if(cov(b,f))continue;
-        if(unit.every(u=>!rayBlocked(bl[u].c,u===i?d:bl[u].d,occ,unit,lv.span,lv.gravity)))moves.push([i,k,d,f,unit])}
+        if(unit.every(u=>!rayBlocked(bl[u].c,(u===i||b.pairDot)?d:bl[u].d,occ,unit,lv.span,lv.gravity)))moves.push([i,k,d,f,unit])}
     });
     if(!moves.length)return false;
     const [i,k,d,f,unit]=moves[Math.floor(rand()*moves.length)];bl[i].d=d;bl[i].arrowFace=f;
@@ -1212,6 +1230,7 @@ const TESTING=false; // true = every level open plus a "go to level" box; false 
 const HINTS={0:'Tap an arrow to slide its block out. Drag to turn the puzzle.',
   3:'Each block has one arrow, on any side. Turn the puzzle to find it, then tap it.',
   [ROTATOR_START]:'Teal blocks have a dot. Tap the dot to turn that block a quarter turn.',
+  18:'A dot on a linked pair turns both cubes together, like rolling one piece.',
   30:'A padlock block won\'t move until the block with the matching key is gone.',
   33:'Some padlock blocks hide a key. Unlock one and its key appears, ready to open the next lock.'};
 
@@ -2167,12 +2186,12 @@ function lockedJiggle(b){
   tweens.push({t:0,dur:.3,step:k=>{b.mesh.position.copy(home).addScaledVector(side,.03*Math.sin(k*Math.PI*6)*(1-k))},end:()=>{b.mesh.position.copy(home);b.busy=false}});
 }
 function spin(b){
-  endWobble(b);saveUndo();b.busy=true;click();
-  const q0=b.mesh.quaternion.clone();
-  const qa=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(...b.axis),Math.PI/2);
-  const q1=qa.clone().multiply(q0);
-  b.d=turn(b.d,b.axis);
-  tweens.push({t:0,dur:.28,step:k=>THREE.Quaternion.slerp(q0,q1,b.mesh.quaternion,ease(k)),end:()=>{b.mesh.quaternion.copy(q1);b.busy=false}});
+  // a dot on a linked pair turns the whole pair: both cubes roll a quarter turn about the line through them
+  const unit=b.pairDot&&b.group?unitOf(b):[b];if(unit.some(u=>u!==b&&u.busy))return;
+  unit.forEach(endWobble);saveUndo();click();
+  const qa=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(...b.axis),Math.PI/2),ax=b.axis;
+  unit.forEach(u=>{u.busy=true;const q0=u.mesh.quaternion.clone(),q1=qa.clone().multiply(q0);u.d=turn(u.d,ax);
+    tweens.push({t:0,dur:.28,step:k=>THREE.Quaternion.slerp(q0,q1,u.mesh.quaternion,ease(k)),end:()=>{u.mesh.quaternion.copy(q1);u.busy=false}})});
 }
 const CHEERS=['Smooth moves.','The cubes never stood a chance.','Tidy. Very tidy.','Somebody’s been practicing.',
   'Not a block left standing.','Spatial genius, clearly.','Okay, show-off.','That one fought back. You won.',
