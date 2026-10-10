@@ -1547,15 +1547,15 @@ musicbox(){const bus=dest(.65,.4);
     if(beat===0){const tones=ch.map(c=>c%12);let best=idx;for(let d=0;d<4;d++){for(const s of[d,-d]){const p=((pitch(idx+s)%12)+12)%12;if(tones.includes(p)){best=idx+s;d=9;break}}}idx=Math.max(3,Math.min(10,best))}
     const m=pitch(idx);note(bus,'sine',m,t,2.2,.05,.004);note(bus,'sine',m+12,t,.8,.011,.004)}})},
   kalimba(){const bus=dest(.5,.45);
- // lo-fi: dark tone and slow pitch wobble, with only a very faint warm tape bed
+ // lo-fi: dark tone and slow pitch wobble, with a subdued dusty bed
  const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1700;lp.Q.value=.4;lp.connect(bus);
  const wob=A.createOscillator();wob.frequency.value=.35;const wg=A.createGain();wg.gain.value=14;wob.frequency.value=.35;wob.connect(wg);wob.start();srcs.push(wob);
- const nb=A.createBuffer(1,A.sampleRate*2,A.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
- // a very faint, warm tape bed (low-passed, no crackle) so the dust stays in the background
- const hs=A.createBufferSource();hs.buffer=nb;hs.loop=true;const hf=A.createBiquadFilter();hf.type='lowpass';hf.frequency.value=2200;const hg=A.createGain();hg.gain.value=.006;hs.connect(hf).connect(hg).connect(out);hs.start();srcs.push(hs);
+ const nb=A.createBuffer(1,A.sampleRate*2,A.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(Math.random()<.0012?.6:.05);
+ // the original dusty bed (hiss with a little vinyl crackle), kept but turned down
+ const hs=A.createBufferSource();hs.buffer=nb;hs.loop=true;const hf=A.createBiquadFilter();hf.type='highpass';hf.frequency.value=1200;const hg=A.createGain();hg.gain.value=.022;hs.connect(hf).connect(hg).connect(out);hs.start();srcs.push(hs);
  const ch=[[57,60,64,67],[53,57,60,64],[48,52,55,60],[55,59,62,67]];
  const nt=(m,t,dur,vol)=>{const o=A.createOscillator();o.type='triangle';o.frequency.value=M(m);wg.connect(o.detune);const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0003,t+dur);o.connect(g).connect(lp);o.start(t);o.stop(t+dur+.1)};
- every(430,n=>{const c=ch[(n/16|0)%4],t=A.currentTime,k=[0,1,2,3,2,1,3,2][n%8],cyc=n%128;
+ every(560,n=>{const c=ch[(n/16|0)%4],t=A.currentTime,k=[0,1,2,3,2,1,3,2][n%8],cyc=n%128;
   if(n%16<15){nt(c[k]+12,t+(Math.random()*.012),1.1,.07);nt(c[k]+24,t,.2,.012)}
   if(n%8==0)nt(c[0]-12,t,2.4,.1);
   if(cyc>=48&&n%8==0){const o=A.createOscillator();o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(42,t+.18);const g=A.createGain();g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(g).connect(out);o.start(t);o.stop(t+.35)}})},
