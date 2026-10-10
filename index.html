@@ -1137,7 +1137,8 @@ if(!TIERS[tier])tier='free';
 const maxLevel=()=>TIERS[tier].max;
 // Developer Mode (Settings): a temporary switch that opens all 50 levels for testing,
 // whatever version is selected. Your real progress isn't changed by it.
-let devMode=false;try{devMode=localStorage.getItem('pa2_dev')==='1'}catch(e){}
+const DEV_ALWAYS_ON=true; // for now, Developer Mode starts on every time the game opens (set to false to go back to the saved choice)
+let devMode=DEV_ALWAYS_ON;if(!DEV_ALWAYS_ON){try{devMode=localStorage.getItem('pa2_dev')==='1'}catch(e){}}
 const topLevel=()=>devMode?49:Math.min(best,maxLevel()-1);       // furthest level you can open right now
 const capCleared=()=>best>=maxLevel();                 // every level in this version is cleared
 const themeOK=t=>{try{if(devMode)return true}catch(e){}return TIERS[tier].themes.includes(t)}; // Developer Mode opens every theme
