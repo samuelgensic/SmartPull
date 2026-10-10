@@ -998,7 +998,7 @@ function materialsFor(b){
   }
   // colored mode: each cube takes its brand color; its dot uses a different one
   // pure black hides all shading, so "black" cubes use a soft charcoal
-  const skin=b.neutral?(!colorMode?PLAIN:b.neutral==='#FFFFFF'?'#34363A':b.neutral) /* Classic: every cube is white, blockers too */:b.fuseColor?(colorMode?(isFused(b)?shade(b.fuseColor,.2):b.fuseColor):PLAIN):(colorMode?(b.cubeColor==='#000000'?'#34363A':b.cubeColor):PLAIN);
+  const skin=b.neutral?(!colorMode?PLAIN:b.neutral==='#FFFFFF'?'#34363A':b.neutral) /* Classic: every cube is white, blockers too */:b.fuseColor?(colorMode?b.fuseColor /* fused cubes keep their exact color, no darker shade */:PLAIN):(colorMode?(b.cubeColor==='#000000'?'#34363A':b.cubeColor):PLAIN);
   // off-white mode: dots always take a vivid brand color (olive, teal or orange)
   let dotC=!colorMode?b.plainDot:b.dotColor===b.cubeColor?b.altDot:b.dotColor;
   if(dotC==='#000000')dotC=INK; // "black" dots use the same soft charcoal as the arrows
@@ -1913,7 +1913,7 @@ function bridgeMat(b){
     if(!bridgeMats[k]){const m=new THREE.MeshBasicMaterial({color:nc});m.userData.neonBridge=new THREE.Color(nc);bridgeMats[k]=m}
     return bridgeMats[k];
   }
-  const col=theme==='brand'?shade(b.fuseColor,.2):PLAIN; // Standard: fused cubes stay off-white
+  const col=theme==='brand'?b.fuseColor:PLAIN; // Standard: fused cubes stay off-white
   // olive cube faces use the shinier material (for Blacklight), so their filler matches it
   return bridgeMats[col]||(bridgeMats[col]=col===OLIVE?new THREE.MeshPhongMaterial({color:col,specular:0x000000,shininess:55}):new THREE.MeshPhongMaterial({color:col,specular:0x000000,shininess:1}));
 }
