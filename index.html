@@ -1,0 +1,2426 @@
+<title>SmartPull · Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@500&family=Manrope:wght@300;400;600;700&display=swap">
+<style>
+/* Layout: one full-screen stage, a slim top bar, a quiet caption at the bottom. */
+:root{
+  --bg:#E7EBE3; --bg2:#DCE2D7; --ink:#25302A; --muted:#66736B;
+  --accent:#3E7C78; --chip:#F4F3EE;
+  --display:"Krona One", "Arial Black", system-ui, sans-serif;
+  --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#191E1C; --bg2:#222926; --ink:#E9ECE6; --muted:#97A39B; --accent:#7FC0B9; --chip:#2A322F; color-scheme:dark }}
+:root[data-theme="dark"]{ --bg:#191E1C; --bg2:#222926; --ink:#E9ECE6; --muted:#97A39B; --accent:#7FC0B9; --chip:#2A322F; color-scheme:dark }
+html,body{height:100%}
+body{background:radial-gradient(120% 90% at 50% 40%, var(--bg) 0%, var(--bg2) 100%); background-color:var(--bg); color:var(--ink); font-family:var(--body); overflow:hidden; -webkit-user-select:none; user-select:none}
+.app{position:relative; height:100%; display:flex; flex-direction:column}
+header{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px 0; position:relative; z-index:2}
+.mark{font-family:var(--display); font-weight:700; font-size:24px; letter-spacing:.06em; line-height:1.1; text-transform:uppercase}
+.mark span{color:var(--accent)}
+/* small caps: a full-height S and P, with the rest of each word in shorter capitals */
+.mark small{font-size:.76em; letter-spacing:.05em}
+.controls{display:flex; align-items:center; gap:6px}
+.lvl{font-family:var(--display); font-variant-numeric:tabular-nums; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; min-width:86px; text-align:center}
+button{font:inherit; color:var(--ink); background:var(--chip); border:0; border-radius:999px; width:38px; height:38px; display:grid; place-items:center; cursor:pointer; box-shadow:0 1px 0 rgba(0,0,0,.06)}
+button:disabled{opacity:.3; cursor:default}
+#sound[aria-pressed="true"] .off,#sound[aria-pressed="false"] .on{display:none}
+#sound[aria-pressed="false"]{opacity:.55}
+
+/* Neon theme: a dark, glow-in-the-dark room. Higher specificity so it wins over the light/dark tokens. */
+html:root.neon{--bg:#000000; --bg2:#000000; --ink:#F4ECFF; --muted:#9A8FB0; --accent:#FF2E97; --chip:#15101E; color-scheme:dark}
+.app{position:relative}
+.panel{position:absolute; z-index:5; top:64px; right:16px; left:auto; max-width:calc(100% - 32px); background:var(--chip); border-radius:16px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.14); display:flex; flex-direction:column; gap:14px}
+.prow{display:flex; flex-direction:column; gap:8px}
+.plab{font-family:var(--display); font-weight:500; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.opts{display:flex; flex-wrap:wrap; gap:6px}
+button.opt{width:auto; height:32px; padding:0 12px; font-size:13px; font-weight:600; background:var(--bg2); box-shadow:none}
+button.opt[aria-pressed="true"]{background:var(--accent); color:var(--chip)}
+.panel{max-height:calc(100% - 80px); overflow-y:auto}
+input.vol{width:100%; min-width:200px; accent-color:var(--accent); height:24px; margin:0}
+/* locked themes and levels */
+.tright{display:flex; align-items:center; gap:8px}
+.price{display:none; font-family:var(--display); font-weight:500; font-size:11px; color:var(--muted)}
+button.topt.locked .price{display:inline}
+button.topt.locked .sw{opacity:.4}
+button.topt.locked > span:first-child{color:var(--muted)}
+button.lv.more{background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted); font-size:14px}
+/* upgrade screen */
+[hidden]{display:none!important}
+.upwrap{position:absolute; inset:0; z-index:8; display:grid; place-items:center; padding-inline:16px; background:rgba(0,0,0,.35)}
+.upsheet{width:min(360px,100%); max-height:calc(100% - 32px); overflow-y:auto; background:var(--chip); color:var(--ink); border-radius:18px; padding:20px; display:flex; flex-direction:column; gap:12px; box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.uptitle{font-family:var(--display); font-weight:700; font-size:18px; text-wrap:balance}
+.upcard{background:var(--bg2); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px}
+.upcard.best{box-shadow:inset 0 0 0 2px var(--accent)}
+.uphead{display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-family:var(--display); font-weight:500; font-size:14px}
+.upprice{font-weight:700; color:var(--accent)}
+.upcard ul{margin:0; padding-left:18px; font-size:14px; line-height:1.5}
+.upnote{font-size:13px; color:var(--muted)}
+/* scorecard: one card per version, each with that version's levels and your stats on them */
+.scsheet{gap:10px} #scCards{display:flex; flex-direction:column; gap:10px}
+.sccard{background:var(--bg2); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; border-left:4px solid var(--sc)}
+.sccard.locked{opacity:.55}
+.schead{display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-family:var(--display); font-weight:500; font-size:14px}
+.schead small{font-family:var(--body); font-size:12px; color:var(--muted); font-weight:600}
+.scbar{height:6px; border-radius:99px; background:var(--chip); overflow:hidden} .scbar i{display:block; height:100%; background:var(--sc); border-radius:99px}
+.scgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px 6px}
+.scgrid div{display:flex; flex-direction:column; gap:1px} .scgrid b{font-family:var(--display); font-size:15px; font-weight:500; font-variant-numeric:tabular-nums}
+.scgrid span{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.scnote{font-size:12px; color:var(--muted)} .scclose{align-self:center; padding:0 22px}
+.upsmall{margin:0; font-size:12px; line-height:1.5; color:var(--muted)}
+button.upclose{align-self:center}
+/* the level name doubles as a button that opens the level picker */
+button.lvl{width:auto; height:38px; padding:0 10px; background:transparent; box-shadow:none; color:var(--ink); font-family:var(--display); font-weight:700; font-size:12px}
+button.lvl::after{content:""; display:inline-block; width:5px; height:5px; margin-left:7px; border-right:1.6px solid currentColor; border-bottom:1.6px solid currentColor; transform:translateY(-2px) rotate(45deg); opacity:.55}
+button.lvl[aria-expanded="true"]{background:var(--chip)}
+.panel.levels{left:16px; right:16px; margin-inline:auto; width:min(280px,calc(100% - 32px))}
+button.lvl{touch-action:none; overflow:hidden; white-space:nowrap; display:inline-flex; flex-direction:row; align-items:center; justify-content:center}
+.lvtxt{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.1; transition:transform .12s ease-out}
+/* the level's group (Pull, Twist, Link...) in small letters under the number */
+.lvsub{font-family:var(--body); font-size:9.5px; font-weight:600; letter-spacing:.12em; color:#007493; margin-top:1px}
+/* the level-type subtitle takes a color from the theme: blue in Standard, orange in SmartPull, pink in Neon */
+html.brandtheme .lvsub{color:#E06A22}
+html.neon .lvsub{color:#FF2E97}
+@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) .lvsub{color:#4FB6D2} html.brandtheme .lvsub{color:#F59A5E}}
+/* picker wheel: five rows tall, the middle row is the pick */
+.wheelbox{position:relative; height:220px}
+.wband{position:absolute; left:0; right:0; top:88px; height:44px; border-radius:10px; background:var(--bg2); pointer-events:none}
+.wheel{position:relative; height:100%; overflow-y:auto; scroll-snap-type:y mandatory; overscroll-behavior:contain; scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent); mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+.wheel::-webkit-scrollbar{display:none}
+.wpad{height:88px}
+.wrow{height:44px; scroll-snap-align:center; display:flex; align-items:center; justify-content:space-between; padding-inline:16px; cursor:pointer;
+  font-family:var(--display); font-weight:500; font-size:15px; font-variant-numeric:tabular-nums; transform-origin:center}
+.wrow em{font-style:normal; font-size:12px; color:var(--muted)}
+/* the level's group (Pull, Twist...) under each level in the wheel: small and thin */
+.wlv{display:flex; flex-direction:column; line-height:1.1}
+.wlv small{font-family:var(--body); font-size:10px; font-weight:300; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-top:2px}
+.wrow.on{color:var(--accent)}
+.wrow.lock span{color:var(--muted)}
+button.wgo{align-self:stretch; height:40px; background:var(--accent); color:var(--chip)}
+.lvgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:6px}
+button.lv{width:100%; height:40px; border-radius:10px; background:var(--bg2); box-shadow:none; font-family:var(--display); font-weight:500; font-size:13px; font-variant-numeric:tabular-nums}
+button.lv.open{background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted)} /* unlocked, not yet cleared */
+button.lv[aria-current="true"]{background:var(--accent); color:var(--chip); box-shadow:none}
+.topts{display:flex; flex-direction:column; gap:6px; min-width:min(250px,100%)}
+button.topt{width:100%; height:auto; padding:9px 12px; border-radius:12px; display:flex; align-items:center; justify-content:space-between; gap:14px; background:var(--bg2); box-shadow:none; font-size:13px; font-weight:600; text-align:left}
+button.topt[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.sw{display:flex; gap:3px; padding:4px; border-radius:7px; flex:none}
+.sw i{width:11px; height:11px; border-radius:3px; display:block}
+#paint[aria-expanded="true"],#tune[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
+header{flex-wrap:wrap; row-gap:8px}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
+#stage{flex:1; min-height:0; position:relative; touch-action:none; cursor:grab}
+#stage:active{cursor:grabbing}
+canvas{display:block; width:100%; height:100%}
+/* the credit sits under the SmartPull wordmark, top left */
+.brandbox{display:flex; flex-direction:column; align-items:flex-start; gap:2px}
+.tapc{color:#F17B31} /* SmartPull orange */
+/* stats: bottom left of the play area, one per line, left-aligned; the clock comes last and quietest */
+.left{position:absolute; left:16px; bottom:14px; z-index:3; pointer-events:none; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; line-height:1.15; font-family:var(--display); font-weight:500; font-variant-numeric:tabular-nums; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+.left .clock{opacity:.55; font-weight:300}
+/* the level timer: bottom right, quiet gray, with its own small show/hide button beside it
+   (in Neon it sits just above the Blacklight switch) */
+.timebox{position:absolute; right:16px; bottom:12px; z-index:4; display:flex; align-items:center; gap:8px}
+html.neon .timebox{bottom:54px}
+.timebox .clock{font-family:var(--display); font-weight:300; font-size:12px; letter-spacing:.08em; font-variant-numeric:tabular-nums; color:var(--muted); opacity:.7}
+/* full screen (web only; iPhone and iPad don't get it): a small button in the top-right corner of the play area */
+button.fsbtn{position:absolute; top:8px; right:16px; z-index:4; width:32px; height:32px; background:var(--chip); box-shadow:none; color:var(--muted)}
+button.fsbtn svg{width:16px; height:16px} button.fsbtn .fs-out{display:none}
+button.fsbtn[aria-pressed="true"] .fs-in{display:none} button.fsbtn[aria-pressed="true"] .fs-out{display:inline}
+/* iPhone and iPad in landscape: "immersive" hides the header so the puzzle fills the whole screen (and a TV, when mirrored) */
+html.immersive,html.immersive body{height:100vh; height:100dvh}
+html.immersive .app>header{display:none}
+button.ttoggle{width:30px; height:30px; background:var(--chip); box-shadow:none; color:var(--muted); opacity:.6}
+button.ttoggle svg{width:15px; height:15px}
+button.ttoggle[aria-pressed="true"]{opacity:1; color:var(--ink)}
+@media (max-width:430px){.left{font-size:11px; letter-spacing:.08em}}
+/* small phones: tighter top bar so all the buttons fit beside the wider title font */
+@media (max-width:400px){.controls{gap:4px} .controls button:not(.lvl){width:34px; height:34px} button.lvl{padding:0 4px; min-width:0} .lvl{font-size:11px; letter-spacing:.02em}}
+.credit{font-family:"Quicksand", system-ui, sans-serif; font-weight:500; font-size:11px; white-space:nowrap; letter-spacing:0; color:var(--muted); opacity:.85} /* small, thin and tight under the wordmark */
+.hint{font-size:14px; color:var(--muted); transition:opacity .4s; max-width:36ch}
+.done{position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; opacity:0; transition:opacity .5s}
+.blacklight{position:absolute; right:16px; bottom:12px; z-index:4; width:auto; height:34px; padding:0 14px 0 10px; border-radius:999px; display:flex; align-items:center; gap:8px;
+  font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.04em; background:var(--chip); color:var(--muted); box-shadow:none}
+.blacklight .bulb{width:12px; height:12px; border-radius:50%; background:#3A2F4A}
+.blacklight[aria-pressed="true"]{color:#E9D6FF; box-shadow:0 0 0 1.5px #B026FF, 0 0 14px rgba(176,38,255,.55)}
+.blacklight[aria-pressed="true"] .bulb{background:#B026FF; box-shadow:0 0 10px #B026FF}
+.undo{position:absolute; left:50%; transform:translateX(-50%); bottom:12px; z-index:4; width:auto; height:34px; padding:0 14px; border-radius:999px;
+  font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.04em; background:var(--chip); color:var(--ink); box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.undo:disabled{opacity:.35}
+.stuck{position:absolute; left:50%; bottom:56px; transform:translateX(-50%); z-index:3; padding:8px 14px; border-radius:999px; background:var(--chip); color:var(--ink);
+  font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.04em; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.done.show{opacity:1; pointer-events:auto; cursor:pointer}
+.done-in{display:flex; flex-direction:column; align-items:center; gap:14px}
+.done .taps{display:block; text-align:center; font-family:var(--display); font-weight:500; font-size:13px; letter-spacing:.06em; color:var(--ink); font-variant-numeric:tabular-nums; margin-top:-4px; white-space:pre}
+.done .taps.best{color:var(--accent)}
+.done .movesline{margin-top:7px}
+.done .taps.time{margin-top:-8px; font-weight:300; color:var(--muted)}
+.done .taps.time.best{color:var(--accent)}
+#devLevel{width:80px; height:32px; border:0; border-radius:999px; padding:0 12px; background:var(--bg2); color:var(--ink); font:600 13px var(--body); font-variant-numeric:tabular-nums}
+#devLevel:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.statrow{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+.stat{font-family:var(--display); font-weight:500; font-size:22px; font-variant-numeric:tabular-nums; letter-spacing:.02em}
+.done small{opacity:0; transition:opacity .6s; font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; animation:breathe 2.4s ease-in-out infinite;
+  /* shaped like a button (the whole message is tappable, this just makes it obvious) */
+  display:inline-block; margin-top:6px; padding:11px 22px; border-radius:999px; background:var(--accent); color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.15); max-width:calc(100vw - 48px); text-align:center}
+html.brandtheme .done small{background:#F17B31}
+html.neon .done small{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 14px rgba(255,46,151,.45)}
+@keyframes breathe{50%{opacity:.4}}
+.done:not(.ready) small{animation:none; opacity:0}
+.done.ready small{opacity:1}
+@media (prefers-reduced-motion: reduce){.done small{animation:none}}
+.done b{max-width:18ch; padding-inline:16px; text-align:center; text-wrap:balance; line-height:1.2; font-family:var(--display); font-weight:500; font-size:clamp(22px,5vw,34px); letter-spacing:.04em; color:var(--accent)}
+@media (prefers-reduced-motion: reduce){.hint,.done{transition:none}}
+</style>
+
+<div class="app">
+  <header>
+    <div class="brandbox"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div>
+    <div class="controls">
+      <button id="prev" aria-label="Previous level"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe up or down, or tap for the wheel"><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
+      <button id="next" aria-label="Next level"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button id="sound" aria-label="Music" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
+      <button id="tune" aria-label="Settings" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="14" r="2.2" style="fill:var(--chip)"/><circle cx="12" cy="8" r="2.2" style="fill:var(--chip)"/><circle cx="19" cy="15" r="2.2" style="fill:var(--chip)"/></svg></button>
+      <button id="paint" aria-label="Themes" aria-expanded="false"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="#C0B50A" stroke="none"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="#007493" stroke="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="#F17B31" stroke="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="#ABABA8" stroke="none"/></svg></button>
+      <button id="reset" aria-label="Restart level"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button>
+    </div>
+  </header>
+  <div class="panel" id="themes" hidden>
+    <div class="prow"><div class="plab">Themes</div><div class="topts" id="optTheme"></div></div>
+  </div>
+  <div class="panel" id="panel" hidden>
+    <div class="prow"><div class="plab">SFX</div><div class="opts" id="optSfx"></div></div>
+    <div class="prow"><label class="plab" for="sfxVol">SFX volume</label><input class="vol" id="sfxVol" type="range" min="0" max="100" step="1" value="70"></div>
+    <div class="prow"><label class="plab" for="musicVol">Music volume</label><input class="vol" id="musicVol" type="range" min="0" max="100" step="1" value="70"></div>
+    <div class="prow" id="tierRow"><div class="plab">Version (preview)</div><div class="opts" id="optTier"></div></div>
+    <div class="prow"><div class="plab">Developer Mode</div><div class="opts" id="optDev"></div></div>
+    <div class="prow" id="devFloor" hidden><div class="plab">Gravity floor</div><div class="opts" id="optFloor"></div></div>
+    <form class="prow" id="devJump" hidden><label class="plab" for="devLevel">Preview level (1–50)</label>
+      <div class="opts"><input id="devLevel" type="number" min="1" max="50" step="1" inputmode="numeric" value="1"><button class="opt" type="submit">Go</button></div></form>
+    <div class="prow"><div class="plab">Pulls</div><div class="stat" id="totalPulls">0</div></div>
+    <div class="prow"><div class="plab">Taps</div><div class="stat" id="totalTaps">0</div></div>
+    <div class="prow"><div class="plab">Bumps</div><div class="stat" id="totalOops">0</div></div>
+    <div class="prow"><div class="plab">Time</div>
+      <div class="statrow"><div class="stat" id="totalTime">0m 0s</div></div></div>
+    <div class="prow"><div class="plab">Scorecard</div><div class="opts"><button class="opt" id="scoreOpen" type="button">View scorecard</button></div></div>
+  </div>
+  <div class="upwrap" id="scorecard" hidden>
+    <div class="upsheet scsheet" role="dialog" aria-labelledby="scTitle">
+      <div class="uptitle" id="scTitle">Your scorecard</div>
+      <div id="scCards"></div>
+      <button class="opt scclose" id="scClose" type="button">Done</button>
+    </div>
+  </div>
+  <div class="upwrap" id="upgrade" hidden>
+    <div class="upsheet" role="dialog" aria-labelledby="upTitle">
+      <div class="uptitle" id="upTitle">More levels. More looks.</div>
+      <div class="upcard" id="up-plus">
+        <div class="uphead"><span>SmartPull Pack</span><span class="upprice">$0.99</span></div>
+        <ul><li>Levels 1–25</li><li>SmartPull color theme</li></ul>
+      </div>
+      <div class="upcard best">
+        <div class="uphead"><span>Complete</span><span class="upprice">$1.99</span></div>
+        <ul><li>All 50 levels</li><li>All three themes, including Neon</li></ul>
+        <div class="upnote" id="up-full-note" hidden>Everything you have now, plus levels 26–50 and the Neon theme.</div>
+      </div>
+      <p class="upsmall">Purchases happen through the App Store in the iPhone and iPad app. In this preview, try each version from Settings → Version.</p>
+      <button class="opt upclose" id="upClose" type="button">Not now</button>
+    </div>
+  </div>
+  <div class="panel levels" id="levels" hidden>
+    <div class="wheelbox"><div class="wband"></div><div class="wheel" id="wheel"></div></div>
+    <button class="opt wgo" id="wheelGo" type="button">Select</button>
+  </div>
+  <div id="stage"><div class="left" id="left">1 block</div><button class="fsbtn" id="fsBtn" type="button" hidden aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button><div class="timebox" id="timebox"><span class="clock" id="clock" hidden>0:00</span><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button></div><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Blacklight"><span class="bulb"></span>Blacklight</button><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">↶ Undo</button><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const DIRS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+const K=(x,y,z)=>x+','+y+','+z;
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const crossV=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const neg=a=>a.map(v=>-v||0);
+const dirIdx=d=>DIRS.findIndex(e=>e[0]===d[0]&&e[1]===d[1]&&e[2]===d[2]);
+// rotate d by +90deg about axis a (both unit axis vectors)
+const turn=(d,a)=>crossV(a,d);
+
+/* ---------- shapes (grow in size) ---------- */
+function box(a,b,c){const o=[];for(let x=0;x<a;x++)for(let y=0;y<b;y++)for(let z=0;z<c;z++)o.push([x,y,z]);return o}
+function filter(cells,f){return cells.filter(f)}
+function pyramid(n){const o=[];let l=0;for(let s=n;s>0;s-=2,l++)for(let x=0;x<s;x++)for(let z=0;z<s;z++)o.push([x+l,l,z+l]);return o}
+function stairs(n,d){const o=[];for(let x=0;x<n;x++)for(let y=0;y<=x;y++)for(let z=0;z<d;z++)o.push([x,y,z]);return o}
+function cross(r){const o=[];for(let i=-r;i<=r;i++){o.push([i,0,0]);if(i){o.push([0,i,0]);o.push([0,0,i])}}return o}
+function hollowCube(n){return filter(box(n,n,n),([x,y,z])=>[x,y,z].filter(v=>v===0||v===n-1).length>=2)}
+// ordered by block count so each level is at least as big as the last
+const LEVELS=[
+  ()=>[[0,0,0]],          ()=>box(2,1,1),        ()=>box(3,1,1),
+  ()=>box(2,2,1),         ()=>box(3,2,1),        ()=>stairs(3,1),
+  ()=>cross(1),           ()=>box(2,2,2),        ()=>box(3,3,1),
+  ()=>pyramid(3),         ()=>box(4,3,1),        ()=>box(3,2,2),
+  ()=>stairs(3,2),        ()=>cross(2),          ()=>box(4,2,2),
+  ()=>box(3,3,2),         ()=>filter(box(3,3,3),([x,y,z])=>!(x!==1&&y!==1&&z!==1)),
+  ()=>stairs(4,2),        ()=>box(4,3,2),        ()=>box(3,3,3),
+  ()=>stairs(4,3),        ()=>hollowCube(4),     ()=>box(4,4,2),
+  ()=>pyramid(5),         ()=>box(4,3,3),        ()=>hollowCube(5),
+  ()=>box(4,4,3),         ()=>box(4,4,4),
+];
+/* each level's group, shown under "Level #": [last level of the group, name] */
+const GROUPS=[[3,'Pull'],[7,'Twist'],[15,'Stack'],[20,'Link'],[30,'Drop'],[35,'Lock'],[45,'Mix'],[50,'Fuse']];
+const groupOf=i=>(GROUPS.find(g=>i+1<=g[0])||GROUPS[GROUPS.length-1])[1];
+function lvLabel(i){const b=document.getElementById('lvl');if(!b)return;
+  b.querySelector('.lvnum').textContent='Level '+(i+1);b.querySelector('.lvsub').textContent=groupOf(i)}
+const ROTATOR_START=3; // first level with dot blocks (level 4)
+const DOT_COLORS=['#C0B50A','#000000','#ABABA8','#007493','#F17B31'];
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shapeFor(i){
+  if(i>=NEW_FROM)return PLAN[Math.min(i-NEW_FROM,PLAN.length-1)][0]();
+  if(i<LEVELS.length) return LEVELS[i]();
+  // endless: boxes keep growing, then stay at the largest size
+  const k=i-LEVELS.length;
+  return box(4+Math.min(2,Math.floor(k/3)),4+Math.min(1,Math.floor(k/6)),4);
+}
+
+/* ---------- puzzle generation ---------- */
+function bounds(cells){const mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(const c of cells)for(let i=0;i<3;i++){mn[i]=Math.min(mn[i],c[i]);mx[i]=Math.max(mx[i],c[i])}return{mn,mx}}
+function firstHit(c,d,occ,span){for(let i=1;i<=span;i++){if(occ.has(K(c[0]+d[0]*i,c[1]+d[1]*i,c[2]+d[2]*i)))return i}return 0}
+// random arrows, then repair stuck blocks until a full removal order exists.
+// A block can leave only if its path is clear AND one of its side faces is uncovered
+// (that is where its arrow will go, since arrows must be tapped).
+function solvableDirs(cells,r,span){
+  const dirs=cells.map(()=>Math.floor(r()*6)),ord=cells.map(()=>-1);let n=0;
+  const occ=new Set(cells.map(c=>K(...c)));const left=new Set(cells.map((_,i)=>i));
+  const canGo=(i,d)=>{const c=cells[i],D=DIRS[d];return !firstHit(c,D,occ,span)&&DIRS.some(f=>dot(f,D)===0&&!occ.has(K(c[0]+f[0],c[1]+f[1],c[2]+f[2])))};
+  for(let g=0;g<5000&&left.size;g++){
+    let moved=true;
+    while(moved){moved=false;for(const i of [...left])if(canGo(i,dirs[i])){left.delete(i);occ.delete(K(...cells[i]));ord[i]=n++;moved=true}}
+    if(!left.size)break;
+    const cand=[];for(const i of left){const v=[];for(let d=0;d<6;d++)if(canGo(i,d))v.push(d);if(v.length)cand.push([i,v])}
+    const [i,v]=cand[Math.floor(r()*cand.length)];dirs[i]=v[Math.floor(r()*v.length)];
+  }
+  return {dirs,ord};
+}
+// difficulty: how many "waves" of removal are needed, and how many blocks start stuck
+function difficulty(cells,dirs,span){
+  const occ=new Set(cells.map(c=>K(...c)));let left=cells.map((_,i)=>i),waves=0,stuck0=0;
+  while(left.length){
+    const free=left.filter(i=>!firstHit(cells[i],DIRS[dirs[i]],occ,span));
+    if(!waves)stuck0=left.length-free.length;
+    if(!free.length)return 1e9;
+    free.forEach(i=>occ.delete(K(...cells[i])));left=left.filter(i=>!free.includes(i));waves++;
+  }
+  return waves*3+stuck0/cells.length*4;
+}
+function buildLevel(L){
+  if(L>=NEW_FROM)return buildLevelNew(L);
+  const cells=shapeFor(L),n=cells.length;
+  const {mn,mx}=bounds(cells);const ext=Math.max(...[0,1,2].map(i=>mx[i]-mn[i]+1));const span=ext+2;
+  // many candidates; later levels take a harder one
+  const cands=[];for(let c=0;c<40;c++){const r=rng(L*100003+c*977+13);const {dirs,ord}=solvableDirs(cells,r,span);cands.push({d:dirs,ord,s:difficulty(cells,dirs,span)})}
+  cands.sort((a,b)=>a.s-b.s);
+  const p=Math.min(1,.15+L*.035);const pick=cands[Math.min(cands.length-1,Math.floor(p*(cands.length-1)))];
+  // an arrow (or dot) face is usable if its neighbor is empty or leaves earlier in the solution
+  const idx=new Map(cells.map((c,i)=>[K(...c),i]));
+  const nb=(i,f)=>idx.get(K(cells[i][0]+f[0],cells[i][1]+f[1],cells[i][2]+f[2]));
+  const ok=(i,f)=>{const j=nb(i,f);return j===undefined||pick.ord[j]<pick.ord[i]};
+  const r=rng(L*7919+1);
+  const openNow=(i,f)=>nb(i,f)===undefined;
+  const choose=(i,faces)=>{const o=faces.filter(f=>openNow(i,f));const pool=o.length?o:faces;return pool[Math.floor(r()*pool.length)]};
+  // dot (rotator) blocks: the solution direction stays reachable by turning
+  let rotN=0;if(L>=ROTATOR_START&&n>1)rotN=Math.max(2,Math.round(n*Math.min(.5,.3+(L-ROTATOR_START)*.02)));
+  const order=cells.map((_,i)=>i).sort(()=>r()-.5);let made=0;
+  const out=cells.map((c,i)=>({c,d:DIRS[pick.d[i]],axis:null,dotFace:null,arrowFace:null}));
+  for(const i of order){
+    const b=out[i],ds=b.d;
+    if(made<rotN){
+      const opts=[];
+      for(const a of DIRS.filter(a=>dot(a,ds)===0)){
+        const dots=[a,neg(a)].filter(f=>ok(i,f)),arrs=[crossV(a,ds),neg(crossV(a,ds))].filter(f=>ok(i,f));
+        if(dots.length&&arrs.length)opts.push([a,dots,arrs]);
+      }
+      if(opts.length){
+        const [a,dots,arrs]=opts[Math.floor(r()*opts.length)];
+        let d=ds,f=choose(i,arrs);const k=1+Math.floor(r()*3);
+        for(let t=0;t<k;t++){d=turn(d,a);f=turn(f,a)}
+        Object.assign(b,{d,axis:a,dotFace:choose(i,dots),arrowFace:f,dotColor:DOT_COLORS[Math.floor(r()*DOT_COLORS.length)]});made++;continue;
+      }
+    }
+    b.arrowFace=choose(i,DIRS.filter(f=>dot(f,ds)===0&&ok(i,f)));
+  }
+  return {span,ext,blocks:out};
+}
+
+/* ---------- levels 21–50: new rules instead of more cubes ----------
+   pairs:   linked cubes that move together (a matching colored frame)
+   gravity: when a cube leaves, the ones above it fall down onto the floor
+   locks:   a padlock cube can't move until the cube with the matching key is gone
+   chains:  a key cube that is itself locked (key A opens lock B, and B holds the key to lock C)
+   Each row: [shape, pairs, gravity, locks, fusion, chains]. New rules get a few easy levels on their own first. */
+const NEW_FROM=15; // levels 1–15 come from LEVELS above (Pull 1–3, Twist 4–7, Stack 8–15); the plan below starts at 16
+const PLAN=[
+  [()=>box(3,3,1),1,0,0],[()=>box(3,2,2),2,0,0],[()=>stairs(3,2),2,0,0],[()=>box(3,3,2),3,0,0],[()=>cross(2),2,0,0],       // 16–20 Link (linked pairs)
+  [()=>box(2,2,2),0,1,0],[()=>box(3,2,1),0,1,0],[()=>stairs(3,1),0,1,0],[()=>box(3,1,2),0,1,0],[()=>pyramid(3),0,1,0],   // 21–25 Drop (gravity, easy start)
+  [()=>box(3,2,2),0,1,0],[()=>stairs(3,2),0,1,0],[()=>box(3,3,2),0,1,0],[()=>box(3,3,2),1,1,0],[()=>pyramid(5),0,1,0],     // 26–30 Drop (gravity, harder)
+  [()=>box(3,3,2),0,0,1],[()=>box(4,3,2),0,0,1],[()=>stairs(4,2),0,0,1],[()=>box(3,3,3),1,0,3,0,1],[()=>box(4,2,3),0,1,2],     // 31–35 locks (31–33: one lock each; 34: first chain)
+  [()=>hollowCube(4),3,0,2],[()=>stairs(4,3),2,1,0],[()=>box(4,3,2),2,1,2],[()=>box(4,4,2),4,0,0],[()=>box(3,3,3),0,1,3,0,1],  // 36–40 mixes
+  [()=>filter(box(3,3,3),([x,y,z])=>!(x!==1&&y!==1&&z!==1)),3,0,3],[()=>pyramid(5),2,1,1],[()=>box(4,3,3),0,0,4,0,2],
+  [()=>box(4,3,3),3,1,0],[()=>box(4,4,2),4,0,2,0,1],                                                                           // 41–45
+  [()=>box(4,3,2),0,1,0,1],[()=>stairs(4,3),0,1,0,1],[()=>box(4,4,2),0,1,0,1],[()=>box(4,3,3),0,1,0,1],[()=>box(4,4,4),0,1,0,1], // 46–50 color fusion (50: the full 4×4×4 cube)
+];
+// pair frames and lock/key symbols use brand colors only (orange, teal, olive, charcoal); Neon swaps in its neons
+const DECO=['#F17B31','#007493','#C0B50A','#34363A'];
+// step a cube through the gravity rule: every column closes its gaps down to the floor (y = 0)
+function settle(pos,occ,gone){
+  const cols=new Map();
+  pos.forEach((p,i)=>{if(gone.has(i))return;const k=p[0]+','+p[2];if(!cols.has(k))cols.set(k,[]);cols.get(k).push(i)});
+  occ.clear();
+  for(const col of cols.values()){col.sort((a,b)=>pos[a][1]-pos[b][1]);col.forEach((i,y)=>{pos[i]=[pos[i][0],y,pos[i][2]];occ.set(K(...pos[i]),i)})}
+}
+function rayBlocked(p,D,occ,skip,span,grav){
+  for(let s=1;s<=span;s++){const x=p[0]+D[0]*s,y=p[1]+D[1]*s,z=p[2]+D[2]*s;if(grav&&y<0)return true;
+    const o=occ.get(K(x,y,z));if(o!==undefined&&!skip.includes(o))return true}
+  return false;
+}
+// play a removal order (each step removes one cube or one linked pair) and report, for every cube,
+// which of its side faces are uncovered at the moment it leaves. null = the order doesn't work.
+function replay(cells,dirs,seq,o){
+  const pos=cells.map(c=>c.slice()),occ=new Map(pos.map((p,i)=>[K(...p),i])),gone=new Set(),uncov=[];
+  for(const unit of seq){
+    for(const i of unit){
+      if(o.locks&&o.locks[i]!==undefined&&!gone.has(o.locks[i]))return null;
+      const D=DIRS[dirs[i]];if(rayBlocked(pos[i],D,occ,unit,o.span,o.gravity))return null;
+      const faces=DIRS.filter(f=>dot(f,D)===0&&!(o.gravity&&f[1]===-1)&&!occ.has(K(pos[i][0]+f[0],pos[i][1]+f[1],pos[i][2]+f[2])));
+      if(!faces.length)return null;uncov[i]=faces;
+    }
+    unit.forEach(i=>{occ.delete(K(...pos[i]));gone.add(i)});
+    if(o.gravity)settle(pos,occ,gone);
+  }
+  return uncov;
+}
+// build a removal order one cube at a time, fixing arrows whenever nothing can move (works with gravity)
+function genOrder(cells,r,span,grav){
+  const allowed=grav?[0,1,2,4,5]:[0,1,2,3,4,5]; // no downward arrows when there's a floor
+  const dirs=cells.map(()=>allowed[Math.floor(r()*allowed.length)]);
+  const pos=cells.map(c=>c.slice()),occ=new Map(pos.map((p,i)=>[K(...p),i])),gone=new Set(),seq=[];
+  const canGo=(i,d)=>{const D=DIRS[d],p=pos[i];if(grav&&D[1]===-1)return false;
+    return !rayBlocked(p,D,occ,[i],span,grav)&&DIRS.some(f=>dot(f,D)===0&&!(grav&&f[1]===-1)&&!occ.has(K(p[0]+f[0],p[1]+f[1],p[2]+f[2])))};
+  for(let g=0;g<20000&&gone.size<cells.length;g++){
+    const left=cells.map((_,i)=>i).filter(i=>!gone.has(i));
+    const R=left.filter(i=>canGo(i,dirs[i]));
+    if(R.length){const i=R[Math.floor(r()*R.length)];seq.push([i]);occ.delete(K(...pos[i]));gone.add(i);if(grav)settle(pos,occ,gone);continue}
+    const cand=[];for(const i of left){const v=allowed.filter(d=>canGo(i,d));if(v.length)cand.push([i,v])}
+    const [i,v]=cand[Math.floor(r()*cand.length)];dirs[i]=v[Math.floor(r()*v.length)];
+  }
+  return {dirs,seq};
+}
+function buildLevelNewSeed(L,salt){
+  const [shape,nPairs,grav,nLocks,,nChains=0]=PLAN[Math.min(L-NEW_FROM,PLAN.length-1)];
+  let cells=shape();
+  if(grav){const mnY=Math.min(...cells.map(c=>c[1]));cells=cells.map(c=>[c[0],c[1]-mnY,c[2]])} // sit on the floor
+  const n=cells.length,{mn,mx}=bounds(cells),ext=Math.max(...[0,1,2].map(i=>mx[i]-mn[i]+1)),span=ext+2;
+  const idx=new Map(cells.map((c,i)=>[K(...c),i]));
+  const nb=(i,f)=>idx.get(K(cells[i][0]+f[0],cells[i][1]+f[1],cells[i][2]+f[2]));
+  // try a handful of layouts; keep one where plenty of cubes start out stuck
+  let best=null;
+  for(let c=0;c<10;c++){const r=rng(L*100003+c*977+29+salt*7777);const g=genOrder(cells,r,span,grav);
+    const occ=new Map(cells.map((p,i)=>[K(...p),i]));
+    g.score=cells.filter((p,i)=>rayBlocked(p,DIRS[g.dirs[i]],occ,[i],span,grav)).length;
+    if(!best||g.score>best.score)best=g}
+  let {dirs,seq}=best;const r=rng(L*7919+3+salt*131);
+  const special=new Set(),pairOf={},locks={},keyOf={},pairColor={},lockColor={},keyColor={};
+  const unitOf=i=>seq.findIndex(u=>u.includes(i));
+  // linked pairs: two touching cubes that share an arrow direction and leave together.
+  // With gravity they're stacked (so they fall together); otherwise side by side.
+  const shuffled=cells.map((_,i)=>i).sort(()=>r()-.5);let pairs=0;
+  for(const i of shuffled){
+    if(pairs>=nPairs)break;if(special.has(i))continue;
+    const D=DIRS[dirs[i]];
+    for(const a of DIRS.slice().sort(()=>r()-.5)){
+      if(dot(a,D)!==0)continue;if(grav&&a[1]===0)continue;
+      const j=nb(i,a);if(j===undefined||special.has(j))continue;
+      const d2=dirs.slice();d2[j]=dirs[i];
+      const s2=seq.filter(u=>!u.includes(j)).map(u=>u.includes(i)?[i,j]:u);
+      if(replay(cells,d2,s2,{span,gravity:grav})){dirs=d2;seq=s2;special.add(i);special.add(j);pairOf[i]=j;pairOf[j]=i;
+        pairColor[i]=pairColor[j]=DECO[pairs%DECO.length];pairs++;break}
+    }
+  }
+  // locks: a cube that can't move until its key cube is gone. Prefer locking cubes that are free at the
+  // start, so the lock actually changes what you can do; their removal moves to just after the key's.
+  const occ0=new Map(cells.map((p,i)=>[K(...p),i]));
+  const freeNow=i=>!rayBlocked(cells[i],DIRS[dirs[i]],occ0,[i],span,grav);
+  const lockCands=cells.map((_,i)=>i).filter(i=>!special.has(i)).sort((a,b)=>(freeNow(b)-freeNow(a))||(r()-.5));
+  let made=0,chained=0,lastX=null;
+  for(const x of lockCands){
+    if(made>=nLocks)break;if(special.has(x))continue;
+    const keys=cells.map((_,i)=>i).filter(k=>k!==x&&!special.has(k)&&!pairOf.hasOwnProperty(k)).sort(()=>r()-.5);
+    // a chain: the key to this lock is the cube locked just before it (so it's a locked key)
+    const chainNow=chained<nChains&&lastX!=null&&!keyOf.hasOwnProperty(lastX);
+    const tryKeys=chainNow?[lastX,...keys.slice(0,8)]:keys.slice(0,8);
+    for(const k of tryKeys){
+      const s2=seq.filter(u=>!u.includes(x));const ki=s2.findIndex(u=>u.includes(k));s2.splice(ki+1,0,[x]);
+      const L2=Object.assign({},locks,{[x]:k});
+      if(replay(cells,dirs,s2,{span,gravity:grav,locks:L2})){seq=s2;Object.assign(locks,L2);special.add(x);special.add(k);
+        keyOf[k]=x;lockColor[x]=keyColor[k]=DECO[(made+2)%DECO.length];if(k===lastX)chained++;lastX=x;made++;break}
+    }
+  }
+  const uncov=replay(cells,dirs,seq,{span,gravity:grav,locks});
+  const has=(i,f)=>uncov[i].some(g=>g[0]===f[0]&&g[1]===f[1]&&g[2]===f[2]);
+  const openNow=(i,f)=>nb(i,f)===undefined;
+  const choose=(i,faces)=>{const o=faces.filter(f=>openNow(i,f));const pool=o.length?o:faces;return pool[Math.floor(r()*pool.length)]};
+  // a few dot (turning) cubes, but fewer than before, since these levels have new rules to think about
+  const rotN=Math.round(n*.15);let rots=0;
+  const out=cells.map((c,i)=>({c,d:DIRS[dirs[i]],axis:null,dotFace:null,arrowFace:null,
+    pair:pairOf.hasOwnProperty(i)?pairOf[i]:null,pairColor:pairColor[i]||null,
+    lock:locks[i]!==undefined?locks[i]:null,lockColor:lockColor[i]||null,keyColor:keyColor[i]||null,isKey:keyOf.hasOwnProperty(i)}));
+  for(const i of cells.map((_,i)=>i).sort(()=>r()-.5)){
+    const b=out[i],ds=b.d;
+    if(rots<rotN&&!special.has(i)){
+      const opts=[];
+      for(const a of DIRS.filter(a=>dot(a,ds)===0)){
+        if(grav&&a[1]===0)continue; // on gravity levels a turning cube only turns flat, so it never points at the floor
+        const dts=[a,neg(a)].filter(f=>has(i,f)),arrs=[crossV(a,ds),neg(crossV(a,ds))].filter(f=>has(i,f));
+        if(dts.length&&arrs.length)opts.push([a,dts,arrs]);
+      }
+      if(opts.length){const [a,dts,arrs]=opts[Math.floor(r()*opts.length)];
+        let d=ds,f=choose(i,arrs);const k=1+Math.floor(r()*3);for(let t=0;t<k;t++){d=turn(d,a);f=turn(f,a)}
+        Object.assign(b,{d,axis:a,dotFace:choose(i,dts),arrowFace:f,dotColor:DOT_COLORS[Math.floor(r()*DOT_COLORS.length)]});rots++;continue}
+    }
+    b.arrowFace=choose(i,uncov[i]);
+  }
+  return {span,ext,blocks:out,gravity:!!grav};
+}
+// With gravity a careless order can leave a dead end. Try a few layouts and keep the one that
+// ordinary play (random sensible moves) finishes most often, so these levels feel fair.
+function buildLevelNew(L){
+  if(PLAN[Math.min(L-NEW_FROM,PLAN.length-1)][4])return buildFusionBest(L);
+  const grav=PLAN[Math.min(L-NEW_FROM,PLAN.length-1)][2];
+  if(!grav)return buildLevelNewSeed(L,0);
+  let best=null,bestRate=-1;
+  for(let salt=0;salt<6;salt++){
+    const lv=buildLevelNewSeed(L,salt);let ok=0;const tries=12;
+    for(let t=0;t<tries;t++)if(playout(lv,rng(L*31+salt*97+t)))ok++;
+    if(ok/tries>bestRate){best=lv;bestRate=ok/tries}
+    if(bestRate>=.6)break;
+  }
+  return best;
+}
+// one quick game of random sensible moves on a level's starting layout; true if it clears
+function playout(lv,rand){
+  const eq3=(a,b)=>a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2];
+  const bl=lv.blocks.map(b=>({...b,c:b.c.slice(),alive:true}));
+  for(let step=0;step<400;step++){
+    const occ=new Map();bl.forEach((b,i)=>{if(b.alive)occ.set(K(...b.c),i)});
+    if(!occ.size)return true;
+    const cov=(b,f)=>(lv.gravity&&f[1]===-1)||occ.has(K(b.c[0]+f[0],b.c[1]+f[1],b.c[2]+f[2]));
+    const moves=[];
+    bl.forEach((b,i)=>{
+      if(!b.alive||(b.lock!=null&&bl[b.lock].alive))return;
+      const unit=b.pair!=null?[i,b.pair]:[i];
+      const ks=b.axis&&!cov(b,b.dotFace)?[0,1,2,3]:[0];
+      for(const k of ks){let d=b.d,f=b.arrowFace;for(let t=0;t<k;t++){d=turn(d,b.axis);f=turn(f,b.axis)}
+        if(cov(b,f))continue;
+        if(unit.every(u=>!rayBlocked(bl[u].c,u===i?d:bl[u].d,occ,unit,lv.span,lv.gravity)))moves.push([i,k,d,f,unit])}
+    });
+    if(!moves.length)return false;
+    const [i,k,d,f,unit]=moves[Math.floor(rand()*moves.length)];bl[i].d=d;bl[i].arrowFace=f;
+    unit.forEach(u=>bl[u].alive=false);
+    if(lv.gravity){const pos=bl.map(b=>b.c),occ2=new Map(),gone=new Set();bl.forEach((b,j)=>{if(!b.alive)gone.add(j)});settle(pos,occ2,gone);bl.forEach((b,j)=>b.c=pos[j])}
+  }
+  return false;
+}
+
+/* ---------- color fusion (levels 46–50) ----------
+   Every cube has one of three fusion colors. When gravity brings two same-colored cubes into
+   contact that weren't touching before, they fuse into one piece. A piece falls as one rigid
+   body, and tapping any arrow on it slides the whole piece that way (if every part has a clear path). */
+const FUSE=['#F17B31','#007493','#C0B50A'];
+// neutral cubes (white and gray) never fuse with anything; they're plain blockers to work around.
+// They use color numbers 3 (white) and 4 (gray), past the three fusion colors.
+const NEUTRAL=3,NEUTRAL_COL=['#FFFFFF','#ABABA8'],NEUTRAL_SHARE=.22;
+// rigid gravity: whole pieces drop one step at a time until nothing can fall
+function settleRigid(pos,alive,gid){
+  const occ=new Map();alive.forEach(i=>occ.set(K(...pos[i]),i));
+  for(let guard=0;guard<400;guard++){
+    const bodies=new Map();alive.forEach(i=>{if(!bodies.has(gid[i]))bodies.set(gid[i],[]);bodies.get(gid[i]).push(i)});
+    let moved=false;
+    for(const m of [...bodies.values()].sort((a,b)=>Math.min(...a.map(i=>pos[i][1]))-Math.min(...b.map(i=>pos[i][1])))){
+      const can=m.every(i=>{if(pos[i][1]<=0)return false;const o=occ.get(K(pos[i][0],pos[i][1]-1,pos[i][2]));return o===undefined||gid[o]===gid[i]});
+      if(!can)continue;
+      m.forEach(i=>occ.delete(K(...pos[i])));m.forEach(i=>{pos[i]=[pos[i][0],pos[i][1]-1,pos[i][2]];occ.set(K(...pos[i]),i)});moved=true;
+    }
+    if(!moved)break;
+  }
+  return occ;
+}
+const touching=(pos,alive)=>{const occ=new Map();alive.forEach(i=>occ.set(K(...pos[i]),i));const s=new Set();
+  alive.forEach(i=>DIRS.forEach(f=>{const j=occ.get(K(pos[i][0]+f[0],pos[i][1]+f[1],pos[i][2]+f[2]));if(j!==undefined&&i<j)s.add(i+','+j)}));return s};
+// after a fall: same-colored cubes that are newly touching join into one piece
+function fuseNew(pos,alive,gid,col,before){
+  const occ=new Map();alive.forEach(i=>occ.set(K(...pos[i]),i));
+  for(const i of alive)for(const f of DIRS){
+    const j=occ.get(K(pos[i][0]+f[0],pos[i][1]+f[1],pos[i][2]+f[2]));
+    if(j===undefined||col[i]>=NEUTRAL||col[i]!==col[j]||gid[i]===gid[j]||before.has(Math.min(i,j)+','+Math.max(i,j)))continue;
+    const old=gid[j];alive.forEach(k=>{if(gid[k]===old)gid[k]=gid[i]});
+  }
+  // a fused piece also takes in every same-colored cube or piece it's touching, so matching colors
+  // that sit together always end up as one piece
+  for(let changed=true;changed;){changed=false;
+    const size=new Map();alive.forEach(k=>size.set(gid[k],(size.get(gid[k])||0)+1));
+    for(const i of alive){if(size.get(gid[i])<2)continue;
+      for(const f of DIRS){const j=occ.get(K(pos[i][0]+f[0],pos[i][1]+f[1],pos[i][2]+f[2]));
+        if(j===undefined||col[i]>=NEUTRAL||col[i]!==col[j]||gid[i]===gid[j])continue;
+        const old=gid[j];alive.forEach(k=>{if(gid[k]===old)gid[k]=gid[i]});changed=true}}
+  }
+}
+// one game of the fusion rules. pick(moves) chooses a move; returns the log if it clears, else null.
+function runFusion(cells,dirs,col,span,pick,repair){
+  const pos=cells.map(c=>c.slice()),gid=cells.map((_,i)=>i);let alive=cells.map((_,i)=>i);const log=[];
+  const canMove=(x,d,occ)=>{const D=DIRS[d];if(D[1]===-1)return false;const body=alive.filter(i=>gid[i]===gid[x]);
+    if(body.some(i=>rayBlocked(pos[i],D,occ,body,span,true)))return false;
+    return DIRS.some(f=>dot(f,D)===0&&f[1]!==-1&&!occ.has(K(pos[x][0]+f[0],pos[x][1]+f[1],pos[x][2]+f[2])))};
+  for(let g=0;g<6000&&alive.length;g++){
+    const occ=new Map();alive.forEach(i=>occ.set(K(...pos[i]),i));
+    const moves=alive.filter(x=>canMove(x,dirs[x],occ));
+    if(!moves.length){
+      if(!repair)return null;
+      const cand=[];alive.forEach(x=>[0,1,2,4,5].forEach(d=>{if(canMove(x,d,occ))cand.push([x,d])}));
+      if(!cand.length)return null;
+      const [x,d]=cand[Math.floor(repair()*cand.length)];dirs[x]=d;continue;
+    }
+    const x=pick(moves),D=DIRS[dirs[x]];
+    log.push([x,DIRS.filter(f=>dot(f,D)===0&&f[1]!==-1&&!occ.has(K(pos[x][0]+f[0],pos[x][1]+f[1],pos[x][2]+f[2])))]);
+    const body=new Set(alive.filter(i=>gid[i]===gid[x]));alive=alive.filter(i=>!body.has(i));
+    const before=touching(pos,alive);settleRigid(pos,alive,gid);fuseNew(pos,alive,gid,col,before);
+  }
+  return alive.length?null:log;
+}
+function buildFusion(L,salt){
+  const [shape]=PLAN[Math.min(L-NEW_FROM,PLAN.length-1)];
+  let cells=shape();const mnY=Math.min(...cells.map(c=>c[1]));cells=cells.map(c=>[c[0],c[1]-mnY,c[2]]);
+  const {mn,mx}=bounds(cells),ext=Math.max(...[0,1,2].map(i=>mx[i]-mn[i]+1)),span=ext+2;
+  const r=rng(L*100003+salt*7777+41);
+  const col=cells.map(()=>r()<NEUTRAL_SHARE?NEUTRAL+Math.floor(r()*2):Math.floor(r()*FUSE.length));
+  const dirs=cells.map(()=>[0,1,2,4,5][Math.floor(r()*5)]);
+  const log=runFusion(cells,dirs,col,span,m=>m[Math.floor(r()*m.length)],r);
+  if(!log)return null;
+  const idx=new Map(cells.map((c,i)=>[K(...c),i]));
+  const openNow=(i,f)=>!idx.has(K(cells[i][0]+f[0],cells[i][1]+f[1],cells[i][2]+f[2]));
+  const choose=(i,faces)=>{const o=faces.filter(f=>openNow(i,f));const pool=o.length?o:faces;return pool[Math.floor(r()*pool.length)]};
+  const tapped=new Map(log);
+  const blocks=cells.map((c,i)=>{const d=DIRS[dirs[i]];
+    const faces=tapped.has(i)&&tapped.get(i).length?tapped.get(i):DIRS.filter(f=>dot(f,d)===0&&f[1]!==-1);
+    return {c,d,axis:null,dotFace:null,arrowFace:choose(i,faces),pair:null,lock:null,isKey:false,fuseColor:col[i]<NEUTRAL?FUSE[col[i]]:null,fuseIdx:col[i],neutral:col[i]<NEUTRAL?null:NEUTRAL_COL[col[i]-NEUTRAL]}});
+  return {span,ext,blocks,gravity:true,fusion:true,dirs,col,cells};
+}
+// keep the layout that ordinary play finishes most often (fusion can trap you, so fairness matters)
+// After a fusion, a cube's arrow may sit on a side that's now buried inside its piece. Move it to another side of
+// the same cube that faces out (still perpendicular to its direction, never the bottom), so it can always be tapped.
+// Used both by the game and by the level checker, so they follow the same rules.
+function rehomeArrow(c,d,face,inPiece,occupied){
+  const k=p=>p.join(',');const at=f=>[c[0]+f[0],c[1]+f[1],c[2]+f[2]];
+  if(!inPiece(at(face)))return face;
+  const sides=DIRS.filter(f=>dot(f,d)===0&&!inPiece(at(f)));
+  const best=sides.find(f=>f[1]!==-1&&!occupied(at(f)))||sides.find(f=>f[1]!==-1)||sides[0];
+  return best||face;
+}
+// one game of a fusion level under the game's exact rules: only visible arrows can be tapped, pieces fall as one,
+// same colors fuse on contact (and fused pieces absorb same-colored neighbors), buried arrows move outward.
+function playFusionExact(lv,rand){
+  const bl=lv.blocks.map((b,i)=>({c:b.c.slice(),d:b.d,a:b.arrowFace,col:b.fuseIdx,g:i,alive:true}));
+  const occMap=()=>{const m=new Map();bl.forEach((b,i)=>{if(b.alive)m.set(K(...b.c),i)});return m};
+  for(let step=0;step<300;step++){
+    const alive=bl.map((b,i)=>i).filter(i=>bl[i].alive);if(!alive.length)return true;
+    const occ=occMap(),moves=[];
+    for(const i of alive){const b=bl[i],af=b.a,nb=[b.c[0]+af[0],b.c[1]+af[1],b.c[2]+af[2]];
+      if(af[1]===-1||occ.has(K(...nb)))continue; // arrow hidden (floor side or covered)
+      const unit=alive.filter(j=>bl[j].g===b.g);
+      if(unit.every(j=>!rayBlocked(bl[j].c,b.d,occ,unit,lv.span,true)))moves.push(unit)}
+    if(!moves.length)return false;
+    const unit=moves[Math.floor(rand()*moves.length)];unit.forEach(j=>bl[j].alive=false);
+    const al=bl.map((b,i)=>i).filter(i=>bl[i].alive),pos=bl.map(b=>b.c),gid=bl.map(b=>b.g),col=bl.map(b=>b.col);
+    const before=touching(pos,al);settleRigid(pos,al,gid);fuseNew(pos,al,gid,col,before);
+    al.forEach(i=>{bl[i].c=pos[i];bl[i].g=gid[i]});
+    const occ2=occMap();
+    for(const i of al){const b=bl[i];const sz=al.filter(j=>bl[j].g===b.g).length;if(sz<2)continue;
+      b.a=rehomeArrow(b.c,b.d,b.a,p=>{const o=occ2.get(K(...p));return o!==undefined&&bl[o].g===b.g},p=>occ2.has(K(...p)))}
+  }
+  return false;
+}
+// the layout each fusion level uses, found by the checker below (random play cleared these 200 of 200 times)
+const FUSION_PICK={45:6,46:14,47:13,48:6,49:155};
+function buildFusionBest(L){
+  if(FUSION_PICK[L]!==undefined){const lv=buildFusion(L,FUSION_PICK[L]);if(lv)return lv} // the layout already chosen for this level
+  let bestSalt=0;
+  let best=null,bestRate=-1;
+  // try many layouts; keep the one that random play (with the game's exact rules) finishes most often
+  for(let salt=0;salt<40;salt++){
+    const lv=buildFusion(L,salt);if(!lv)continue;let ok=0;const tries=24;
+    for(let t=0;t<tries;t++)if(playFusionExact(lv,rng(L*53+salt*101+t)))ok++;
+    if(ok/tries>bestRate){best=lv;bestRate=ok/tries;bestSalt=salt}
+    if(bestRate>=.96)break;
+  }
+  if(best)best.salt=bestSalt;
+  return best;
+}
+
+/* ---------- textures ---------- */
+const FACE_U=[[0,0,-1],[0,0,1],[1,0,0],[1,0,0],[1,0,0],[-1,0,0]];
+const FACE_V=[[0,1,0],[0,1,0],[0,0,-1],[0,0,1],[0,1,0],[0,1,0]];
+const FACE_N=DIRS;
+const INK='#2C3631', LIGHT_INK='#F5F2EA', PLAIN='#F5F2EA';
+const hexRGB=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const shade=(h,k)=>'#'+hexRGB(h).map(v=>Math.round(v*(1-k)).toString(16).padStart(2,'0')).join('');
+// how much two colors stand apart (WCAG contrast ratio: 1 = identical, 21 = black on white)
+function contrast(a,b){const L=h=>{if(!/^#[0-9a-f]{6}$/i.test(h))return null;const [r,g,bb]=hexRGB(h).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*r+.7152*g+.0722*bb};
+  const x=L(a),y=L(b);if(x===null||y===null)return 21;return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+const isDark=h=>{const [r,g,b]=hexRGB(h);return (.299*r+.587*g+.114*b)/255<.5};
+const matCache={};
+/* A dot is a button pressed into the face. The dent itself is lit by the scene's light (see dentNormals below),
+   so its bright and dark sides stay put as the cube turns. Here we only paint what doesn't depend on the light:
+   the dot's color and a soft dark crease where the button meets the wall of its hole. */
+const DOT_R=44,DENT_R=58,DENT_DEPTH=22; // in face-texture pixels (a face is 256 across)
+function pressedDot(g,color,fillC){
+  // the wall of the hole, a little darker than the face (it's tucked away from the light from every side)
+  g.fillStyle=shade(fillC,isDark(fillC)?.18:.1);g.beginPath();g.arc(0,0,DENT_R-3,0,Math.PI*2);g.fill();
+  g.fillStyle=color;g.beginPath();g.arc(0,0,DOT_R,0,Math.PI*2);g.fill();
+  // the crease all the way around the button's edge
+  const cr=g.createRadialGradient(0,0,DOT_R-9,0,0,DOT_R+4);
+  cr.addColorStop(0,'rgba(0,0,0,0)');cr.addColorStop(.7,'rgba(0,0,0,.22)');cr.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=cr;g.beginPath();g.arc(0,0,DOT_R+4,0,Math.PI*2);g.fill();
+}
+/* The shape of the dent as a normal map: a sloped wall from the face down to the button, and a gently dished
+   button. The 3D lighting uses it to shade the dent, as if it were really carved into the cube. */
+/* Locks and keys are pressed into the face the same way: the symbol's shape, softened at its edges, becomes a
+   shallow dent that the scene's light shades (the keyhole stays at face level, like a little island). */
+const symbolOf=deco=>{const m=/(?:^|;)(lock|unlock|key)\|/.exec(deco||'');return m?m[1]:null};
+const symDents={};
+function symbolDent(type){
+  if(symDents[type])return symDents[type];
+  const s=256,cv=document.createElement('canvas');cv.width=cv.height=s;const g=cv.getContext('2d');
+  g.fillStyle='#000';g.fillRect(0,0,s,s);drawDeco(g,s,type+'|#ffffff','#000000',false);
+  const px=g.getImageData(0,0,s,s).data;let h=new Float32Array(s*s);for(let i=0;i<s*s;i++)h[i]=px[i*4]/255;
+  // soften the edges (a few box blurs) so the walls of the dent slope instead of dropping straight down
+  const blur=(a,r)=>{const o=new Float32Array(s*s),t=new Float32Array(s*s);
+    for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const xx=x+k;if(xx>=0&&xx<s){sum+=a[y*s+xx];n++}}t[y*s+x]=sum/n}
+    for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const yy=y+k;if(yy>=0&&yy<s){sum+=t[yy*s+x];n++}}o[y*s+x]=sum/n}return o};
+  h=blur(blur(h,2),2);
+  const D=SYMBOL_DEPTH,img=g.createImageData(s,s),d=img.data,H=(x,y)=>-D*h[Math.min(s-1,Math.max(0,y))*s+Math.min(s-1,Math.max(0,x))];
+  for(let y=0;y<s;y++)for(let x=0;x<s;x++){
+    const dx=(H(x+1,y)-H(x-1,y))/2,dy=(H(x,y+1)-H(x,y-1))/2;let nx=-dx,ny=dy,nz=1;const L=Math.hypot(nx,ny,nz);nx/=L;ny/=L;nz/=L;
+    const k=(y*s+x)*4;d[k]=(nx*.5+.5)*255;d[k+1]=(ny*.5+.5)*255;d[k+2]=(nz*.5+.5)*255;d[k+3]=255}
+  g.putImageData(img,0,0);return symDents[type]=new THREE.CanvasTexture(cv);
+}
+const SYMBOL_DEPTH=9;
+let dentTex=null;
+function dentNormals(){
+  if(dentTex)return dentTex;
+  const s=256,c=s/2,cv=document.createElement('canvas');cv.width=cv.height=s;const g=cv.getContext('2d');
+  const img=g.createImageData(s,s),d=img.data;
+  const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+  const height=r=>r>=DENT_R?0:r>DOT_R?-DENT_DEPTH*(1-sm((r-DOT_R)/(DENT_R-DOT_R))):-DENT_DEPTH-2.5*(1-(r/DOT_R)*(r/DOT_R));
+  for(let y=0;y<s;y++)for(let x=0;x<s;x++){
+    const H=(px,py)=>height(Math.hypot(px-c,py-c));
+    const dx=(H(x+1,y)-H(x-1,y))/2,dy=(H(x,y+1)-H(x,y-1))/2;
+    // tangent space: x follows the texture's u (right), y its v (up = canvas up), z points out of the face
+    let nx=-dx,ny=dy,nz=1;const L=Math.hypot(nx,ny,nz);nx/=L;ny/=L;nz/=L;
+    const k=(y*s+x)*4;d[k]=(nx*.5+.5)*255;d[k+1]=(ny*.5+.5)*255;d[k+2]=(nz*.5+.5)*255;d[k+3]=255;
+  }
+  g.putImageData(img,0,0);dentTex=new THREE.CanvasTexture(cv);return dentTex;
+}
+function faceTex(fillC,kind,color,deco){
+  // dark cubes get a lighter rim so their edges still read; light cubes get a darker one
+  const lighten=(h,k)=>'#'+hexRGB(h).map(v=>Math.round(v+(255-v)*k).toString(16).padStart(2,'0')).join('');
+  const edgeC=deco&&deco.includes('seamless')?fillC:fillC===PLAIN?'#E6E1D5':isDark(fillC)?lighten(fillC,.07):shade(fillC,.08); // only a faint rim, so a cube reads as one color
+  const s=256,cv=document.createElement('canvas');cv.width=cv.height=s;const g=cv.getContext('2d');
+  g.fillStyle=edgeC;g.fillRect(0,0,s,s);
+  g.fillStyle=fillC;const p=10,rr=34;g.beginPath();g.moveTo(p+rr,p);g.arcTo(s-p,p,s-p,s-p,rr);g.arcTo(s-p,s-p,p,s-p,rr);g.arcTo(p,s-p,p,p,rr);g.arcTo(p,p,s-p,p,rr);g.fill();
+  drawDeco(g,s,deco,fillC,false);
+  g.translate(s/2,s/2);
+  if(kind==='dot')pressedDot(g,color,fillC);
+  else if(kind!=='blank'){
+    g.rotate({right:0,up:-Math.PI/2,left:Math.PI,down:Math.PI/2}[kind]);g.scale(.8,.8);
+    g.strokeStyle=color||(isDark(fillC)?LIGHT_INK:INK);g.lineWidth=22;g.lineCap='round';g.lineJoin='round';
+    // a chunky rounded chevron with softly bowed arms
+    g.lineWidth=28;
+    g.beginPath();g.moveTo(-26,-50);g.quadraticCurveTo(3,-22,30,0);g.quadraticCurveTo(3,22,-26,50);g.stroke();
+  }
+  const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
+}
+/* Olive is reflective: it throws neon-green highlights and glows while the puzzle turns. */
+const OLIVE='#C0B50A', NEON=0x9CFF1E;
+// retro glow-in-the-dark palette: pink, orange, yellow, green, blue, purple
+const NEONS=['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF'];
+const glowMats=[];
+function dotMask(){
+  const s=256,cv=document.createElement('canvas');cv.width=cv.height=s;const g=cv.getContext('2d');
+  g.fillStyle='#000';g.fillRect(0,0,s,s);g.fillStyle='#fff';g.beginPath();g.arc(s/2,s/2,44,0,Math.PI*2);g.fill();
+  return new THREE.CanvasTexture(cv);
+}
+let maskTex=null;
+const neonFillA=halo=>halo?1:.9; // fused Neon pieces: full-strength neon color
+function neonTex(kind,color,halo,deco,fill,edgeC){
+  const s=256,cv=document.createElement('canvas');cv.width=cv.height=s;const g=cv.getContext('2d');
+  g.fillStyle='#000';g.fillRect(0,0,s,s);
+  if(fill){
+    // a fused cube: the face fills with one even glow of its neon (no per-cube outline or gradient),
+    // so the whole fused piece reads as a single brick
+    const [r,gg,b]=hexRGB(fill);g.fillStyle=`rgba(${r},${gg},${b},${neonFillA(halo)})`;g.fillRect(0,0,s,s);
+  }
+  // the outline of the face: faint normally; under Blacklight it glows a soft UV violet
+  const p=12,rr=34;
+  const edge=()=>{g.beginPath();g.moveTo(p+rr,p);g.arcTo(s-p,p,s-p,s-p,rr);g.arcTo(s-p,s-p,p,s-p,rr);g.arcTo(p,s-p,p,p,rr);g.arcTo(p,p,s-p,p,rr);g.closePath();g.stroke()};
+  // white: a bright white edge line with a soft white glow
+  // (on fusion levels an unfused cube's edges take its neon color, so you can see its group from any side)
+  // cube outlines only show with Blacklight on; with it off the cubes vanish into the dark and only the symbols glow
+  if(fill||!halo||(deco&&deco.includes('outline|'))){}
+  else if(edgeC){g.lineWidth=3.5;g.strokeStyle=edgeC;g.shadowColor=edgeC;g.shadowBlur=14;edge();g.shadowBlur=0;edge()}
+  else{g.lineWidth=3;g.strokeStyle='rgba(255,255,255,.85)';g.shadowColor='rgba(255,255,255,.9)';g.shadowBlur=16;edge();g.shadowBlur=5;edge();g.shadowBlur=0}
+  drawDeco(g,s,deco,'#000000',halo);
+  if(kind==='blank')return new THREE.CanvasTexture(cv);
+  g.translate(s/2,s/2);
+  const draw=()=>{
+    if(kind==='dot'){g.fillStyle=color;g.beginPath();g.arc(0,0,44,0,Math.PI*2);g.fill();return}
+    g.save();g.rotate({right:0,up:-Math.PI/2,left:Math.PI,down:Math.PI/2}[kind]);g.scale(.8,.8);
+    g.strokeStyle=color;g.lineWidth=28;g.lineCap='round';g.lineJoin='round';
+    g.beginPath();g.moveTo(-26,-50);g.quadraticCurveTo(3,-22,30,0);g.quadraticCurveTo(3,22,-26,50);g.stroke();g.restore();
+  };
+  // with Blacklight on: a soft neon halo first, then the crisp glyph on top. Off: just the flat color.
+  if(halo&&!fill){g.shadowColor=color;g.shadowBlur=26;draw();g.shadowBlur=12;draw();g.shadowBlur=0} // (fused pieces: crisp, no halo)
+  draw();
+  const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
+}
+function mat(skin,kind,color,deco){
+  const k=skin+kind+(color||'')+(deco||'');
+  if(!matCache[k]){
+    const isNeon=skin.startsWith('neon'),tintEdge=isNeon&&skin[4]==='~',nfill=isNeon&&!tintEdge?skin.slice(4)||null:null,nedge=tintEdge?skin.slice(5):null;
+    const map=isNeon?null:faceTex(skin,kind,color,deco);let m;
+    if(isNeon){
+      // neon theme: a black, unlit face that disappears into the black room; only a faint outline
+      // and the glowing neon chevron or dot show. Brightens a little while you turn the puzzle.
+      const lit=neonTex(kind,color,true,deco,nfill,nedge),flat=neonTex(kind,color,false,deco,nfill,nedge);
+      m=new THREE.MeshBasicMaterial({map:blOn()?lit:flat});m.color.setScalar(nfill?1:.85);
+      m.userData.neonBasic=true;m.userData.fusedNeon=!!nfill;m.userData.lit=lit;m.userData.flat=flat;glowMats.push(m);
+    }else if(skin===OLIVE){
+      // a whole olive cube: glossy, with a neon sheen
+      m=new THREE.MeshPhongMaterial({map,specular:NEON,shininess:55,emissive:NEON,emissiveIntensity:0});
+      m.userData.glowMax=.32;glowMats.push(m);
+    }else if(kind==='dot'&&color===OLIVE){
+      // an olive dot on another cube: only the dot shines and glows
+      maskTex=maskTex||dotMask();
+      m=new THREE.MeshPhongMaterial({map,specular:NEON,specularMap:maskTex,shininess:45,emissive:NEON,emissiveMap:maskTex,emissiveIntensity:.05});
+      m.userData.glowMax=.75;m.userData.glowBase=.05;glowMats.push(m);
+    }else m=new THREE.MeshPhongMaterial({map,specular:0x000000,shininess:1}); // matte; every face of every cube is lit the same way
+    if(kind==='dot'&&!isNeon){m.normalMap=dentNormals();m.normalScale.set(1,1)}
+    else if(kind==='blank'&&!isNeon&&symbolOf(deco)){m.normalMap=symbolDent(symbolOf(deco));m.normalScale.set(1,1)}
+    m.userData.kind=kind;matCache[k]=m;
+  }
+  return matCache[k];
+}
+let glow=0;
+// decorations for the new rules. Frames go on every face of a linked cube; the padlock and key
+// symbols go on its plain sides (the faces without an arrow or dot).
+const NEON_NEUTRAL={'#FFFFFF':'#FFFFFF','#ABABA8':'#39FF14'}; // Neon never shows gray: the gray blockers glow neon green there
+const NEON_OF={'#F17B31':'#FF7A1A','#007493':'#1FB8FF','#C0B50A':'#F4FF3A','#34363A':'#B026FF'};
+// a pale tint of a fusion color, for cubes that haven't fused yet
+const pale=h=>'#'+hexRGB(h).map(v=>Math.round(v+(255-v)*.7).toString(16).padStart(2,'0')).join('');
+const FUSED_BRAND='#34363A'; // SmartPull: charcoal (the brand black) means "fused"
+const isFused=b=>!!(b.fuseColor&&b.group&&b.group.members.filter(m=>m.alive).length>1);
+/* Linked-pair look (preview in Developer Mode): "Frames" = two cubes, each with a colored frame;
+   "One piece" = the pair is shaped as one smooth piece (like fused cubes) with a colored outline around the whole shape. */
+var linkPiece=false;try{linkPiece=localStorage.getItem('pa2_linkpiece')==='1'}catch(e){}
+const linkPieceOn=()=>false; // linked pairs always show as two cubes with frames (the one-piece look was a preview, now retired)
+const isLinkPiece=b=>!!(linkPieceOn()&&!b.fuseColor&&b.group&&b.group.members.filter(m=>m.alive).length>1);
+const isPiece=b=>isFused(b)||isLinkPiece(b);
+function decoFor(b,neon){
+  const c=x=>neon?(NEON_OF[x]||x):x,parts=[];
+  // fusion color: small corner marks on every face (in SmartPull the cube itself is that color, so no marks)
+  // (once fused, the whole cube turns that color instead, so the marks go away)
+  // (in Standard and Neon a fused cube turns its color instead, so the marks go away; in SmartPull a fused
+  //  cube turns charcoal, so it keeps its marks to show which color group it belongs to)
+  // (no corner marks: a cube's fusion color shows as a pale tint of the whole cube instead)
+  // a frame means "these cubes move as one": a linked pair from the start. Fused cubes show it by
+  // their solid color; only in SmartPull (where every cube is already colored) do they also get a frame.
+  if(b.group&&b.group.members.filter(m=>m.alive).length>1&&!b.fuseColor&&!linkPieceOn())parts.push('frame|'+c(b.group.color||b.pairColor));
+  if(b.lockKey&&b.lockKey.alive)parts.push('lock|'+c(b.lockColor));
+  else if(b.unlocking)parts.push('unlock|'+c(b.lockColor)); // just opened: the padlock shows open for a moment
+  // a locked key (part of a chain) shows only its padlock; its key appears once that lock opens,
+  // so a face never carries two symbols (the unlock wobble points you to it)
+  if(b.isKey&&!(b.lockKey&&b.lockKey.alive)&&!b.unlocking)parts.push('key|'+c(b.keyColor||b.lockColor));
+  return parts.join(';');
+}
+// frames and corner marks go on every face; padlocks and keys only on the plain sides
+const faceDeco=dc=>dc.split(';').filter(x=>x.startsWith('frame')||x.startsWith('corner')).join(';');
+function drawDeco(g,s,deco,fillC,glowing){
+  if(!deco)return;
+  if(deco.includes(';')){deco.split(';').forEach(d=>drawDeco(g,s,d,fillC,glowing));return}
+  const [type,col0]=deco.split('|');if(type==='seamless')return;
+  // never draw a symbol in the same color as the cube it sits on
+  const col=fillC&&col0.toLowerCase()===String(fillC).toLowerCase()?(isDark(fillC)?LIGHT_INK:INK):col0;
+  g.save();if(glowing){g.shadowColor=col;g.shadowBlur=14}
+  g.strokeStyle=col;g.fillStyle=col;g.lineCap='round';g.lineJoin='round';
+  if(type==='outline'){
+    // outline the outer edges of a one-piece shape (a linked pair in the "One piece" preview)
+    const mask=deco.split('|')[2]||'1111',m=28,lw=14;g.lineWidth=lw;g.lineCap='round'; // same inset and weight as the linked-pair frame
+    // a line runs right to the face's edge where the shape carries on into the next cube; where two outside
+    // edges meet, the corner curves early (same roundness as the linked-pair frame), well clear of the cube's rounded edge
+    const o=i=>mask[i]==='1',R=24,A=Math.PI;
+    const x0=o(1)?m+(o(2)?R:0):0,x1=o(0)?s-m-(o(2)?R:0):s,x2=o(1)?m+(o(3)?R:0):0,x3=o(0)?s-m-(o(3)?R:0):s; // top / bottom spans
+    const y0=o(2)?m+(o(1)?R:0):0,y1=o(3)?s-m-(o(1)?R:0):s,y2=o(2)?m+(o(0)?R:0):0,y3=o(3)?s-m-(o(0)?R:0):s; // left / right spans
+    const seg=(a,b,c,d)=>{g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.stroke()},arc=(cx,cy,a0)=>{g.beginPath();g.arc(cx,cy,R,a0,a0+A/2);g.stroke()};
+    if(o(2))seg(x0,m,x1,m);if(o(3))seg(x2,s-m,x3,s-m);if(o(1))seg(m,y0,m,y1);if(o(0))seg(s-m,y2,s-m,y3);
+    if(o(2)&&o(1))arc(m+R,m+R,A);if(o(2)&&o(0))arc(s-m-R,m+R,-A/2);if(o(3)&&o(0))arc(s-m-R,s-m-R,0);if(o(3)&&o(1))arc(m+R,s-m-R,A/2);
+  }else if(type==='corner'){
+    // fusion color: a small rounded triangle tucked into each corner
+    const a=40,p=24;[[p,p,1,1],[s-p,p,-1,1],[p,s-p,1,-1],[s-p,s-p,-1,-1]].forEach(([x,y,sx,sy])=>{
+      g.beginPath();g.moveTo(x,y);g.lineTo(x+sx*a,y);g.lineTo(x,y+sy*a);g.closePath();g.fill()});
+  }else if(type==='frame'){
+    // a thick colored frame just inside the edge: this cube is linked to the neighbor with the same frame
+    const p=28,rr=24;g.lineWidth=14;g.beginPath();g.moveTo(p+rr,p);g.arcTo(s-p,p,s-p,s-p,rr);g.arcTo(s-p,s-p,p,s-p,rr);g.arcTo(p,s-p,p,p,rr);g.arcTo(p,p,s-p,p,rr);g.closePath();g.stroke();
+  }else{
+    g.translate(s/2,s/2);g.lineWidth=12;
+    // a symbol that barely stands out from its cube (like olive on gray) gets a thin charcoal outline
+    const outline=null; // (locks and keys are pressed into the face instead of outlined; see symbolDent)
+    const shapes=(ink,extra)=>{
+      g.strokeStyle=ink;g.fillStyle=ink;g.lineWidth=12+extra;
+      if(type==='lock'||type==='unlock'){
+        // padlock: a shackle on top of a rounded body with a keyhole (open: the shackle lifts and swings aside)
+        if(type==='lock'){g.beginPath();g.moveTo(-22,2);g.lineTo(-22,-16);g.arc(0,-16,22,Math.PI,0);g.lineTo(22,2);g.stroke()}
+        else{g.beginPath();g.moveTo(22,2);g.lineTo(22,-30);g.arc(0,-30,22,0,Math.PI,true);g.lineTo(-22,-18);g.stroke()}
+        const x=-38,y=0,w=76,h=56,r=12;g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();
+        if(extra){g.lineWidth=extra;g.stroke()}else g.fill();
+      }else{
+        // key: a round bow, a shaft and two teeth
+        g.beginPath();g.arc(-30,0,18,0,Math.PI*2);g.stroke();
+        g.beginPath();g.moveTo(-12,0);g.lineTo(50,0);g.moveTo(32,0);g.lineTo(32,18);g.moveTo(48,0);g.lineTo(48,22);g.stroke();
+      }
+    };
+    if(outline){const sb=g.shadowBlur;g.shadowBlur=0;shapes(outline,7);g.shadowBlur=sb}
+    shapes(col,0);
+    if(type==='lock'||type==='unlock'){g.shadowBlur=0;
+      // the keyhole gets the same outline around its edge, so it reads clearly too
+      if(outline){g.fillStyle=outline;g.beginPath();g.arc(0,22,11.5,0,Math.PI*2);g.fill();g.beginPath();g.roundRect?g.roundRect(-7,22,14,19.5,3):g.rect(-7,22,14,19.5);g.fill()}
+      g.fillStyle=fillC||'#000';g.beginPath();g.arc(0,22,8,0,Math.PI*2);g.fill();g.fillRect(-3.5,22,7,16)}
+  }
+  g.restore();
+}
+// which edges of face f of a fused cube sit on the outside of the fused shape, as 4 flags:
+// right (+U), left (-U), top (+V), bottom (-V). An edge is inside the shape when the neighbor in that
+// direction is part of the same piece and nothing of the piece sits in front of that neighbor's face.
+function outerEdges(b,f){
+  const n=FACE_N[f],U=FACE_U[f],V=FACE_V[f],inG=(p)=>{const o=occ.get(K(...p));return o&&o.alive&&o.group===b.group};
+  return [U,U.map(x=>-x),V,V.map(x=>-x)].map(e=>{
+    const side=[b.c[0]+e[0],b.c[1]+e[1],b.c[2]+e[2]],front=[side[0]+n[0],side[1]+n[1],side[2]+n[2]];
+    return inG(side)&&!inG(front)?'0':'1'}).join('');
+}
+function materialsFor(b){
+  if(theme==='neon'){
+    // neon theme: invisible cubes; each chevron glows in the cube's neon, each dot in a different neon
+    return FACE_N.map((n,f)=>{
+      const lo=isLinkPiece(b)?'outline|'+(NEON_OF[b.group.color||b.pairColor]||b.group.color||b.pairColor)+'|'+outerEdges(b,f):'';
+      const dc=[decoFor(b,true),lo].filter(Boolean).join(';'),fr=[faceDeco(dc),lo].filter(Boolean).join(';'),nskin=b.neutral?'neon~'+NEON_NEUTRAL[b.neutral]:isFused(b)?'neon'+(NEON_OF[b.fuseColor]||b.fuseColor):b.fuseColor?'neon~'+(NEON_OF[b.fuseColor]||b.fuseColor):'neon';
+      if(b.dotFace&&dot(n,b.dotFace)===1)return mat(nskin,'dot',b.neonDot,fr);
+      if(dot(n,b.arrowFace)===1){const u=dot(FACE_U[f],b.d),v=dot(FACE_V[f],b.d);return mat(nskin,u===1?'right':u===-1?'left':v===1?'up':'down',b.neutral?NEON_NEUTRAL[b.neutral]:b.fuseColor?(isFused(b)?'#0A0712':(NEON_OF[b.fuseColor]||b.neonColor)):b.neonColor,fr)}
+      return mat(nskin,'blank',undefined,dc);
+    });
+  }
+  // colored mode: each cube takes its brand color; its dot uses a different one
+  // pure black hides all shading, so "black" cubes use a soft charcoal
+  const skin=b.neutral?(!colorMode?PLAIN:b.neutral==='#FFFFFF'?'#34363A':b.neutral) /* Classic: every cube is white, blockers too */:b.fuseColor?(colorMode?(isFused(b)?shade(b.fuseColor,.2):b.fuseColor):PLAIN):(colorMode?(b.cubeColor==='#000000'?'#34363A':b.cubeColor):PLAIN);
+  // off-white mode: dots always take a vivid brand color (olive, teal or orange)
+  let dotC=!colorMode?b.plainDot:b.dotColor===b.cubeColor?b.altDot:b.dotColor;
+  if(dotC==='#000000')dotC=INK; // "black" dots use the same soft charcoal as the arrows
+  // SmartPull fused cubes drop the darker rim around each face, so the piece reads as one solid shape
+  const sm=isPiece(b)?'seamless':'',join=(...x)=>x.filter(Boolean).join(';');
+  const dc=join(decoFor(b,false),sm),fr=join(faceDeco(decoFor(b,false)),sm);
+  const outlined=!colorMode&&isFused(b);
+  return FACE_N.map((n,f)=>{
+    // a linked pair shown as one piece: each face outlines only the edges on the outside of the whole shape
+    const ol=isLinkPiece(b)?'outline|'+(b.group.color||b.pairColor)+'|'+outerEdges(b,f):'';
+    if(b.dotFace&&dot(n,b.dotFace)===1)return mat(skin,'dot',dotC,join(fr,ol));
+    if(dot(n,b.arrowFace)===1){const u=dot(FACE_U[f],b.d),v=dot(FACE_V[f],b.d);return mat(skin,u===1?'right':u===-1?'left':v===1?'up':'down',!colorMode&&b.fuseColor?b.fuseColor:undefined,join(fr,ol))}
+    return mat(skin,'blank',undefined,join(dc,ol));
+  });
+}
+
+/* ---------- scene ---------- */
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(35,1,.1,500);
+// soft, even light: mostly from all around, plus a gentle sun for direction, so each cube's sides stay close to its top's color
+// (kept so the brightest face just reaches full brightness, so whites never wash out)
+scene.add(new THREE.HemisphereLight(0xffffff,0xe2e6e3,.84));
+const sun=new THREE.DirectionalLight(0xffffff,.26);sun.position.set(4,9,6);scene.add(sun);
+const fill=new THREE.DirectionalLight(0xffffff,.12);fill.position.set(-6,-2,-4);scene.add(fill);
+const pivot=new THREE.Group();scene.add(pivot);
+const body=new THREE.Group();pivot.add(body); // shifted so the remaining blocks stay centered
+let centerTween=null;
+function recenter(instant){
+  const alive=blocks.filter(b=>b.alive);if(!alive.length)return;
+  const mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+  for(const b of alive){const p=b.home.toArray();for(let i=0;i<3;i++){mn[i]=Math.min(mn[i],p[i]);mx[i]=Math.max(mx[i],p[i])}}
+  const target=new THREE.Vector3(-(mn[0]+mx[0])/2,-(mn[1]+mx[1])/2,-(mn[2]+mx[2])/2);
+  if(instant){body.position.copy(target);return}
+  const from=body.position.clone();
+  if(centerTween)centerTween.dead=true;
+  centerTween={t:0,dur:.6,step:k=>body.position.lerpVectors(from,target,ease(k))};
+  tweens.push(centerTween);
+}
+// rounded cube: grid vertices packed toward the edges, then pushed onto a rounded shell
+function roundedBox(s,r){
+  const N=12,half=s/2,h=half-r,hn=h/half;
+  const remap=t=>{const u=Math.abs(t),v=u<=.5?u/.5*hn:hn+(u-.5)/.5*(1-hn);return Math.sign(t)*v};
+  const g=new THREE.BoxGeometry(s,s,s,N,N,N);
+  const pos=g.attributes.position,nor=g.attributes.normal,uv=g.attributes.uv;
+  const v=new THREE.Vector3(),c=new THREE.Vector3(),n=new THREE.Vector3(),cl=x=>Math.max(-h,Math.min(h,x));
+  for(let i=0;i<pos.count;i++){
+    v.set(remap(pos.getX(i)/half)*half,remap(pos.getY(i)/half)*half,remap(pos.getZ(i)/half)*half);
+    c.set(cl(v.x),cl(v.y),cl(v.z));n.subVectors(v,c).normalize();v.copy(c).addScaledVector(n,r);
+    pos.setXYZ(i,v.x,v.y,v.z);nor.setXYZ(i,n.x,n.y,n.z);
+    uv.setXY(i,(remap(uv.getX(i)*2-1)+1)/2,(remap(uv.getY(i)*2-1)+1)/2);
+  }
+  return g;
+}
+const geo=roundedBox(.985,.11);
+let glowReady=false;
+let gravity=false,fusion=false,floorMesh=null;
+var floorSpec=null,floorGlowMats=[];
+/* Gravity floor looks, per theme. A is the standard look; B and C can be previewed in Developer Mode.
+   Classic    plain gray slab, no outline (the only option)
+   SmartPull  white slab, no border (the only option)
+   Neon       glowing neon grid (the only option) */
+const FLOOR_OPTS={plain:['A'],brand:['A'],neon:['A']}; // one floor per theme // SmartPull has just the one floor: plain white
+var floorPick={plain:'A',brand:'A',neon:'A'};
+try{Object.assign(floorPick,JSON.parse(localStorage.getItem('pa2_floor')||'{}'))}catch(e){}
+function floorStyle(){return 'A'} // every theme has a single floor now (Neon: the glowing grid)
+function floorTex(W,D,draw){
+  const px=96,cv=document.createElement('canvas');cv.width=Math.round(W*px);cv.height=Math.round(D*px);
+  const g=cv.getContext('2d');draw(g,cv.width,cv.height,px);const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
+}
+// each gravity level takes the next color in the theme's list, so back-to-back gravity levels never match
+const GRAVITY_LEVELS=[];for(let L=NEW_FROM;L<50;L++)if(PLAN[Math.min(L-NEW_FROM,PLAN.length-1)][2])GRAVITY_LEVELS.push(L);
+function pickFloor(list){const n=Math.max(0,GRAVITY_LEVELS.indexOf(levelIdx));return list[n%list.length]}
+const tintUp=(h,k)=>'#'+hexRGB(h).map(v=>Math.round(v+(255-v)*k).toString(16).padStart(2,'0')).join('');
+/* the gravity floor: a slab with the same rounded edges and corners as the cubes */
+const FLOOR_R=.11;
+function roundedSlab(w,h,d,r){
+  const half=[w/2,h/2,d/2],N=[Math.max(6,Math.round(w*6)),6,Math.max(6,Math.round(d*6))];
+  const g=new THREE.BoxGeometry(w,h,d,N[0],N[1],N[2]);
+  const pos=g.attributes.position,nor=g.attributes.normal,uv=g.attributes.uv;
+  // pack grid lines toward the edges so the curve is smooth, then push vertices onto a rounded shell
+  const remap=(t,a)=>{const hn=(half[a]-r)/half[a],u=Math.abs(t),v=u<=.5?u/.5*hn:hn+(u-.5)/.5*(1-hn);return Math.sign(t)*v};
+  const v=new THREE.Vector3(),c=new THREE.Vector3(),n=new THREE.Vector3();
+  for(let i=0;i<pos.count;i++){
+    const nx0=nor.getX(i),ny0=nor.getY(i);
+    const p=[pos.getX(i),pos.getY(i),pos.getZ(i)].map((q,a)=>remap(q/half[a],a)*half[a]);
+    v.set(...p);c.set(...p.map((q,a)=>Math.max(-(half[a]-r),Math.min(half[a]-r,q))));
+    n.subVectors(v,c);if(n.lengthSq()<1e-12)n.set(nor.getX(i),nor.getY(i),nor.getZ(i));n.normalize();v.copy(c).addScaledVector(n,r);
+    pos.setXYZ(i,v.x,v.y,v.z);nor.setXYZ(i,n.x,n.y,n.z);
+    // every side's picture is placed by real position, so a pattern (like Neon's grid) lines up from top to sides
+    // to underneath: the same spacing everywhere, and the lines meet across the edges
+    if(Math.abs(ny0)>.5)uv.setXY(i,(v.x+half[0])/w,1-(v.z+half[2])/d);
+    else if(Math.abs(nx0)>.5)uv.setXY(i,(v.z+half[2])/d,1-(v.y+half[1])/h);
+    else uv.setXY(i,(v.x+half[0])/w,1-(v.y+half[1])/h);
+  }
+  return g;
+}
+function buildFloor(){
+  if(floorMesh){body.remove(floorMesh);floorMesh=null}floorGlowMats=[];
+  if(!floorSpec)return;
+  const {w,dz,x,y,z}=floorSpec,st=floorStyle(),L=c=>new THREE.MeshLambertMaterial({color:c});
+  let h=.22,side,top,faces=null; // faces: a material per side, when the sides aren't all the same // thick enough to take the same rounded edges as the cubes (its top stays where it was)
+  // the rim line follows the floor's rounded corners
+  const rim=(g,W,H,col,lw,inset)=>{const px=W/w,rr=Math.max(0,FLOOR_R*px-inset);g.strokeStyle=col;g.lineWidth=lw;
+    const x0=inset,y0=inset,x1=W-inset,y1=H-inset;g.beginPath();g.moveTo(x0+rr,y0);g.arcTo(x1,y0,x1,y1,rr);g.arcTo(x1,y1,x0,y1,rr);g.arcTo(x0,y1,x0,y0,rr);g.arcTo(x0,y0,x1,y0,rr);g.closePath();g.stroke()};
+  if(theme==='plain'){
+    // Classic: always a plain gray slab, no outline
+    const c='#ABABA8';top=side=new THREE.MeshPhongMaterial({color:c,specular:0x000000,shininess:1}); // one material all over, so no edge shows
+  }else if(theme==='brand'){
+    // SmartPull: one floor only, plain white with no border (cubes here are never white)
+    side=L('#E4E4E1');top=new THREE.MeshLambertMaterial({map:floorTex(w,dz,(g,W,H)=>{g.fillStyle='#FFFFFF';g.fillRect(0,0,W,H)})});
+  }else{
+    side=new THREE.MeshBasicMaterial({color:'#0A0810'});
+    if(st==='A'){const gc=pickFloor(['#B026FF','#1FB8FF','#FF2E97','#39FF14','#FF7A1A','#F4FF3A']);
+      // the glowing grid wraps all the way around the slab: top, sides and underneath
+      const grid=(W0,H0)=>new THREE.MeshBasicMaterial({map:floorTex(W0,H0,(g,W,H,px)=>{g.fillStyle='#07050C';g.fillRect(0,0,W,H);
+        g.strokeStyle=gc;g.shadowColor=gc;g.shadowBlur=px*.12;g.lineWidth=Math.max(2,px*.035);
+        for(let i=0;i<=Math.round(W/px*2);i++){const X=i*px/2;g.beginPath();g.moveTo(X,0);g.lineTo(X,H);g.stroke()}
+        for(let j=0;j<=Math.round(H/px*2);j++){const Y=j*px/2;g.beginPath();g.moveTo(0,Y);g.lineTo(W,Y);g.stroke()}
+        g.beginPath();g.moveTo(0,H);g.lineTo(W,H);g.stroke()})});
+      top=grid(w,dz);const bottom=grid(w,dz),sx=grid(dz,h),sz=grid(w,h);
+      faces=[sx,sx,top,bottom,sz,sz];}
+    else{side=new THREE.MeshBasicMaterial({color:'#5A1680'});top=new THREE.MeshBasicMaterial({map:floorTex(w,dz,(g,W,H,px)=>{g.fillStyle='#07050C';g.fillRect(0,0,W,H);
+      g.shadowColor='#B026FF';g.shadowBlur=px*.25;rim(g,W,H,'#B026FF',px*.08,px*.08)})})}
+    floorGlowMats=[top]; // brightens a little while you turn the puzzle, when Blacklight is on
+  }
+  // box faces in order: right, left, top, bottom, front, back
+  floorMesh=new THREE.Mesh(roundedSlab(w,h,dz,Math.min(FLOOR_R,h*.48)),faces||[side,side,top,side,side,side]);
+  if(faces&&theme==='neon')floorGlowMats=[...new Set(faces)];
+  floorMesh.position.set(x,y-(h-.12)/2,z);body.add(floorMesh);
+}
+let blocks=[],occ=new Map(),span=40,tweens=[],levelIdx=0,best=0,camDist=10,clearing=false;
+
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();fitCam()}
+function fitCam(){const k=camera.aspect<1?1/camera.aspect:1;camera.position.set(0,0,camDist*Math.max(1,k*.85));camera.lookAt(0,0,0)}
+
+// best = the furthest level unlocked (cleared levels + the next one). A fresh key, so progress
+// left over from testing mode (when every level was open) doesn't count as cleared.
+try{best=+localStorage.getItem('pa3_unlocked')||0;levelIdx=Math.min(+localStorage.getItem('pa2_lvl')||0,best)}catch(e){}
+/* ---------- versions (App Store pricing) ----------
+   Free:  levels 1–10, Classic theme only
+   $0.99: levels 1–25, Classic + SmartPull themes
+   $1.99: levels 1–50, all three themes
+   Real purchases happen through the App Store in the iOS app; this web preview has a
+   "Version (preview)" switch in settings to try each one. */
+const TIERS={free:{max:10,themes:['plain']},plus:{max:25,themes:['plain','brand']},full:{max:50,themes:['plain','brand','neon']}};
+let tier='free';try{tier=localStorage.getItem('pa2_tier')||'free'}catch(e){}
+if(!TIERS[tier])tier='free';
+const maxLevel=()=>TIERS[tier].max;
+// Developer Mode (Settings): a temporary switch that opens all 50 levels for testing,
+// whatever version is selected. Your real progress isn't changed by it.
+let devMode=false;try{devMode=localStorage.getItem('pa2_dev')==='1'}catch(e){}
+const topLevel=()=>devMode?49:Math.min(best,maxLevel()-1);       // furthest level you can open right now
+const capCleared=()=>best>=maxLevel();                 // every level in this version is cleared
+const themeOK=t=>{try{if(devMode)return true}catch(e){}return TIERS[tier].themes.includes(t)}; // Developer Mode opens every theme
+const THEME_PRICE={brand:'$0.99',neon:'$1.99'};
+levelIdx=Math.min(levelIdx,topLevel());
+// color themes: plain off-white, brand kit, or retro neon
+// [id, name, swatch colors, swatch backdrop]
+const THEMES=[['plain','Classic',['#FFFFFF','#000000'],'transparent'],
+  ['brand','SmartPull',['#F5F2EA','#2C3631','#C0B50A','#007493','#F17B31'],'transparent'],
+  ['neon','Neon',['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF'],'#000000']];
+let theme='plain';
+try{theme=localStorage.getItem('pa2_theme')||(localStorage.getItem('pa2_color')==='1'?'brand':'plain')}catch(e){}
+let colorMode=theme==='brand';
+const paintBtn=document.getElementById('paint');
+function setTheme(t){
+  if(!themeOK(t)){openUpgrade();return} // locked theme: show what unlocks it
+  theme=t;colorMode=t==='brand';
+  document.documentElement.classList.toggle('neon',t==='neon');document.documentElement.classList.toggle('brandtheme',t==='brand');
+  try{localStorage.setItem('pa2_theme',t)}catch(e){}
+  document.querySelectorAll('#optTheme .topt').forEach((btn,i)=>btn.setAttribute('aria-pressed',THEMES[i][0]===t?'true':'false'));
+  for(const b of blocks)b.mesh.material=materialsFor(b);
+  if(typeof buildFloor==='function')buildFloor();
+  if(typeof refreshFloorOpts==='function'&&document.getElementById('optFloor'))refreshFloorOpts();
+  if(typeof updateBridges==='function')updateBridges();
+  const bl=document.getElementById('blBtn');if(bl)bl.hidden=t!=='neon'; // the on-screen Blacklight switch only shows in Neon
+  if(glowReady)applyGlow(); // (skipped during startup, before the Blacklight setting has loaded)
+  if(typeof updateLeft==='function'&&blocks.length)updateLeft(); // re-color the tap count for the new theme
+}
+// the paint button opens the Themes panel
+const themesPanel=document.getElementById('themes');
+paintBtn.onclick=e=>{e.stopPropagation();themesPanel.hidden=!themesPanel.hidden;paintBtn.setAttribute('aria-expanded',String(!themesPanel.hidden));
+  const p=document.getElementById('panel');if(!themesPanel.hidden&&p){p.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}};
+document.addEventListener('pointerdown',e=>{if(!themesPanel.hidden&&!themesPanel.contains(e.target)&&!e.target.closest('#paint')){themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false')}});
+(function(){const box=document.getElementById('optTheme');
+  THEMES.forEach(([id,label,cols,back],i)=>{const btn=document.createElement('button');btn.className='topt';btn.id='optTheme-'+i;
+    const name=document.createElement('span');name.textContent=label;
+    const sw=document.createElement('span');sw.className='sw';sw.style.background=back;
+    cols.forEach(c=>{const s=document.createElement('i');s.style.background=c;
+      if(c==='#FFFFFF'||c==='#F5F2EA')s.style.boxShadow='inset 0 0 0 1px rgba(0,0,0,.18)'; // a hairline so the white chip still shows
+      sw.appendChild(s)});
+    const price=document.createElement('span');price.className='price';price.textContent='🔒 '+(THEME_PRICE[id]||'');
+    const right=document.createElement('span');right.className='tright';right.append(price,sw);
+    btn.append(name,right);btn.onclick=()=>{const was=theme;setTheme(id);if(theme!==was)themeSound(theme)};box.appendChild(btn)})})();
+// locked themes show their price and a lock; unlocked ones just show their colors
+function refreshThemeLocks(){THEMES.forEach(([id],i)=>{const b=document.getElementById('optTheme-'+i);if(b)b.classList.toggle('locked',!themeOK(id))})}
+refreshThemeLocks();
+setTheme(themeOK(theme)?theme:'plain');
+const TESTING=false; // true = every level open plus a "go to level" box; false = clear a level to unlock the next
+
+const HINTS={0:'Tap an arrow to slide its block out. Drag to turn the puzzle.',
+  3:'Each block has one arrow, on any side. Turn the puzzle to find it, then tap it.',
+  [ROTATOR_START]:'Teal blocks have a dot. Tap the dot to turn that block a quarter turn.',
+  30:'A padlock block won\'t move until the block with the matching key is gone.',
+  33:'Some padlock blocks hide a key. Unlock one and its key appears, ready to open the next lock.'};
+
+function load(i){
+  undoStack.length=0;
+  levelIdx=Math.max(0,i);clearing=false;waiting=false;taps=0;pulls=0;bumps=0;resetTimer();
+  try{localStorage.setItem('pa2_lvl',levelIdx)}catch(e){}
+  for(const b of blocks)body.remove(b.mesh);blocks=[];occ.clear();tweens=[];centerTween=null;body.position.set(0,0,0);
+  const lv=buildLevel(levelIdx);
+  span=lv.span;camDist=Math.max(5,lv.ext*2.6+2.5);
+  const {mn,mx}=bounds(lv.blocks.map(b=>b.c));const ctr=[0,1,2].map(i=>(mn[i]+mx[i])/2);
+  const cr=rng(levelIdx*131+5);
+  gravity=!!lv.gravity;fusion=!!lv.fusion;document.getElementById('stuck').hidden=true;
+  // links for the new rules: a linked partner, and the key a locked cube is waiting on
+  lv.blocks.forEach((b,i)=>{b.id=i;b.alive=true;b.group=null;b.partner=b.pair!=null?lv.blocks[b.pair]:null;b.lockKey=b.lock!=null?lv.blocks[b.lock]:null});
+  // a linked pair is a two-cube piece from the start
+  lv.blocks.forEach(b=>{if(b.partner&&!b.group){const g={members:[b,b.partner],color:b.pairColor};b.group=g;b.partner.group=g}});
+  floorSpec=gravity?{w:mx[0]-mn[0]+1.5,dz:mx[2]-mn[2]+1.5,x:(mn[0]+mx[0])/2-ctr[0],y:-ctr[1]-.56,z:(mn[2]+mx[2])/2-ctr[2]}:null;
+  buildFloor(); // gravity levels sit on a floor, so it's clear which way is down
+  lv.blocks.forEach(b=>{
+    // SmartPull colors theme: the five brand colors plus white
+    // (cubes are never white in SmartPull: white is kept for the gravity floor; dots may still be white)
+    const BRAND=[...DOT_COLORS,'#FFFFFF'];
+    b.cubeColor=DOT_COLORS[Math.floor(cr()*DOT_COLORS.length)];
+    const others=BRAND.filter(c=>c!==b.cubeColor);b.altDot=others[Math.floor(cr()*others.length)];
+    b.neonColor=NEONS[Math.floor(cr()*NEONS.length)];
+    const nOthers=NEONS.filter(c=>c!==b.neonColor);b.neonDot=nOthers[Math.floor(cr()*nOthers.length)];
+    const vivid=['#C0B50A','#007493','#F17B31'];b.plainDot=vivid.includes(b.dotColor)?b.dotColor:vivid[Math.floor(cr()*vivid.length)];
+    const m=new THREE.Mesh(geo,materialsFor(b));
+    m.position.set(b.c[0]-ctr[0],b.c[1]-ctr[1],b.c[2]-ctr[2]);
+    Object.assign(b,{mesh:m,home:m.position.clone(),alive:true,busy:false});m.userData.b=b;
+    blocks.push(b);occ.set(K(...b.c),b);body.add(m);
+  });
+  // linked pairs shown as one piece: now that every cube is placed, give them their outline and smooth shape
+  if(linkPieceOn()){blocks.forEach(b=>{if(isLinkPiece(b))b.mesh.material=materialsFor(b)});updateBridges()}
+  recenter(true);startBlocks=blocks.length;
+  pivot.quaternion.setFromEuler(new THREE.Euler(.5,-.65,0));
+  if(resetZoom){
+    // restart: the puzzle grows from small up to full size, with a gentle overshoot that settles
+    // timed to the Reel sound: the puzzle grows steadily while the whir rises (about half a second),
+    // then a gentle overshoot settles as the sound fades out
+    resetZoom=false;
+    pivot.scale.setScalar(.12);tweens.push({t:0,dur:.8,step:k=>{
+      let sc;if(k<.7){const u=k/.7,e=u*u*(3-2*u);sc=.12+(1.04-.12)*e}else{const u=(k-.7)/.3;sc=1.04-.04*(u*u*(3-2*u))}
+      pivot.scale.setScalar(sc)},end:()=>pivot.scale.setScalar(1)});
+  }else{pivot.scale.setScalar(.85);tweens.push({t:0,dur:.45,step:k=>pivot.scale.setScalar(.85+.15*ease(k))})}
+  lvLabel(levelIdx);
+  document.getElementById('prev').disabled=levelIdx===0;
+  refreshNav();
+  document.getElementById('done').classList.remove('show','ready');clearTimeout(readyTimer);
+  updateLeft();resize();
+}
+/* three counts per level:
+   pulls = arrow taps that slide a cube (or piece) out; taps = dot taps that turn a cube;
+   oops  = arrow taps where the cube bumps into another and stays (kept in `bumps`) */
+let taps=0,pulls=0;
+const oopsCount=()=>bumps;
+// the tap count's color follows the theme, and steps to the theme's next color on each level:
+//   Standard: black and white, shown as the page's ink color
+//   SmartPull: orange, teal, olive (gray and black would disappear against the background)
+//   Neon: the six neons
+// color of the "Best" note on the level-complete message: teal in Standard, orange in SmartPull, neon green in Neon
+let cheerColorIdx=0;
+function cheerPalette(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
+  if(theme==='neon')return NEONS;
+  if(theme==='brand')return dark?['#F59A5E','#4FB6D2','#D8CF3A','#C9CBC6']:['#F17B31','#007493','#A39A08','#34363A'];
+  return dark?['#4FB6D2','#F59A5E','#D8CF3A','#E9ECE6']:['#007493','#D9661E','#8C8410','#34363A']}
+// the "Moves" total on the level-complete message has its own theme color (different from the "Best" note)
+function movesColor(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
+  return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#4FB6D2':'#007493'):(dark?'#F59A5E':'#D9661E')}
+const BEST_COLOR={plain:'#007493',brand:'#F17B31',neon:'#39FF14'};
+const TAP_COLORS={plain:['var(--ink)'],brand:['#F17B31','#007493','#C0B50A'],
+  neon:['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF']};
+/* master tap counter: every tap on every level, kept on this device */
+// running totals across every level, kept on this device (pa2_totaltaps held the old all-in count; it carries on as Pulls)
+const TOTALS={pulls:'pa2_totaltaps',taps:'pa2_totaldots',oops:'pa2_totaloops'},totals={pulls:0,taps:0,oops:0};
+try{for(const k in TOTALS)totals[k]=+localStorage.getItem(TOTALS[k])||0}catch(e){}
+function showTotal(){for(const [k,id] of [['pulls','totalPulls'],['taps','totalTaps'],['oops','totalOops']]){const t=document.getElementById(id);if(t)t.textContent=totals[k].toLocaleString()}}
+function addTotal(k){totals[k]++;try{localStorage.setItem(TOTALS[k],totals[k])}catch(e){}showTotal();lvAdd(levelIdx,{pulls:'p',taps:'t',oops:'b'}[k],1)}
+/* per-level stats for the scorecard: pulls, taps, bumps, time played and clears for each level, kept on this device */
+let lvStats={};try{lvStats=JSON.parse(localStorage.getItem('pa2_lvlstats')||'{}')||{}}catch(e){}
+function lvAdd(L,k,n){if(!k||!(n>0))return;const o=lvStats[L]||(lvStats[L]={p:0,t:0,b:0,ms:0,c:0});o[k]=(o[k]||0)+n;
+  try{localStorage.setItem('pa2_lvlstats',JSON.stringify(lvStats))}catch(e){}}
+/* level timer: runs quietly in the background, starting with the first touch on a level.
+   It pauses while the game is in the background and is only shown if the player turns it on. */
+let timeMs=0,timeStart=null,showTimer=false;
+try{showTimer=localStorage.getItem('pa2_showtimer')==='1'}catch(e){}
+let bestTimes={};try{bestTimes=JSON.parse(localStorage.getItem('pa2_besttimes')||'{}')||{}}catch(e){}
+// total play time across every level: banked each time you leave or clear a level
+let totalPlay=0;try{totalPlay=+localStorage.getItem('pa2_totalplay')||0}catch(e){}
+let playLvl=0; // the level the running clock belongs to
+function bankPlay(ms){if(ms>0){totalPlay+=ms;try{localStorage.setItem('pa2_totalplay',Math.round(totalPlay))}catch(e){}lvAdd(playLvl,'ms',Math.round(ms))}}
+function resetTimer(){if(typeof elapsed==='function')bankPlay(elapsed());timeMs=0;timeStart=null;timerPausedBySettings=false}
+function startTimer(){if(timeStart===null&&!clearing&&!document.hidden){timeStart=performance.now();playLvl=levelIdx}}
+function pauseTimer(){if(timeStart!==null){timeMs+=performance.now()-timeStart;timeStart=null}}
+function elapsed(){return timeMs+(timeStart!==null?performance.now()-timeStart:0)}
+const fmtTime=ms=>{const s=Math.max(1,Math.round(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+let timerPausedByHide=false;
+// opening the settings or Themes panel pauses the level timer; closing it picks up where it left off
+let timerPausedBySettings=false;
+const pausingPanels=['panel','themes'].map(id=>document.getElementById(id));
+const pauseObs=new MutationObserver(()=>{
+  const open=pausingPanels.some(p=>!p.hidden);
+  if(open&&timeStart!==null){pauseTimer();timerPausedBySettings=true}
+  else if(!open&&timerPausedBySettings){timerPausedBySettings=false;startTimer()}
+});
+pausingPanels.forEach(p=>pauseObs.observe(p,{attributes:true,attributeFilter:['hidden']}));
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){if(timeStart!==null){pauseTimer();timerPausedByHide=true}}
+  else if(timerPausedByHide){timerPausedByHide=false;startTimer()}
+});
+const plural=(n,w)=>n+' '+w+(n===1?'':'s');
+// stats read label first, then the number: "Pulls 3" (the label stays plural, like a scoreboard)
+const stat=(n,w)=>w+'s '+n;
+/* each stat has its own color from the current theme (lighter versions on a dark screen so they stay readable) */
+const STAT_COLORS={
+  plain:{light:{blocks:'var(--ink)',pulls:'#007493',taps:'#8C8410',bumps:'#D9661E'},dark:{blocks:'var(--ink)',pulls:'#4FB6D2',taps:'#D8CF3A',bumps:'#F59A5E'}},
+  brand:{light:{blocks:'#34363A',pulls:'#F17B31',taps:'#007493',bumps:'#8C8410'},dark:{blocks:'#C9CBC6',pulls:'#F59A5E',taps:'#4FB6D2',bumps:'#D8CF3A'}},
+  neon:{light:{blocks:'#1FB8FF',pulls:'#39FF14',taps:'#F4FF3A',bumps:'#FF2E97'}}};
+function statColors(){const t=STAT_COLORS[theme]||STAT_COLORS.plain;
+  let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
+  return (dark&&t.dark)||t.light}
+function updateLeft(){const n=occ.size;
+  const el=document.getElementById('left');el.textContent='';
+  const line=(txt,cls)=>{const d=document.createElement('div');d.textContent=txt;if(cls)d.className=cls;el.appendChild(d);return d};
+  const sc=statColors(),col=(d,k)=>{d.style.color=sc[k];return d};
+  col(line(stat(n,'Block')),'blocks');
+  col(line(stat(pulls,'Pull'),'tapc'),'pulls');
+  // taps show on levels with dots; bumps show once there's been one
+  if(taps||blocks.some(b=>b.dotFace))col(line(stat(taps,'Tap')),'taps');
+  if(oopsCount())col(line(stat(oopsCount(),'Bump')),'bumps');
+  const c=document.getElementById('clock');if(c){c.hidden=!showTimer;c.textContent=clockText()}
+  const tb=document.getElementById('timerBtn');if(tb)tb.setAttribute('aria-pressed',showTimer?'true':'false')}
+// a quiet running clock, only when the timer is set to Show; it holds at 0:00 until the first touch
+const clockText=()=>{const s=Math.floor(elapsed()/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+setInterval(()=>{const c=document.getElementById('clock');if(c&&!clearing)c.textContent=clockText();showTotalTime()},500);
+// total time in settings: what's banked plus the level you're on right now
+function showTotalTime(){
+  const el=document.getElementById('totalTime');if(!el)return;
+  const s=Math.floor((totalPlay+elapsed())/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);
+  el.textContent=h?h+'h '+m+'m':m+'m '+(s%60)+'s';
+}
+// fewest taps ever used to clear each level, kept on this device
+let bestTaps={};try{bestTaps=JSON.parse(localStorage.getItem('pa2_besttaps')||'{}')||{}}catch(e){}
+const ease=k=>1-Math.pow(1-k,3);
+
+/* ---------- sound (synthesized, very quiet) ---------- */
+let actx=null,noiseBuf=null,soundOn=true,mus=null,musicOn=false,sfxBus=null,musicBus=null;
+try{musicOn=localStorage.getItem('pa2_music')==='1'}catch(e){}
+// volume sliders run 0–100; 70 is the original loudness, so there's room to go up as well as down
+let sfxVol=70,musicVol=70;
+try{const s=localStorage.getItem('pa2_sfxvol'),m=localStorage.getItem('pa2_musvol');if(s!==null)sfxVol=+s;if(m!==null)musicVol=+m}catch(e){}
+const volGain=v=>Math.pow(v/70,2); // squared so the slider feels even to the ear
+function setVol(which,v){
+  if(which==='sfx'){sfxVol=v;if(sfxBus)sfxBus.gain.setTargetAtTime(volGain(v),actx.currentTime,.05)}
+  else{musicVol=v;if(musicBus)musicBus.gain.setTargetAtTime(volGain(v),actx.currentTime,.05)}
+  try{localStorage.setItem(which==='sfx'?'pa2_sfxvol':'pa2_musvol',v)}catch(e){}
+}
+try{soundOn=localStorage.getItem('pa2_sound')!=='0'}catch(e){}
+const soundBtn=document.getElementById('sound');
+/* iPad / iPhone: by default Safari treats game sounds as "ambient" audio, which the silent switch mutes and which
+   doesn't follow the sound out to AirPlay (screen mirroring to a TV or HomePod). Marking it as "playback" audio,
+   like a video or music app, sends it wherever the device's audio is going. Older iOS versions don't have that
+   setting, so there a silent looping <audio> clip, started on the first tap, switches them into playback mode. */
+try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+let keepAlive=null;
+function silentClip(){
+  // a quarter second of silence as a tiny WAV file
+  const n=2000,buf=new ArrayBuffer(44+n),v=new DataView(buf),w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);
+  for(let i=0;i<n;i++)v.setUint8(44+i,128);
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+}
+function unlockPlayback(){
+  if(navigator.audioSession||keepAlive)return; // the setting above already does the job
+  try{keepAlive=new Audio(silentClip());keepAlive.loop=true;keepAlive.setAttribute('playsinline','');keepAlive.play().catch(()=>{keepAlive=null})}catch(e){keepAlive=null}
+}
+/* Web Audio on iPhone/iPad often stays on the phone's own speaker while the screen is mirrored to a TV or HomePod.
+   Media playing through an <audio> element follows the AirPlay route, so the game's sound is sent into one.
+   If that element can't start, the sound goes straight to the device as before. */
+let mediaOut=null;
+function routeOut(){
+  const direct=()=>{sfxBus.connect(actx.destination);musicBus.connect(actx.destination)};
+  try{
+    const md=actx.createMediaStreamDestination();
+    if(!md||!window.Audio)return direct();
+    const el=new Audio();el.setAttribute('playsinline','');el.srcObject=md.stream;
+    sfxBus.connect(md);musicBus.connect(md);
+    el.play().then(()=>{mediaOut=el}).catch(()=>{try{sfxBus.disconnect(md);musicBus.disconnect(md)}catch(e){}direct()});
+  }catch(e){direct()}
+}
+function audio(){
+  unlockPlayback();
+  if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();
+    // when the audio route changes (AirPlay connects, a call comes in), iOS pauses the sound; pick it back up
+    actx.onstatechange=()=>{if(actx.state!=='running'&&!document.hidden)actx.resume().catch(()=>{})};
+    noiseBuf=actx.createBuffer(1,actx.sampleRate,actx.sampleRate);const ch=noiseBuf.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
+    sfxBus=actx.createGain();sfxBus.gain.value=volGain(sfxVol);
+    musicBus=actx.createGain();musicBus.gain.value=volGain(musicVol);
+    routeOut(); // sound goes out through a media element, which AirPlay and screen mirroring follow
+  }catch(e){actx=null}}
+  if(actx&&actx.state!=='running')actx.resume().catch(()=>{}); // "suspended", or iOS's "interrupted"
+  if(actx&&musicOn&&!mus&&!document.hidden)startMusic(actx); // browsers only allow sound after a tap, so music starts on the first one
+  return actx;
+}
+// iOS only lets sound start inside a tap, so every tap makes sure audio is awake (this is cheap once it's running)
+['touchend','pointerup','click'].forEach(ev=>document.addEventListener(ev,()=>{if(soundOn||musicOn)audio()},{passive:true,capture:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&actx&&actx.state!=='running')actx.resume().catch(()=>{})});
+// building blocks: a gliding tone, and a filtered burst of noise
+function tone(a,type,f0,f1,t,dur,vol,att=.005){
+  const o=a.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+dur*.6);
+  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(g).connect(sfxBus);o.start(t);o.stop(t+dur+.02);
+}
+function hiss(a,type,f0,f1,q,t,dur,vol,att=.003){
+  const n=a.createBufferSource();n.buffer=noiseBuf;const f=a.createBiquadFilter();f.type=type;f.Q.value=q;
+  f.frequency.setValueAtTime(f0,t);if(f1!==f0)f.frequency.exponentialRampToValueAtTime(f1,t+dur*.8);
+  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.02);
+}
+const BUMPS=[
+  {name:'Pillow', play:(a,t)=>{tone(a,'sine',120,58,t,.32,.6,.02);hiss(a,'lowpass',500,300,.7,t,.18,.18,.015)}},
+  {name:'Clink',  play:(a,t)=>{tone(a,'sine',1760,1760,t,.22,.07);tone(a,'sine',2640,2640,t,.12,.03);tone(a,'sine',140,80,t,.14,.3)}},
+  // a soft felt mallet on a wooden bar
+  {name:'Felt',   play:(a,t)=>{tone(a,'triangle',233,226,t,.3,.2,.012);tone(a,'sine',466,466,t,.14,.04,.01);tone(a,'sine',95,70,t,.22,.35,.015)}},
+  // a gentle droplet that dips in pitch
+  {name:'Droplet',play:(a,t)=>{tone(a,'sine',520,300,t,.16,.16,.006);tone(a,'sine',110,75,t,.2,.3,.01)}},
+  // two glasses touching: bright, slightly uneven ringing partials and a tiny tick
+  {name:'Glass',  play:(a,t)=>{tone(a,'sine',1975,1975,t,.5,.06,.002);tone(a,'sine',3160,3160,t,.34,.034,.002);tone(a,'sine',4740,4740,t,.18,.016,.002);
+    hiss(a,'highpass',5200,5200,.7,t,.025,.05,.001);tone(a,'sine',150,95,t,.1,.12,.006)}},
+];
+// a breath of filtered noise that rises and then settles back down
+function drift(a,t,lo,hi,end,dur,vol){
+  const n=a.createBufferSource();n.buffer=noiseBuf;const f=a.createBiquadFilter();f.type='bandpass';f.Q.value=.8;
+  f.frequency.setValueAtTime(lo,t);f.frequency.exponentialRampToValueAtTime(hi,t+dur*.45);f.frequency.exponentialRampToValueAtTime(end,t+dur);
+  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+dur*.3);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.02);
+}
+const WOOSHES=[
+  {name:'Air',   play:(a,t)=>hiss(a,'bandpass',350,2400,.9,t,.5,.11,.09)},
+  // slow, wide and soft, like a gust passing by
+  {name:'Breeze',play:(a,t)=>hiss(a,'bandpass',300,1300,.5,t,.75,.09,.18)},
+  // airy and bright, with a faint tone rising inside it
+  {name:'Silk',  play:(a,t)=>{hiss(a,'bandpass',1400,3600,.6,t,.6,.06,.12);tone(a,'sine',880,1320,t,.55,.014,.12)}},
+  // a smooth upward glide with a soft musical fifth
+  {name:'Glide', play:(a,t)=>{hiss(a,'lowpass',500,2200,.7,t,.55,.07,.12);tone(a,'sine',440,660,t,.5,.022,.1);tone(a,'sine',660,990,t,.45,.01,.1)}},
+  // rises, then settles back, like something floating away
+  {name:'Drift', play:(a,t)=>drift(a,t,400,1700,650,.8,.09)},
+];
+let bumpIdx=0,wooshIdx=0;
+try{bumpIdx=Math.min(BUMPS.length-1,+localStorage.getItem('pa3_bump')||0);wooshIdx=Math.min(WOOSHES.length-1,+localStorage.getItem('pa3_woosh')||0)}catch(e){}
+// slide-away is always Air
+function woosh(){if(!soundOn)return;const a=audio();if(a)WOOSHES[0].play(a,a.currentTime)}
+// bumps: Pillow when the cube in the way is right next to it, Droplet when it had to travel to hit one
+const bumpSound=name=>BUMPS.find(b=>b.name===name);
+function thump(delay,far){if(!soundOn)return;const a=audio();if(a)bumpSound(far?'Droplet':'Pillow').play(a,a.currentTime+delay)}
+
+/* sound picker */
+const panel=document.getElementById('panel');
+function buildOpts(id,list,get,set,key){
+  const box=document.getElementById(id);box.innerHTML='';
+  list.forEach((s,i)=>{const btn=document.createElement('button');btn.className='opt';btn.id=id+'-'+i;btn.textContent=(i+1)+' · '+s.name;
+    btn.setAttribute('aria-pressed',i===get()?'true':'false');
+    btn.onclick=()=>{set(i);try{localStorage.setItem(key,i)}catch(e){}
+      box.querySelectorAll('.opt').forEach((b,j)=>b.setAttribute('aria-pressed',j===i?'true':'false'));
+      const a=audio();if(a)s.play(a,a.currentTime+.02)}; // always preview, even with sound off
+    box.appendChild(btn)});
+}
+// neon glow on/off: off turns olive back into a plain matte color (no shine, no glow)
+let glowOn=true;try{glowOn=localStorage.getItem('pa2_glow')!=='0'}catch(e){}
+// Blacklight only exists in the Neon theme; in Standard and SmartPull nothing glows or shines
+function blOn(){return glowOn&&theme==='neon'}
+glowReady=true;
+function applyGlow(){for(const m of glowMats){
+  if(m.userData.neonBasic){m.map=blOn()?m.userData.lit:m.userData.flat;m.needsUpdate=true;continue}m.specular.setHex(blOn()?NEON:0x000000);m.shininess=blOn()?(m.emissiveMap?45:55):1}}
+/* ---------- ambient music: slow chords, soft bell notes, a long gentle reverb ---------- */
+const MTOF=m=>440*Math.pow(2,(m-69)/12);
+// D major, B minor, G major 7, A — warm and unresolved, so it can drift forever
+const CHORDS=[[50,57,64,66],[47,54,62,69],[43,50,59,66],[45,52,61,64]];
+const PENTA=[62,64,66,69,71,74,76]; // D major pentatonic, middle register, for the soft bell swells
+function impulse(a,sec){const len=Math.floor(a.sampleRate*sec),buf=a.createBuffer(2,len,a.sampleRate);
+  for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6)}return buf}
+function startMusic(a){
+  const t0=a.currentTime;
+  const out=a.createGain();out.gain.setValueAtTime(0,t0);out.gain.linearRampToValueAtTime(1,t0+4);out.connect(musicBus);
+  // mostly reverb, very little direct sound, so everything feels far away and spacious
+  const bus=a.createGain();const dry=a.createGain();dry.gain.value=.35;bus.connect(dry).connect(out);
+  const verb=a.createConvolver();verb.buffer=impulse(a,7);const wet=a.createGain();wet.gain.value=.95;bus.connect(verb);verb.connect(wet).connect(out);
+  // a dark filter that slowly breathes open and closed
+  const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=650;lp.Q.value=.3;lp.connect(bus);
+  const lfo=a.createOscillator();lfo.frequency.value=.04;const lfoAmt=a.createGain();lfoAmt.gain.value=220;lfo.connect(lfoAmt).connect(lp.frequency);lfo.start(t0);
+  // a faint bed of air underneath, like distant wind
+  const air=a.createBufferSource();air.buffer=noiseBuf;air.loop=true;const airF=a.createBiquadFilter();airF.type='lowpass';airF.frequency.value=380;
+  const airG=a.createGain();airG.gain.value=.012;air.connect(airF).connect(airG).connect(bus);air.start(t0);
+  mus={a,out,ci:0,padT:0,bellT:0,srcs:[lfo,air]};
+  const pad=()=>{if(!mus)return;const t=a.currentTime,notes=CHORDS[mus.ci++%CHORDS.length];
+    notes.forEach((m,i)=>[-6,6].forEach(det=>{const o=a.createOscillator();o.type='triangle';o.frequency.value=MTOF(m);o.detune.value=det;
+      const v=i===notes.length-1?.008:.014; // the top note sits back so nothing pokes out
+      const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+6);g.gain.setValueAtTime(v,t+10);g.gain.linearRampToValueAtTime(0,t+17);
+      o.connect(g).connect(lp);o.start(t);o.stop(t+17.1)}));
+    mus.padT=setTimeout(pad,12000)};
+  // bells swell in softly instead of striking, through their own warm filter
+  const bellF=a.createBiquadFilter();bellF.type='lowpass';bellF.frequency.value=900;bellF.connect(bus);
+  const bell=()=>{if(!mus)return;const t=a.currentTime,m=PENTA[Math.floor(Math.random()*PENTA.length)];
+    const o=a.createOscillator();o.type='sine';o.frequency.value=MTOF(m);
+    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.007,t+.6);g.gain.exponentialRampToValueAtTime(.0003,t+6);
+    o.connect(g).connect(bellF);o.start(t);o.stop(t+6.1);
+    mus.bellT=setTimeout(bell,5000+Math.random()*7000)};
+  pad();mus.bellT=setTimeout(bell,6000);
+}
+function stopMusic(){
+  if(!mus)return;const m=mus;mus=null;clearTimeout(m.padT);clearTimeout(m.bellT);
+  const t=m.a.currentTime;m.out.gain.cancelScheduledValues(t);m.out.gain.setValueAtTime(m.out.gain.value,t);m.out.gain.linearRampToValueAtTime(0,t+1.5);
+  setTimeout(()=>{try{m.srcs.forEach(s=>s.stop());m.out.disconnect()}catch(e){}},1800);
+}
+// pause when the app is in the background, pick up again when it comes back
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMusic();else if(musicOn&&actx)startMusic(actx)});
+// the speaker button in the top bar turns the ambient music on and off
+function setMusic(val){
+  musicOn=val;try{localStorage.setItem('pa2_music',val?'1':'0')}catch(e){}
+  soundBtn.setAttribute('aria-pressed',val?'true':'false');
+  if(val){const a=audio();if(a&&!mus)startMusic(a)}else stopMusic();
+}
+soundBtn.onclick=()=>setMusic(!musicOn);
+soundBtn.setAttribute('aria-pressed',musicOn?'true':'false');
+// sound effects on/off now lives in the settings panel
+(function(){const box=document.getElementById('optSfx');
+  [['On',true],['Off',false]].forEach(([label,val],i)=>{const btn=document.createElement('button');btn.className='opt';btn.id='optSfx-'+i;btn.textContent=label;
+    btn.setAttribute('aria-pressed',soundOn===val?'true':'false');
+    btn.onclick=()=>{soundOn=val;try{localStorage.setItem('pa2_sound',val?'1':'0')}catch(e){}
+      box.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-pressed',b===btn?'true':'false'))};
+    box.appendChild(btn)})})();
+// Blacklight: an on-screen switch in the Neon theme (bottom right), tap to turn it on or off
+(function(){const btn=document.getElementById('blBtn');
+  btn.setAttribute('aria-pressed',glowOn?'true':'false');
+  btn.onclick=e=>{e.stopPropagation();glowOn=!glowOn;try{localStorage.setItem('pa2_glow',glowOn?'1':'0')}catch(e){}
+    btn.setAttribute('aria-pressed',glowOn?'true':'false');applyGlow();blSound(glowOn)};
+  btn.hidden=theme!=='neon'})();
+// a flashlight/light-switch click: a sharp snap plus a tiny plastic "tock" behind it.
+// On is a touch brighter and snappier than off, like the two directions of a real switch.
+function blSound(on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  hiss(a,'highpass',on?3800:3000,on?3800:3000,.7,t,.012,on?.22:.16,.0005);        // the snap
+  hiss(a,'bandpass',on?1800:1400,on?1800:1400,4,t+.004,.03,on?.14:.1,.001);          // the click body
+  tone(a,'triangle',on?620:480,on?560:420,t+.006,.05,on?.07:.05,.001);               // the little plastic tock
+  if(on)hiss(a,'highpass',2400,2400,.7,t+.07,.008,.06,.0005)}                        // the faint second click as it seats
+document.getElementById('tune').onclick=e=>{e.stopPropagation();
+  const tp=document.getElementById('themes');if(tp&&!tp.hidden){tp.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
+  panel.hidden=!panel.hidden;document.getElementById('tune').setAttribute('aria-expanded',String(!panel.hidden))};
+document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!e.target.closest('#tune')){panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}});
+function click(){
+  // a smooth upward glide: two soft tones a fifth apart, with a breath of air under them
+  if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1800;lp.connect(sfxBus);
+  [[330,392],[495,588]].forEach(([f0,f1],i)=>{
+    const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+.22);
+    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(i?.03:.06,t+.05);g.gain.exponentialRampToValueAtTime(.001,t+.34);
+    o.connect(g).connect(lp);o.start(t);o.stop(t+.36);
+  });
+  const n=a.createBufferSource();n.buffer=noiseBuf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=1.2;
+  bp.frequency.setValueAtTime(700,t);bp.frequency.exponentialRampToValueAtTime(1400,t+.25);
+  const ng=a.createGain();ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(.03,t+.06);ng.gain.exponentialRampToValueAtTime(.001,t+.28);
+  n.connect(bp).connect(ng).connect(sfxBus);n.start(t);n.stop(t+.3);
+}
+/* switching themes: a short sound in the new theme's style
+   Classic: a soft wooden tock and a warm two-note chime · SmartPull: a bright, bubbly rising chord · Neon: a synth power-up sweep */
+function themeSound(t){if(!soundOn)return;const a=audio();if(!a)return;const n=a.currentTime+.02;
+  if(t==='neon'){tone(a,'square',1760,1760,n,.12,.03,.01);
+    [1319,1760,2637].forEach((f,i)=>tone(a,'triangle',f,f,n+.14+i*.05,.22,.03,.004));return}
+  if(t==='brand'){[523,659,784,1047].forEach((f,i)=>tone(a,'triangle',f*1.02,f,n+i*.055,.26,.05,.004));return}
+  hiss(a,'bandpass',900,700,3,n,.05,.06,.001);tone(a,'sine',420,380,n,.08,.12,.002);
+  tone(a,'sine',784,784,n+.07,.5,.05,.01);tone(a,'sine',1175,1175,n+.15,.55,.04,.01)}
+// tapping a locked cube: a small metallic clink (Neon: a soft electronic "nope" blip)
+function lockSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  if(theme==='neon'){tone(a,'square',330,300,t,.07,.018,.003);tone(a,'square',247,230,t+.08,.09,.018,.003);return}
+  tone(a,'sine',2100,2050,t,.12,.035,.002);tone(a,'sine',3150,3100,t+.035,.09,.02,.002);hiss(a,'highpass',5000,5000,.7,t,.02,.03,.001)}
+// the padlock snapping open: a short mechanical click
+function clickSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  if(theme==='neon'){tone(a,'square',1400,1200,t,.04,.02,.001);return}
+  hiss(a,'bandpass',3200,2600,4,t,.035,.08,.001);tone(a,'triangle',1800,900,t,.05,.05,.001);tone(a,'triangle',2400,1600,t+.045,.04,.035,.001)}
+// a key cube leaves and its lock opens: two soft rising notes
+function unlockSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+.15;
+  if(theme==='neon'){[659,988,1319].forEach((f,i)=>tone(a,'triangle',f,f,t+i*.07,.3,.035,.005));return} // a quick synth arpeggio
+  tone(a,'sine',659,659,t,.35,.05,.01);tone(a,'sine',988,988,t+.1,.45,.045,.01)}
+// cubes falling onto the ones below on gravity levels: a soft, low landing thud
+function landSound(delay){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+delay;
+  if(theme==='neon'){tone(a,'sine',90,40,t,.3,.4,.01);hiss(a,'bandpass',900,300,2,t,.1,.04,.005);return} // a deeper, electronic drop
+  tone(a,'sine',110,62,t,.25,.35,.015);hiss(a,'lowpass',420,260,.7,t,.14,.1,.01)}
+// two same-colored pieces fusing: a soft magnetic "clack" with a little shimmer
+// (Neon: a bright synth zap that sweeps up)
+function fuseSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  if(theme==='neon'){
+    const o=a.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(440,t);o.frequency.exponentialRampToValueAtTime(1320,t+.16);
+    const f=a.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(900,t);f.frequency.exponentialRampToValueAtTime(3000,t+.16);
+    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.03,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.3);
+    o.connect(f).connect(g).connect(sfxBus);o.start(t);o.stop(t+.32);tone(a,'sine',1760,1760,t+.12,.35,.02,.01);return}
+  tone(a,'triangle',420,380,t,.08,.12,.002);hiss(a,'bandpass',2600,2600,3,t,.03,.06,.001); // the clack
+  tone(a,'sine',1046,1046,t+.05,.5,.03,.01);tone(a,'sine',1568,1568,t+.09,.45,.018,.01);   // a soft shimmer
+}
+function chime(delay){
+  // four soft bell notes rising (C, E, G, high C)
+  if(!soundOn)return;const a=audio();if(!a)return;const t0=a.currentTime+delay;
+  [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
+    const t=t0+i*.09;
+    [[f,'sine',.09],[f*2,'sine',.025]].forEach(([fr,type,vol])=>{
+      const o=a.createOscillator();o.type=type;o.frequency.value=fr;
+      const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.7);
+      o.connect(g).connect(sfxBus);o.start(t);o.stop(t+.72);
+    });
+  });
+}
+// is the path from cube b in direction d clear? Returns 0 if clear, else how many steps until it hits.
+// Cubes in `ignore` (a linked partner) don't block. On gravity levels the floor blocks downward moves.
+// the piece a cube belongs to: itself, its linked partner, or every cube it has fused with
+function unitOf(b){return b.group?b.group.members.filter(m=>m.alive):[b]}
+function rayHit(b,d,ignore){
+  for(let i=1;i<=span;i++){
+    const x=b.c[0]+d[0]*i,y=b.c[1]+d[1]*i,z=b.c[2]+d[2]*i;
+    if(gravity&&y<0)return i;
+    const o=occ.get(K(x,y,z));if(o&&!ignore.includes(o))return i;
+  }
+  return 0;
+}
+/* ---------- Undo (Developer Mode) ----------
+   Before each move (a cube or piece sliding out, or a dot turn) the whole board is saved.
+   Undo puts every cube back exactly where it was, including falls, fusions and locks. Bumps change nothing. */
+var undoStack=[];let lastMoveAt=-1e9;
+function saveUndo(){
+  lastMoveAt=performance.now();
+  undoStack.push({taps,pulls,bumps,bodyPos:body.position.clone(),
+    cubes:blocks.map(b=>({alive:b.alive,c:b.c.slice(),d:b.d.slice(),arrowFace:b.arrowFace&&b.arrowFace.slice(),
+      home:b.home.clone(),q:b.mesh.quaternion.clone(),isKey:b.isKey,
+      group:b.group?b.group.members.map(m=>m.id):null,groupColor:b.group?b.group.color:null}))});
+  if(undoStack.length>200)undoStack.shift();
+  refreshUndo();
+}
+function refreshUndo(){const u=document.getElementById('undo');if(u)u.disabled=!undoStack.length}
+setInterval(refreshUndo,400);
+function undo(){
+  if(!devMode||!undoStack.length||clearing||waiting)return;
+  // wait for the last move to finish animating (falls and fusions settle within about a second)
+  if(performance.now()-lastMoveAt<900||blocks.some(b=>b.busy))return;
+  const st=undoStack.pop();
+  taps=st.taps;pulls=st.pulls||0;bumps=st.bumps;
+  occ.clear();const groups=new Map();
+  blocks.forEach((b,i)=>{const s=st.cubes[i];
+    Object.assign(b,{alive:s.alive,c:s.c,d:s.d,arrowFace:s.arrowFace,isKey:s.isKey,busy:false,group:null,unlocking:false});
+    b.home.copy(s.home);b.mesh.position.copy(s.home);b.mesh.quaternion.copy(s.q);b.mesh.scale.setScalar(1);
+    if(b.alive){if(!b.mesh.parent)body.add(b.mesh);occ.set(K(...b.c),b)}else if(b.mesh.parent)body.remove(b.mesh);
+  });
+  blocks.forEach((b,i)=>{const s=st.cubes[i];if(!s.group)return;const key=s.group.join(',');
+    if(!groups.has(key))groups.set(key,{members:s.group.map(id=>blocks[id]),color:s.groupColor});b.group=groups.get(key)});
+  blocks.forEach(b=>b.mesh.material=materialsFor(b));
+  body.position.copy(st.bodyPos);
+  updateBridges();document.getElementById('stuck').hidden=true;updateLeft();refreshUndo();
+  rewindTick();
+}
+// a tiny reverse "tick" so undo feels like stepping back
+function rewindTick(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;tone(a,'sine',660,440,t,.12,.05,.004)}
+document.getElementById('undo').onclick=e=>{e.stopPropagation();undo()};
+document.addEventListener('keydown',e=>{if(devMode&&(e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}});
+function slide(b){
+  for(const m of unitOf(b))endWobble(m);
+  // a locked cube can't move until its key cube is gone: it just jiggles against the lock
+  if(b.lockKey&&b.lockKey.alive){if(!clearing){taps++;addTotal('taps');updateLeft()}lockedJiggle(b);return} // counts as a Tap
+  const unit=unitOf(b); // linked pairs and fused pieces always move together, the way the tapped arrow points
+  if(unit.some(u=>u.busy))return;
+  const hits=unit.map(u=>rayHit(u,b.d,unit));
+  if(hits.every(h=>!h)){
+    saveUndo();
+    if(!clearing){pulls++;addTotal('pulls')} // a successful pull
+    woosh();
+    unit.forEach(u=>{u.alive=false;occ.delete(K(...u.c));
+      const dv=new THREE.Vector3(...b.d),start=u.mesh.position.clone(),dist=span+6;
+      tweens.push({t:0,dur:.75,step:k=>{u.mesh.position.copy(start).addScaledVector(dv,dist*k*k);u.mesh.scale.setScalar(1-.6*Math.max(0,k-.5)*2)},end:()=>body.remove(u.mesh)});
+    });
+    afterRemoval(unit);
+  }else{
+    bumps++;addTotal('oops');updateLeft(); // an oops: the cube bumped and stayed
+    const hit=Math.min(...hits.filter(h=>h>0)); // the pair stops where the first of the two would hit
+    unit.forEach((u,k)=>bumpAnim(u,hit,k===0,b.d,isPiece(u)));
+    if(navigator.vibrate)try{navigator.vibrate(12)}catch(e){}
+  }
+}
+// everything that happens after cubes leave: unlock locks, let cubes fall, check for a win or a dead end
+function afterRemoval(unit){
+  updateLeft();
+  // keys open their locks
+  for(const u of unit)for(const b of blocks)if(b.alive&&b.lockKey===u){
+    b.unlocking=true;b.mesh.material=materialsFor(b);clickSound();unlockWobble(b);unlockSound();
+    setTimeout(()=>{b.unlocking=false;if(b.alive)b.mesh.material=materialsFor(b)},700)}
+  for(const u of unit)if(u.isKey){u.isKey=false}
+  if(occ.size===0){win();return}
+  if(gravity){
+    const before=fusion?touchingNow():null;
+    fall();
+    if(fusion)fuseAfterFall(before);
+    setTimeout(()=>{recenter(false);checkStuck()},560);
+  }
+  else setTimeout(()=>recenter(false),180);
+}
+// gravity: every column settles down to the floor, closing any gaps
+function fall(){
+  if(fusion){fallRigid();return}
+  const cols=new Map();
+  for(const b of blocks)if(b.alive){const k=b.c[0]+','+b.c[2];if(!cols.has(k))cols.set(k,[]);cols.get(k).push(b)}
+  let any=false;occ.clear();
+  for(const col of cols.values()){
+    col.sort((a,b)=>a.c[1]-b.c[1]);
+    col.forEach((b,y)=>{
+      const drop=b.c[1]-y;
+      if(drop>0){any=true;b.c=[b.c[0],y,b.c[2]];b.busy=true;
+        const from=b.mesh.position.clone(),to=b.home.clone();to.y-=drop;b.home.copy(to);
+        const dur=.22+.08*drop;
+        tweens.push({t:-.14,dur,step:k=>{const q=Math.max(0,k);b.mesh.position.lerpVectors(from,to,q*q)},end:()=>{b.mesh.position.copy(to);b.busy=false;squash(b)}});
+      }
+      occ.set(K(...b.c),b);
+    });
+  }
+  if(any)landSound(.38);
+}
+// fusion levels: whole pieces drop one step at a time until nothing can fall, then animate the drops
+function fallRigid(){
+  const alive=blocks.filter(b=>b.alive),start=new Map(alive.map(b=>[b,b.c[1]]));
+  for(let guard=0;guard<400;guard++){
+    let moved=false;const seen=new Set();
+    const pieces=[];alive.forEach(b=>{if(seen.has(b))return;const u=unitOf(b);u.forEach(m=>seen.add(m));pieces.push(u)});
+    pieces.sort((a,b)=>Math.min(...a.map(m=>m.c[1]))-Math.min(...b.map(m=>m.c[1])));
+    for(const u of pieces){
+      const can=u.every(m=>{if(m.c[1]<=0)return false;const o=occ.get(K(m.c[0],m.c[1]-1,m.c[2]));return !o||u.includes(o)});
+      if(!can)continue;
+      u.forEach(m=>occ.delete(K(...m.c)));u.forEach(m=>{m.c=[m.c[0],m.c[1]-1,m.c[2]];occ.set(K(...m.c),m)});moved=true;
+    }
+    if(!moved)break;
+  }
+  let any=false;
+  for(const b of alive){const drop=start.get(b)-b.c[1];if(drop<=0)continue;any=true;b.busy=true;
+    const from=b.mesh.position.clone(),to=b.home.clone();to.y-=drop;b.home.copy(to);const dur=.22+.08*drop;
+    tweens.push({t:-.14,dur,step:k=>{const q=Math.max(0,k);b.mesh.position.lerpVectors(from,to,q*q)},end:()=>{b.mesh.position.copy(to);b.busy=false;squash(b)}});
+  }
+  if(any)landSound(.38);
+}
+function touchingNow(){const s=new Set();for(const b of blocks)if(b.alive)for(const f of DIRS){const o=occ.get(K(b.c[0]+f[0],b.c[1]+f[1],b.c[2]+f[2]));if(o&&o.alive)s.add(b.id+','+o.id)}return s}
+// same-colored cubes that land against each other (and weren't touching before) fuse into one piece
+function fuseAfterFall(before){
+  const fused=new Set();
+  for(const a of blocks){if(!a.alive||a.neutral)continue;
+    for(const f of DIRS){const o=occ.get(K(a.c[0]+f[0],a.c[1]+f[1],a.c[2]+f[2]));
+      if(!o||!o.alive||o.fuseIdx!==a.fuseIdx||(a.group&&a.group===o.group)||before.has(a.id+','+o.id))continue;
+      const g=a.group||{members:[a],color:a.fuseColor};const h=o.group||{members:[o]};
+      for(const m of h.members)if(!g.members.includes(m))g.members.push(m);
+      g.members.forEach(m=>{m.group=g;fused.add(m)});
+    }
+  }
+  // a fused piece also takes in every same-colored cube or piece it's touching
+  for(let changed=true;changed;){changed=false;
+    for(const a of blocks){if(!a.alive||!isFused(a))continue;
+      for(const f of DIRS){const o=occ.get(K(a.c[0]+f[0],a.c[1]+f[1],a.c[2]+f[2]));
+        if(!o||!o.alive||o.fuseIdx!==a.fuseIdx||o.group===a.group)continue;
+        const g=a.group,h=o.group||{members:[o]};
+        for(const m of h.members)if(!g.members.includes(m))g.members.push(m);
+        g.members.forEach(m=>{m.group=g;fused.add(m)});changed=true}}
+  }
+  if(!fused.size)return;
+  // an arrow now buried inside its piece moves to an outside side of its cube, so the piece can always be tapped
+  for(const m of fused)if(m.alive)m.arrowFace=rehomeArrow(m.c,m.d,m.arrowFace,p=>{const o=occ.get(K(...p));return o&&o.alive&&o.group===m.group},p=>{const o=occ.get(K(...p));return !!(o&&o.alive)});
+  // show it as the fall lands: the pieces get their linked frame, give a little pulse, and a soft "fuse" sound
+  setTimeout(()=>{for(const m of fused)if(m.alive){m.mesh.material=materialsFor(m);pulse(m,.07,.36)}updateBridges();fuseSound()},420);
+}
+// SmartPull: between two fused neighbors, a thin filler block closes the rounded groove,
+// so a fused piece looks like one continuous shape. It rides along on the cube, so it moves with the piece.
+var bridgeGeo=null,bridges=[],bridgeMats={};
+// the filler takes the exact color of the fused cube's faces in each theme
+function bridgeMat(b){
+  if(theme==='neon'){
+    const nc=NEON_OF[b.fuseColor]||b.fuseColor,k='neon'+nc;
+    if(!bridgeMats[k]){const m=new THREE.MeshBasicMaterial({color:nc});m.userData.neonBridge=new THREE.Color(nc);bridgeMats[k]=m}
+    return bridgeMats[k];
+  }
+  const col=theme==='brand'?shade(b.fuseColor,.2):PLAIN; // Standard: fused cubes stay off-white
+  // olive cube faces use the shinier material (for Blacklight), so their filler matches it
+  return bridgeMats[col]||(bridgeMats[col]=col===OLIVE?new THREE.MeshPhongMaterial({color:col,specular:0x000000,shininess:55}):new THREE.MeshPhongMaterial({color:col,specular:0x000000,shininess:1}));
+}
+/* ---------- smooth fused surfaces ----------
+   A fused piece is meshed as ONE smooth surface (rounded outside edges and corners, curved inside creases),
+   then cut back into one mesh per cube, so tapping and the arrow artwork still work cube by cube.
+   The math runs in a background worker so fusing never freezes the game. */
+/* Smooth fused-piece surface.
+   cells: list of [x,y,z] integer cell centers (unit cells). Returns per-cell triangle lists in cell-local coords
+   with normals, so each cube keeps its own mesh (for tapping and per-face artwork) while the whole piece forms
+   one continuous rounded surface: convex edges rounded, inside creases filleted, flat faces at 0.4925. */
+function edt1(f,n,d,v,z){let k=0;v[0]=0;z[0]=-1e20;z[1]=1e20;
+  for(let q=1;q<n;q++){let s;do{const p=v[k];s=((f[q]+q*q)-(f[p]+p*p))/(2*q-2*p);if(s<=z[k]){k--;}else break}while(k>=0);
+    k++;v[k]=q;z[k]=s;z[k+1]=1e20}
+  k=0;for(let q=0;q<n;q++){while(z[k+1]<q)k++;const p=v[k];d[q]=(q-p)*(q-p)+f[p]}}
+function edt3(feat,nx,ny,nz){ // feat: Uint8Array 1 = feature. returns squared distance in voxel units
+  const N=nx*ny*nz,INF=1e20,g=new Float64Array(N);for(let i=0;i<N;i++)g[i]=feat[i]?0:INF;
+  const m=Math.max(nx,ny,nz),f=new Float64Array(m),d=new Float64Array(m),v=new Int32Array(m),z=new Float64Array(m+1);
+  const pass=(n,stride,count,base)=>{for(const b of base){for(let q=0;q<n;q++)f[q]=g[b+q*stride];edt1(f,n,d,v,z);for(let q=0;q<n;q++)g[b+q*stride]=d[q]}};
+  const bx=[],by=[],bz=[];
+  for(let k=0;k<nz;k++)for(let j=0;j<ny;j++)bx.push((k*ny+j)*nx);
+  for(let k=0;k<nz;k++)for(let i=0;i<nx;i++)by.push(k*ny*nx+i);
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)bz.push(j*nx+i);
+  pass(nx,1,0,bx);pass(ny,nx,0,by);pass(nz,nx*ny,0,bz);return g}
+function smoothPiece(cells,opt){
+  opt=opt||{};const R=24,h=1/R,M=8; // voxels per cell, margin voxels
+  const mn=[0,1,2].map(a=>Math.min(...cells.map(c=>c[a]))),mx=[0,1,2].map(a=>Math.max(...cells.map(c=>c[a])));
+  const nx=(mx[0]-mn[0]+1)*R+2*M,ny=(mx[1]-mn[1]+1)*R+2*M,nz=(mx[2]-mn[2]+1)*R+2*M,N=nx*ny*nz;
+  const ox=mn[0]-.5-M*h,oy=mn[1]-.5-M*h,oz=mn[2]-.5-M*h; // world position of voxel (0,0,0) corner
+  const set=new Set(cells.map(c=>c.join(',')));
+  const U=new Uint8Array(N);
+  for(let k=0;k<nz;k++)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
+    const x=ox+(i+.5)*h,y=oy+(j+.5)*h,z=oz+(k+.5)*h;
+    if(set.has(Math.round(x)+','+Math.round(y)+','+Math.round(z)))U[(k*ny+j)*nx+i]=1}
+  const inv=a=>{const b=new Uint8Array(N);for(let i=0;i<N;i++)b[i]=a[i]?0:1;return b};
+  const thr=(d2,cmp,t)=>{const b=new Uint8Array(N),t2=(t*R)*(t*R);for(let i=0;i<N;i++)b[i]=cmp?(d2[i]<=t2?1:0):(d2[i]>t2?1:0);return b};
+  const rc=.11,re=.15; // fillet (closing) radius, and erosion depth before the final rounding
+  const D=thr(edt3(U,nx,ny,nz),true,rc);           // dilate U
+  const C=thr(edt3(inv(D),nx,ny,nz),false,rc);     // erode back: closing (inside creases filleted)
+  const E=thr(edt3(inv(C),nx,ny,nz),false,re);     // erode for the rounding
+  const dE=edt3(E,nx,ny,nz);
+  // final smooth field: distance to E minus the rounding radius, tuned so flat faces land at 0.4925
+  // E's flat faces sit at the center of the first kept voxel past depth re
+  const firstKept=(Math.floor(re*R-1)+1+.5)*h, rr=firstKept-.0075; // depth of the first voxel center kept by the erosion
+  const s=new Float32Array(N);for(let i=0;i<N;i++)s[i]=Math.sqrt(dE[i])*h-rr;
+  // surface nets
+  const idx=(i,j,k)=>(k*ny+j)*nx+i,vid=new Int32Array((nx-1)*(ny-1)*(nz-1)).fill(-1),cid=(i,j,k)=>(k*(ny-1)+j)*(nx-1)+i;
+  const verts=[];
+  const cornersO=[[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,1],[1,0,1],[0,1,1],[1,1,1]];
+  const edges=[[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+  for(let k=0;k<nz-1;k++)for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){
+    const vals=cornersO.map(o=>s[idx(i+o[0],j+o[1],k+o[2])]);
+    let neg=0;for(const q of vals)if(q<0)neg++;if(neg===0||neg===8)continue;
+    let px=0,py=0,pz=0,cnt=0;
+    for(const [a,b] of edges){const va=vals[a],vb=vals[b];if((va<0)===(vb<0))continue;const t=va/(va-vb);
+      const A=cornersO[a],B=cornersO[b];px+=A[0]+(B[0]-A[0])*t;py+=A[1]+(B[1]-A[1])*t;pz+=A[2]+(B[2]-A[2])*t;cnt++}
+    vid[cid(i,j,k)]=verts.length;
+    verts.push([ox+(i+.5+px/cnt)*h,oy+(j+.5+py/cnt)*h,oz+(k+.5+pz/cnt)*h]);
+  }
+  // smooth normals: the field's gradient, blended (trilinearly) between neighboring voxels
+  const gAt=(i,j,k)=>{i=Math.max(1,Math.min(nx-2,i));j=Math.max(1,Math.min(ny-2,j));k=Math.max(1,Math.min(nz-2,k));
+    return [s[idx(i+1,j,k)]-s[idx(i-1,j,k)],s[idx(i,j+1,k)]-s[idx(i,j-1,k)],s[idx(i,j,k+1)]-s[idx(i,j,k-1)]]};
+  const grad=(x,y,z)=>{
+    const fi=(x-ox)/h-.5,fj=(y-oy)/h-.5,fk=(z-oz)/h-.5,i0=Math.floor(fi),j0=Math.floor(fj),k0=Math.floor(fk),
+      tx=fi-i0,ty=fj-j0,tz=fk-k0,g=[0,0,0];
+    for(let c=0;c<8;c++){const dx=c&1,dy=(c>>1)&1,dz=(c>>2)&1,wgt=(dx?tx:1-tx)*(dy?ty:1-ty)*(dz?tz:1-tz);
+      if(!wgt)continue;const q=gAt(i0+dx,j0+dy,k0+dz);g[0]+=q[0]*wgt;g[1]+=q[1]*wgt;g[2]+=q[2]*wgt}
+    const l=Math.hypot(...g)||1;return g.map(q=>q/l)};
+  const tris=[];
+  const quad=(a,b,c,d)=>{if(a<0||b<0||c<0||d<0)return;tris.push([a,b,c],[a,c,d])};
+  for(let k=1;k<nz-1;k++)for(let j=1;j<ny-1;j++)for(let i=0;i<nx-1;i++){ // x edges
+    if((s[idx(i,j,k)]<0)===(s[idx(i+1,j,k)]<0))continue;
+    quad(vid[cid(i,j-1,k-1)],vid[cid(i,j,k-1)],vid[cid(i,j,k)],vid[cid(i,j-1,k)])}
+  for(let k=1;k<nz-1;k++)for(let j=0;j<ny-1;j++)for(let i=1;i<nx-1;i++){ // y edges
+    if((s[idx(i,j,k)]<0)===(s[idx(i,j+1,k)]<0))continue;
+    quad(vid[cid(i-1,j,k-1)],vid[cid(i,j,k-1)],vid[cid(i,j,k)],vid[cid(i-1,j,k)])}
+  for(let k=0;k<nz-1;k++)for(let j=1;j<ny-1;j++)for(let i=1;i<nx-1;i++){ // z edges
+    if((s[idx(i,j,k)]<0)===(s[idx(i,j,k+1)]<0))continue;
+    quad(vid[cid(i-1,j-1,k)],vid[cid(i,j-1,k)],vid[cid(i,j,k)],vid[cid(i-1,j,k)])}
+  // normals from the field, flip triangles to face outward, assign each triangle to the cell containing it
+  const nrm=verts.map(p=>grad(...p));
+  const out={};cells.forEach(c=>out[c.join(',')]={c,pos:[],nor:[]});
+  for(const t of tris){
+    const [A,B,Cc]=t.map(q=>verts[q]);
+    const cx=(A[0]+B[0]+Cc[0])/3,cy=(A[1]+B[1]+Cc[1])/3,cz=(A[2]+B[2]+Cc[2])/3;
+    const u=[B[0]-A[0],B[1]-A[1],B[2]-A[2]],w=[Cc[0]-A[0],Cc[1]-A[1],Cc[2]-A[2]];
+    const n=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];
+    const g=grad(cx,cy,cz);const order=(n[0]*g[0]+n[1]*g[1]+n[2]*g[2])<0?[t[0],t[2],t[1]]:t;
+    let key=Math.round(cx)+','+Math.round(cy)+','+Math.round(cz);
+    if(!out[key]){ // a triangle just outside every cell (in a fillet): give it to the nearest cell of the piece
+      let best=null,bd=1e9;for(const c of cells){const dd=(c[0]-cx)**2+(c[1]-cy)**2+(c[2]-cz)**2;if(dd<bd){bd=dd;best=c}}key=best.join(',')}
+    const o=out[key];
+    for(const q of order){const p=verts[q];o.pos.push(p[0]-o.c[0],p[1]-o.c[1],p[2]-o.c[2]);o.nor.push(...nrm[q])}
+  }
+  return {perCell:out,tris:tris.length,verts:verts.length};
+}
+
+
+// the worker is built from these same functions' source text (no eval needed)
+const SMOOTH_SRC=[edt1,edt3,smoothPiece].map(f=>f.toString()).join('\n');
+let smoothWorker=null;try{
+  smoothWorker=new Worker(URL.createObjectURL(new Blob([SMOOTH_SRC+`
+    onmessage=e=>{const {id,cells}=e.data;const r=smoothPiece(cells),out={},tr=[];
+      for(const k in r.perCell){const o=r.perCell[k];const pos=new Float32Array(o.pos),nor=new Float32Array(o.nor);out[k]={pos,nor};tr.push(pos.buffer,nor.buffer)}
+      postMessage({id,out},tr)}`],{type:'text/javascript'})));
+}catch(e){smoothWorker=null}
+const smoothCache={},smoothPending={};let smoothSeq=0;
+function layoutOf(members){const c=members.map(m=>m.c),mn=[0,1,2].map(a=>Math.min(...c.map(p=>p[a])));
+  const rel=c.map(p=>[p[0]-mn[0],p[1]-mn[1],p[2]-mn[2]]);return {mn,rel,key:rel.map(p=>p.join(',')).sort().join('|')}}
+function smoothGeo(o){ // one cube's part of the smooth surface -> geometry, grouped by face direction for the face artwork
+  const half=.985/2,FACES=[[2,1,-1,-1],[2,1,1,-1],[0,2,1,1],[0,2,1,-1],[0,1,1,-1],[0,1,-1,-1]];
+  const P=o.pos,Nn=o.nor,tc=P.length/9,buckets=[[],[],[],[],[],[]];
+  for(let t=0;t<tc;t++){let nx=0,ny=0,nz=0;for(let v=0;v<3;v++){nx+=Nn[t*9+v*3];ny+=Nn[t*9+v*3+1];nz+=Nn[t*9+v*3+2]}
+    const ax=Math.abs(nx),ay=Math.abs(ny),az=Math.abs(nz),f=ax>=ay&&ax>=az?(nx>0?0:1):ay>=az?(ny>0?2:3):(nz>0?4:5);buckets[f].push(t)}
+  const pos=new Float32Array(P.length),nor=new Float32Array(P.length),uv=new Float32Array(tc*6),g=new THREE.BufferGeometry();
+  let w=0;
+  buckets.forEach((list,f)=>{const start=w;const [ua,va,ud,vd]=FACES[f];
+    for(const t of list)for(let v=0;v<3;v++){const i=t*9+v*3;
+      for(let a=0;a<3;a++){pos[w*3+a]=P[i+a];nor[w*3+a]=Nn[i+a]}
+      uv[w*2]=ud*P[i+ua]/(2*half)+.5;uv[w*2+1]=.5-vd*P[i+va]/(2*half);w++}
+    if(w>start)g.addGroup(start,w-start,f)});
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('normal',new THREE.BufferAttribute(nor,3));g.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+  g.computeBoundingSphere();return g;
+}
+function applySmooth(group){
+  const mem=group.members.filter(m=>m.alive);if(mem.length<2)return false;
+  const L=layoutOf(mem),hit=smoothCache[L.key];
+  if(hit){mem.forEach(m=>{const k=[m.c[0]-L.mn[0],m.c[1]-L.mn[1],m.c[2]-L.mn[2]].join(',');if(hit[k])m.mesh.geometry=hit[k]});return true}
+  if(!smoothPending[L.key]){
+    smoothPending[L.key]=true;
+    const done=out=>{const geos={};for(const k in out)geos[k]=smoothGeo(out[k]);smoothCache[L.key]=geos;delete smoothPending[L.key];
+      // apply to any piece that still has this exact shape
+      const seen=new Set();for(const b of blocks)if(b.alive&&isPiece(b)&&!seen.has(b.group)){seen.add(b.group);applySmooth(b.group)}};
+    if(smoothWorker){const id=++smoothSeq;const h=e=>{if(e.data.id!==id)return;smoothWorker.removeEventListener('message',h);done(e.data.out)};
+      smoothWorker.addEventListener('message',h);smoothWorker.postMessage({id,cells:L.rel})}
+    else setTimeout(()=>{const r=smoothPiece(L.rel),out={};for(const k in r.perCell)out[k]=r.perCell[k];done(out)},0);
+  }
+  return false;
+}
+// Fused pieces: each cube's shape is rebuilt so the sides facing another cube of the same piece are flat and
+// reach all the way to it (no bevel, no gap), while every outside edge keeps the normal rounded bevel.
+// Together the cubes form one clean, continuous brick.
+const shapedGeos={};
+function shapedBox(mask){ // mask: 6 flags in DIRS order (+x,-x,+y,-y,+z,-z), '1' = joined on that side
+  if(shapedGeos[mask])return shapedGeos[mask];
+  const N=12,half=.985/2,r=.11,g=new THREE.BoxGeometry(1,1,1,N,N,N);
+  const L=[],H=[],A=[],B=[];
+  for(let i=0;i<3;i++){const hiJ=mask[i*2]==='1',loJ=mask[i*2+1]==='1';
+    H[i]=hiJ?.5:half;L[i]=loJ?-.5:-half;A[i]=L[i]+(loJ?0:r);B[i]=H[i]-(hiJ?0:r)}
+  // place the grid so a quarter of the vertices sit in each rounded band (smooth bevels), half on the flat middle
+  const map=(t,i)=>{const u=(t+.5);return u<.25?L[i]+(A[i]-L[i])*(u/.25):u<=.75?A[i]+(B[i]-A[i])*((u-.25)/.5):B[i]+(H[i]-B[i])*((u-.75)/.25)};
+  const pos=g.attributes.position,nor=g.attributes.normal,uv=g.attributes.uv,v=new THREE.Vector3(),c=new THREE.Vector3(),n=new THREE.Vector3();
+  // texture coordinates follow the real surface position (the same way a normal cube's do), so arrows and dots
+  // stay exactly the same size on fused cubes. BoxGeometry lays its faces out as +x,-x,+y,-y,+z,-z, each with
+  // its own horizontal/vertical axes and directions:
+  const FACES=[[2,1,-1,-1],[2,1,1,-1],[0,2,1,1],[0,2,1,-1],[0,1,1,-1],[0,1,-1,-1]],per=(N+1)*(N+1);
+  for(let k=0;k<pos.count;k++){
+    v.set(map(pos.getX(k),0),map(pos.getY(k),1),map(pos.getZ(k),2));
+    const [ua,va,ud,vd]=FACES[Math.floor(k/per)];
+    uv.setXY(k,ud*v.getComponent(ua)/(2*half)+.5,.5-vd*v.getComponent(va)/(2*half));
+    c.set(Math.min(B[0],Math.max(A[0],v.x)),Math.min(B[1],Math.max(A[1],v.y)),Math.min(B[2],Math.max(A[2],v.z)));
+    n.subVectors(v,c);
+    if(n.lengthSq()>1e-12){n.normalize();v.copy(c).addScaledVector(n,r)}else n.set(nor.getX(k),nor.getY(k),nor.getZ(k));
+    pos.setXYZ(k,v.x,v.y,v.z);nor.setXYZ(k,n.x,n.y,n.z);
+  }
+  return shapedGeos[mask]=g;
+}
+function updateBridges(){
+  if(!bridges)return; // (the theme is set once during startup, before any puzzle exists)
+  bridges.forEach(m=>m.parent&&m.parent.remove(m));bridges.length=0;
+  for(const b of blocks){if(!b.mesh)continue;
+    if(b.alive&&isPiece(b)){
+      const mask=DIRS.map(d=>{const o=occ.get(K(b.c[0]+d[0],b.c[1]+d[1],b.c[2]+d[2]));return o&&o.alive&&o.group===b.group?'1':'0'}).join('');
+      b.mesh.geometry=shapedBox(mask);
+    }else b.mesh.geometry=geo;
+  }
+  const seen=new Set();for(const b of blocks)if(b.alive&&isPiece(b)&&!seen.has(b.group)){seen.add(b.group);applySmooth(b.group)}
+}
+// Inside corners: where a fused piece bends (an L-shape), the two outer faces meet in a sharp inner crease.
+// A small rounded fillet fills that crease so every corner of the brick is soft, inside and out.
+let filletGeos={};
+function filletGeo(len){
+  if(filletGeos[len])return filletGeos[len];
+  const r=.11,sh=new THREE.Shape();
+  sh.moveTo(-.01,-.01);sh.lineTo(r,-.01);sh.lineTo(r,0);sh.absarc(r,r,r,-Math.PI/2,-Math.PI,true);sh.lineTo(-.01,r);sh.lineTo(-.01,-.01);
+  const g=new THREE.ExtrudeGeometry(sh,{depth:len,bevelEnabled:false,curveSegments:10});g.translate(0,0,-len/2);
+  return filletGeos[len]=g;
+}
+function addFillets(){
+  const inG=(b,p)=>{const o=occ.get(K(...p));return o&&o.alive&&o.group===b.group};
+  const len=.985-2*.11*.85;
+  for(const b of blocks){if(!b.alive||!isFused(b))continue;
+    const blank=(b.mesh.material.find&&b.mesh.material.find(m=>m.userData&&m.userData.kind==='blank'))||b.mesh.material[0];
+    for(let i=0;i<6;i++)for(let j=0;j<6;j++){
+      const d1=DIRS[i],d2=DIRS[j];if(dot(d1,d2)!==0||i>j)continue;
+      const p1=[b.c[0]+d1[0],b.c[1]+d1[1],b.c[2]+d1[2]],p2=[b.c[0]+d2[0],b.c[1]+d2[1],b.c[2]+d2[2]],
+            pe=[p1[0]+d2[0],p1[1]+d2[1],p1[2]+d2[2]];
+      if(!inG(b,p1)||!inG(b,p2)||inG(b,pe))continue; // an L of three cubes with b in the middle, and the fourth spot open
+      const d3=crossV(d1,d2),m=new THREE.Mesh(filletGeo(len),blank);
+      // shape x -> d1, shape y -> d2, length -> d3; the crease sits where b's two neighbors' faces meet
+      m.matrixAutoUpdate=false;
+      const o=[d1[0]*.4925+d2[0]*.4925,d1[1]*.4925+d2[1]*.4925,d1[2]*.4925+d2[2]*.4925];
+      m.matrix.set(d1[0],d2[0],d3[0],o[0], d1[1],d2[1],d3[1],o[1], d1[2],d2[2],d3[2],o[2], 0,0,0,1);
+      b.mesh.add(m);bridges.push(m);
+    }
+  }
+}
+// small visual touches: a landing squash and a gentle pulse
+function squash(b){if(isPiece(b))return;tweens.push({t:0,dur:.16,step:k=>{if(!b.busy)b.mesh.scale.setScalar(1-.05*Math.sin(k*Math.PI))},end:()=>b.mesh.scale.setScalar(1)})}
+function pulse(b,amt,dur){tweens.push({t:0,dur,step:k=>b.mesh.scale.setScalar(1+amt*Math.sin(k*Math.PI)),end:()=>b.mesh.scale.setScalar(1)})}
+// on gravity levels a wrong order can leave nothing that can move; say so gently
+function checkStuck(){
+  if(!gravity||clearing)return;
+  const can=blocks.some(b=>{
+    if(!b.alive||(b.lockKey&&b.lockKey.alive))return false;
+    const unit=unitOf(b);
+    const dirsToTry=b.axis?[0,1,2,3].map(k=>{let d=b.d;for(let t=0;t<k;t++)d=turn(d,b.axis);return d}):[b.d];
+    return dirsToTry.some(d=>unit.every(u=>!rayHit(u,d,unit)));
+  });
+  document.getElementById('stuck').hidden=can;
+}
+// a blocked cube's reaction: a tiny rattle if the cube in the way is right next to it,
+// or a scoot, bonk and dizzy wobble if it traveled first
+function bumpAnim(b,hit,withSound,dir,solid){
+  const dv=new THREE.Vector3(...(dir||b.d));
+  b.busy=true;const home=b.home.clone(),q0=b.mesh.quaternion.clone();
+  let side=new THREE.Vector3().crossVectors(dv,new THREE.Vector3(0,1,0));if(side.lengthSq()<.5)side.set(1,0,0);side.normalize();
+  const side2=new THREE.Vector3().crossVectors(dv,side).normalize();
+  const tilt=solid?()=>{}:(ang,ang2=0)=>b.mesh.quaternion.copy(q0)
+    .premultiply(new THREE.Quaternion().setFromAxisAngle(side,ang))
+    .premultiply(new THREE.Quaternion().setFromAxisAngle(side2,ang2));
+  const done=()=>{b.mesh.position.copy(home);b.mesh.quaternion.copy(q0);b.busy=false};
+  if(hit===1){
+    if(withSound)thump(0);
+    tweens.push({t:0,dur:.34,step:k=>{const damp=1-k;
+      b.mesh.position.copy(home).addScaledVector(dv,.035*Math.sin(k*Math.PI*7)*damp);
+      tilt(.035*Math.sin(k*Math.PI*9+1)*damp)},end:done});
+  }else{
+    const go=hit-1+.05,tGo=.14+go*.06,tRecoil=.16,tDaze=.6,tBack=.32+go*.06,total=tGo+tRecoil+tDaze+tBack;
+    if(withSound)thump(tGo,true);
+    tweens.push({t:0,dur:total,step:k=>{
+      const s=k*total;let d=0,a1=0,a2=0,sc=1;
+      if(s<tGo){const u=s/tGo;d=go*u*u}
+      else if(s<tGo+tRecoil){const u=(s-tGo)/tRecoil;d=go-.2*Math.sin(u*Math.PI/2);a1=-.16*Math.sin(u*Math.PI);sc=1-.06*Math.sin(u*Math.PI)}
+      else if(s<tGo+tRecoil+tDaze){const u=(s-tGo-tRecoil)/tDaze;d=go-.2;const env=Math.sin(u*Math.PI)*(1-u*.5),ph=u*Math.PI*4;a1=.09*Math.sin(ph)*env;a2=.09*Math.cos(ph)*env}
+      else{const u=(s-tGo-tRecoil-tDaze)/tBack;const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;d=(go-.2)*(1-e)}
+      b.mesh.position.copy(home).addScaledVector(dv,d);tilt(a1,a2);if(!solid)b.mesh.scale.setScalar(sc);
+    },end:()=>{b.mesh.scale.setScalar(1);done()}});
+  }
+}
+// a lock just opened: the cube gives the same dazed wobble as after a long-distance bump, right where it sits.
+// It only tilts (never moves), so it can't fight a fall that starts at the same moment.
+function unlockWobble(b){
+  const dv=new THREE.Vector3(...b.d);let side=new THREE.Vector3().crossVectors(dv,new THREE.Vector3(0,1,0));
+  if(side.lengthSq()<.5)side.set(1,0,0);side.normalize();const side2=new THREE.Vector3().crossVectors(dv,side).normalize();
+  const q0=b.mesh.quaternion.clone(),dur=.6,qa=new THREE.Quaternion(),qb=new THREE.Quaternion(),w={q0,stop:false};b.wobble=w;
+  // Neon: the whole cube lights up white for the wobble (fading in and out), so you can spot which one opened
+  let glow=null;
+  if(theme==='neon'){glow=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));
+    glow.scale.setScalar(1.03);glow.renderOrder=2;b.mesh.add(glow);
+    tweens.push({t:0,dur:dur+.25,step:u=>{glow.material.opacity=.9*Math.sin(Math.min(1,u)*Math.PI)},end:()=>{b.mesh.remove(glow);glow.material.dispose()}})}
+  tweens.push({t:0,dur,step:u=>{if(w.stop)return;const env=Math.sin(u*Math.PI)*(1-u*.5),ph=u*Math.PI*4;
+    b.mesh.quaternion.copy(q0).premultiply(qa.setFromAxisAngle(side,.09*Math.sin(ph)*env)).premultiply(qb.setFromAxisAngle(side2,.09*Math.cos(ph)*env))},
+    end:()=>{if(!w.stop)b.mesh.quaternion.copy(q0);if(b.wobble===w)b.wobble=null}});
+}
+// if the cube gets turned while it's still wobbling, settle it first so the turn starts from its true angle
+function endWobble(b){if(b.wobble){b.wobble.stop=true;b.mesh.quaternion.copy(b.wobble.q0);b.wobble=null}}
+// a locked cube: a short side-to-side jiggle and a little metal clink, no bump counted
+function lockedJiggle(b){
+  if(b.busy)return;b.busy=true;const home=b.home.clone();
+  const side=new THREE.Vector3(...(b.arrowFace||[1,0,0]));
+  lockSound();
+  tweens.push({t:0,dur:.3,step:k=>{b.mesh.position.copy(home).addScaledVector(side,.03*Math.sin(k*Math.PI*6)*(1-k))},end:()=>{b.mesh.position.copy(home);b.busy=false}});
+}
+function spin(b){
+  endWobble(b);saveUndo();b.busy=true;click();
+  const q0=b.mesh.quaternion.clone();
+  const qa=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(...b.axis),Math.PI/2);
+  const q1=qa.clone().multiply(q0);
+  b.d=turn(b.d,b.axis);
+  tweens.push({t:0,dur:.28,step:k=>THREE.Quaternion.slerp(q0,q1,b.mesh.quaternion,ease(k)),end:()=>{b.mesh.quaternion.copy(q1);b.busy=false}});
+}
+const CHEERS=['Smooth moves.','The cubes never stood a chance.','Tidy. Very tidy.','Somebody’s been practicing.',
+  'Not a block left standing.','Spatial genius, clearly.','Okay, show-off.','That one fought back. You won.',
+  'Your brain says thanks.','Easy, right? Don’t answer that.','Took that apart like a pro.','Gone. Every last one.',
+  'Clean sweep.','Now you’re just bragging.','Cube whisperer.','Flawless dismantling.',
+  'Pulled it off. Nailed it.','Did you even break a sweat?','The cubes have filed a complaint.','Someone call IKEA. They need you.',
+  'Spatial reasoning: unlocked.','Smooth as butter.','Pure pull power.','Look at you go.',
+  'Took you long enough. Kidding!','Gravity is jealous.','Not even close. In a good way.','Tidy mind, tidy cubes.',
+  'Cubes: 0. You: 1.','You make it look easy.','Somewhere, a Rubik’s Cube is nervous.','Is that a new record? Probably.',
+  'Brains AND good looks.','Ten out of ten. No notes.','That was oddly satisfying.','You and cubes? Iconic.',
+  'Physics teachers everywhere: impressed.','Unboxed. Literally.','Show those cubes who’s boss.','Absolutely unbothered.',
+  'Big brain energy.','The puzzle never saw it coming.','Is there anything you can’t take apart?','Main character moment.',
+  'Every cube accounted for.','Legend status: confirmed.','Cubes, meet your match.','That’s how it’s done.',
+  'Speed? Style? Both.','Okay, genius.'];
+let lastCheer=-1,bumps=0,startBlocks=1;
+// shown instead when a level took a lot of bumps: teasing, never mean
+const SASS=['Took the scenic route, huh?','Bump. Bump. Bump. Done!','Those cubes will need a nap.','Subtle. Very subtle.',
+  'Bonk count: impressive.','Who needs a plan anyway?','Brute force is still a strategy.','The cubes felt every one of those.',
+  'You won! The cubes are a little bruised.','Efficiency was optional, apparently.','Bumper cars champion.','Well, that’s one way to do it.'];
+// a fixed shuffle (same every time), so level 7 always says the same thing and old and new lines are mixed
+const CHEER_ORDER=(()=>{const r=rng(2026),o=CHEERS.map((_,i)=>i);for(let i=o.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[o[i],o[j]]=[o[j],o[i]]}return o})();
+function win(){
+  // the gravity floor fades away as the level clears, so the message reads cleanly
+  if(floorMesh){const f=floorMesh,mats=[...new Set(f.material)];mats.forEach(m=>{m.transparent=true;m.depthWrite=false});
+    tweens.push({t:-.15,dur:.55,step:k=>{const o=1-ease(Math.max(0,k));mats.forEach(m=>m.opacity=o)},end:()=>{if(floorMesh===f){body.remove(f);floorMesh=null}}})}
+  // every puzzle has its own line: 50 lines, one per level, scattered by a fixed shuffle
+  const c=CHEER_ORDER[levelIdx%CHEER_ORDER.length];lastCheer=c;
+  // lots of bumps on this level? a playful jab instead of the usual cheer
+  // 3 bumps earns a sarcastic line on smaller levels; bigger levels allow about 1 bump per 8 cubes
+  const bumpy=bumps>=Math.max(3,Math.ceil(startBlocks/8));
+  // level 1 always gets the same friendly line
+  document.querySelector('#done b').textContent=levelIdx===0?'Ooo, nice one.':bumpy?SASS[(levelIdx+bumps)%SASS.length]:CHEERS[c];
+  // the cheer takes a different color each time, from the current theme's palette (never the same twice in a row)
+  {const pal=cheerPalette();cheerColorIdx=(cheerColorIdx+1+Math.floor(Math.random()*(pal.length-1)))%pal.length;document.querySelector('#done b').style.color=pal[cheerColorIdx]}
+  // tap count for this clear, compared with the best so far on this level
+  // best = fewest total moves (pulls + taps + oops)
+  const moves=pulls+taps+oopsCount(),prev=bestTaps[levelIdx],isBest=prev===undefined||moves<prev;
+  lvAdd(levelIdx,'c',1); // one more clear of this level
+  if(isBest){bestTaps[levelIdx]=moves;try{localStorage.setItem('pa2_besttaps',JSON.stringify(bestTaps))}catch(e){}}
+  const tl=document.getElementById('tapsLine');
+  // the "Best" part stands out in a color from the current theme's palette
+  const bestBit=(main,extra)=>{const f=document.createDocumentFragment();f.append(main);
+    if(extra){const sp=document.createElement('span');sp.textContent=extra;sp.style.color=BEST_COLOR[theme]||BEST_COLOR.plain;f.append(sp)}return f};
+  const parts=[stat(pulls,'Pull')];if(taps||blocks.some(b=>b.dotFace))parts.push(stat(taps,'Tap'));parts.push(stat(oopsCount(),'Bump'));
+  // two lines with a little breathing room between them: the counts, then the total moves and best
+  const l1=document.createElement('div');l1.textContent=parts.join('  ·  ');
+  const l2=document.createElement('div');l2.className='movesline';const mv=document.createElement('span');mv.textContent=stat(moves,'Move');mv.style.color=movesColor();
+  l2.append(bestBit(mv,prev===undefined?'':isBest?'  ·  New best!':'  ·  Best: '+prev));
+  tl.replaceChildren(l1,l2);
+  tl.classList.remove('best');
+  // time is always recorded, but only shown when the player has turned the timer on
+  pauseTimer();const ms=timeMs,pt=bestTimes[levelIdx],tBest=pt===undefined||ms<pt;
+  bankPlay(ms);timeMs=0; // add this level's time to the total (and don't count it twice)
+  if(tBest){bestTimes[levelIdx]=Math.round(ms);try{localStorage.setItem('pa2_besttimes',JSON.stringify(bestTimes))}catch(e){}}
+  const tm=document.getElementById('timeLine');
+  tm.hidden=!showTimer;
+  tm.replaceChildren(bestBit('Time '+fmtTime(ms),pt===undefined?'':tBest?'  ·  New best time!':'  ·  Best: '+fmtTime(pt)));
+  tm.classList.remove('best');
+  chime(.4); // lands as the message fades in
+  clearing=true;if(levelIdx+1>best)best=levelIdx+1; // clearing a level unlocks the next one
+  try{localStorage.setItem('pa3_unlocked',best)}catch(e){}
+  refreshNav();
+  // what tapping does next: the next level, the upgrade screen, or (after level 50) the level picker
+  const atEnd=levelIdx+1>=(devMode?50:maxLevel());
+  document.querySelector('#done small').textContent=!atEnd?'Tap to continue':tier==='full'?'All 50 levels cleared! Tap to pick any level':'Tap to unlock more levels';
+  // the message stays until the player taps or clicks anywhere
+  // the message and stats appear first; the continue button joins after a pause so there's time to read them
+  setTimeout(()=>{if(clearing)document.getElementById('done').classList.add('show')},450);
+  clearTimeout(readyTimer);readyTimer=setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('ready');waiting=true}},2800);
+}
+let waiting=false,readyTimer=0;
+function advance(){
+  if(!waiting)return;waiting=false;pageTurn();
+  if(levelIdx+1>=(devMode?50:maxLevel())){load(levelIdx);if(tier==='full')openLevels();else openUpgrade();return} // end of this version
+  load(levelIdx+1);
+}
+// next arrow: on to an unlocked level, or, at the end of the free or $0.99 levels, the upgrade screen
+const nextAllowed=()=>TESTING||levelIdx<topLevel();
+const nextUpsell=()=>!devMode&&tier!=='full'&&capCleared()&&levelIdx===maxLevel()-1;
+function refreshNav(){document.getElementById('next').disabled=!(nextAllowed()||nextUpsell())}
+document.addEventListener('pointerup',e=>{if(waiting&&!e.target.closest('button'))advance()});
+document.addEventListener('keydown',e=>{if(waiting&&(e.key==='Enter'||e.key===' ')){e.preventDefault();advance()}});
+
+/* ---------- input ---------- */
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+let down=null,dragging=false,last=null;
+const el=renderer.domElement;
+// every finger currently on the screen, so two fingers can pinch to zoom
+const touches=new Map();let pinchDist=0,pinched=false;
+const fingerGap=()=>{const [a,b]=[...touches.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
+el.addEventListener('pointerdown',e=>{
+  startTimer(); // the clock starts with the first touch on the puzzle, not when the level appears
+  audio();touches.set(e.pointerId,{x:e.clientX,y:e.clientY});el.setPointerCapture(e.pointerId);
+  if(touches.size===2){pinchDist=fingerGap();pinched=true;dragging=true;return} // second finger: start pinching
+  if(touches.size>2)return;
+  down={x:e.clientX,y:e.clientY};last={...down};dragging=false;pinched=false;
+});
+el.addEventListener('pointermove',e=>{
+  if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(touches.size>=2){
+    // pinch: spreading fingers zooms in, pinching them together zooms out
+    const d=fingerGap();if(pinchDist>0&&d>0){camDist=Math.min(80,Math.max(3,camDist*pinchDist/d));fitCam()}
+    pinchDist=d;return;
+  }
+  if(!down)return;const dx=e.clientX-last.x,dy=e.clientY-last.y;
+  if(!dragging&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>6)dragging=true;
+  if(dragging){
+    glow=Math.min(1,glow+Math.hypot(dx,dy)*.012); // turning the puzzle charges the neon glow
+    pivot.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dx*.009))
+      .premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*.009));
+  }
+  last={x:e.clientX,y:e.clientY};
+});
+function liftFinger(e){
+  touches.delete(e.pointerId);
+  if(pinched){
+    // after a pinch, the finger still down keeps turning the puzzle from where it is, with no jump or tap
+    if(touches.size===1){const p=[...touches.values()][0];down={...p};last={...p};dragging=true}
+    else{down=null;pinched=false}
+    return true;
+  }
+  return false;
+}
+el.addEventListener('pointercancel',e=>{liftFinger(e);if(!touches.size)down=null});
+el.addEventListener('pointerup',e=>{
+  if(liftFinger(e))return;
+  if(down&&!dragging){
+    const r=el.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+    ray.setFromCamera(ndc,camera);
+    const hits=ray.intersectObjects(blocks.filter(b=>b.alive).map(b=>b.mesh));
+    if(hits.length){
+      const h=hits[0],b=h.object.userData.b;
+      if(!b.busy){
+        const kind=b.mesh.material[h.face.materialIndex].userData.kind;
+        // a dot tap counts as a Tap; arrow taps count as a Pull, a Bump, or (on a locked cube) a Tap inside slide()
+        if(kind==='dot'&&!clearing){taps++;addTotal('taps');updateLeft()}
+        if(kind==='dot')spin(b);else if(kind!=='blank')slide(b); // only the arrow slides a block
+      }
+    }
+  }
+  down=null;
+});
+el.addEventListener('wheel',e=>{e.preventDefault();camDist=Math.min(80,Math.max(3,camDist*(1+e.deltaY*.001)));fitCam()},{passive:false});
+
+// volume sliders: changes are heard right away; releasing the effects slider plays a sample bump
+const sfxSlider=document.getElementById('sfxVol'),musSlider=document.getElementById('musicVol');
+sfxSlider.value=sfxVol;musSlider.value=musicVol;
+sfxSlider.addEventListener('input',()=>{audio();setVol('sfx',+sfxSlider.value)});
+sfxSlider.addEventListener('change',()=>{const a=audio();if(a&&sfxVol>0)bumpSound('Pillow').play(a,a.currentTime+.02)});
+musSlider.addEventListener('input',()=>{audio();setVol('music',+musSlider.value)});
+// level timer show/hide (hidden by default, so nobody feels rushed)
+// the credit under the wordmark: 11px, shrinking only if it would ever without running past the end of SMART·PULL
+function fitCredit(){const m=document.querySelector('.mark'),c=document.querySelector('.credit');if(!m||!c)return;
+  let fs=11;c.style.fontSize=fs+'px';while(fs>7&&c.scrollWidth>m.getBoundingClientRect().width){fs-=.25;c.style.fontSize=fs+'px'}}
+fitCredit();addEventListener('resize',fitCredit);
+try{document.fonts.ready.then(fitCredit);document.fonts.addEventListener('loadingdone',fitCredit)}catch(e){}
+/* ---------- scorecard ---------- */
+const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack · $0.99','Levels 11–25',10,25],['full','Complete · $1.99','Levels 26–50',25,50]];
+function openScorecard(){
+  [panel,themesPanel,lvPanel].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
+  bankPlay(elapsed());if(timeStart!==null)timeStart=performance.now();timeMs=0; // count the time on the current level so far
+  const sc=statColors(),pal={plain:['#007493','#D9661E','#8C8410'],brand:['#F17B31','#007493','#C0B50A'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007493','#D9661E','#8C8410'];
+  const owned=v=>devMode||TIERS[tier].max>=TIERS[v].max;
+  const fmtLong=ms=>{const m=Math.floor(ms/60000),h=Math.floor(m/60);return h?h+'h '+(m%60)+'m':m+'m '+Math.floor(ms/1000)%60+'s'};
+  const box=document.getElementById('scCards');box.innerHTML='';
+  SC_VERSIONS.forEach(([v,name,range,a,z],i)=>{
+    let p=0,t=0,b=0,ms=0,cleared=0,bestSum=0;
+    for(let L=a;L<z;L++){const o=lvStats[L]||{};p+=o.p||0;t+=o.t||0;b+=o.b||0;ms+=o.ms||0;if(bestTaps[L]!==undefined){cleared++;bestSum+=bestTaps[L]}}
+    const n=z-a,c=document.createElement('div');c.className='sccard'+(owned(v)?'':' locked');c.style.setProperty('--sc',pal[i]);
+    const cell=(val,lab,col)=>`<div><b${col?` style="color:${col}"`:''}>${val}</b><span>${lab}</span></div>`;
+    c.innerHTML=`<div class="schead"><span>${name}</span><small>${owned(v)?range:'🔒 '+range}</small></div>
+      <div class="scbar" aria-hidden="true"><i style="width:${Math.round(100*cleared/n)}%"></i></div>
+      <div class="scgrid">${cell(cleared+' / '+n,'Cleared')+cell(cleared?bestSum:'–','Best moves')+cell(fmtLong(ms),'Time')+cell(p,'Pulls',sc.pulls)+cell(t,'Taps',sc.taps)+cell(b,'Bumps',sc.bumps)}</div>`;
+    if(!owned(v)){const u=document.createElement('button');u.className='opt';u.type='button';u.textContent='Unlock';u.style.alignSelf='flex-start';u.onclick=()=>{closeScorecard();openUpgrade()};c.appendChild(u)}
+    box.appendChild(c)});
+  const note=document.createElement('div');note.className='scnote';note.textContent='Best moves adds up your fewest moves on each level you’ve cleared. Lower is better.';box.appendChild(note);
+  document.getElementById('scorecard').hidden=false;
+}
+function closeScorecard(){document.getElementById('scorecard').hidden=true}
+document.getElementById('scoreOpen').onclick=openScorecard;document.getElementById('scClose').onclick=closeScorecard;
+document.getElementById('scorecard').addEventListener('click',e=>{if(e.target.id==='scorecard')closeScorecard()});
+// full screen: offered on computers and other web browsers, never on iPhone or iPad (iPads report themselves as Macs, so touch gives them away)
+(function(){const btn=document.getElementById('fsBtn');if(!btn)return;
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&(navigator.maxTouchPoints>1||'ontouchend' in document));
+  const de=document.documentElement,req=de.requestFullscreen||de.webkitRequestFullscreen,
+    ok=!!req&&(document.fullscreenEnabled||document.webkitFullscreenEnabled);
+  const land=()=>matchMedia('(orientation: landscape)').matches;
+  // iPhone and iPad: no real full screen, so the button is "immersive" and only shows in landscape
+  if(ios){
+    const sync=()=>{const on=de.classList.contains('immersive');
+      if(!land()&&on){de.classList.remove('immersive');}
+      btn.hidden=!land();btn.setAttribute('aria-pressed',de.classList.contains('immersive')?'true':'false');
+      btn.setAttribute('aria-label',de.classList.contains('immersive')?'Exit full screen':'Full screen');resize()};
+    btn.addEventListener('click',e=>{e.stopPropagation();de.classList.toggle('immersive');window.scrollTo(0,1);sync()});
+    ['pointerdown','pointerup'].forEach(ev=>btn.addEventListener(ev,e=>e.stopPropagation()));
+    addEventListener('resize',sync);addEventListener('orientationchange',()=>setTimeout(sync,300));
+    sync();return;
+  }
+  if(!ok)return; // no button where full screen isn't available
+  btn.hidden=false;
+  const isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+  const sync=()=>{btn.setAttribute('aria-pressed',isFs()?'true':'false');btn.setAttribute('aria-label',isFs()?'Exit full screen':'Full screen')};
+  btn.addEventListener('click',e=>{e.stopPropagation();
+    if(isFs())(document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    else{const r=req.call(de);if(r&&r.catch)r.catch(()=>{})}});
+  ['pointerdown','pointerup'].forEach(ev=>btn.addEventListener(ev,e=>e.stopPropagation()));
+  document.addEventListener('fullscreenchange',sync);document.addEventListener('webkitfullscreenchange',sync);
+})();
+// the timer's show/hide button, right beside the timer
+document.getElementById('timerBtn').addEventListener('click',e=>{e.stopPropagation();showTimer=!showTimer;
+  try{localStorage.setItem('pa2_showtimer',showTimer?'1':'0')}catch(err){}updateLeft();tick()});
+['pointerdown','pointerup'].forEach(ev=>document.getElementById('timerBtn').addEventListener(ev,e=>e.stopPropagation()));
+showTotal();
+/* ---------- level picker, two ways (both on, to compare) ----------
+   1. Swipe: drag up or down on "Level #" and it rolls through your unlocked levels like a dial.
+   2. Wheel: tap "Level #" to open an iPhone-style wheel; scroll it and tap Play. */
+const lvBtn=document.getElementById('lvl'),lvPanel=document.getElementById('levels');
+const ROW=44; // height of one wheel row
+function tick(){ // the tiniest click as the dial or wheel passes each level
+  if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  hiss(a,'bandpass',3200,3200,4,t,.018,.05,.001);
+}
+function closeLevels(){lvPanel.hidden=true;lvBtn.setAttribute('aria-expanded','false')}
+let wheelPick=0,wheelLast=-1;
+function openLevels(){
+  panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');
+  themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false');
+  const list=document.getElementById('wheel');list.innerHTML='';
+  const pad=()=>{const s=document.createElement('div');s.className='wpad';return s};
+  list.appendChild(pad());
+  for(let i=0;i<=topLevel();i++){
+    const r=document.createElement('div');r.className='wrow';r.dataset.i=i;
+    r.innerHTML='<span class="wlv">Level '+(i+1)+'<small>'+groupOf(i)+'</small></span><em>'+(i<best?'✓':'new')+'</em>';
+    // tapping any level picks it right away (no need to press Select): it rolls to the middle, then opens
+    r.onclick=()=>{list.scrollTo({top:i*ROW,behavior:'smooth'});tick();
+      setTimeout(()=>{closeLevels();if(i!==levelIdx){pageTurn();load(i)}},220)};list.appendChild(r);
+  }
+  if(tier!=='full'&&!devMode){const r=document.createElement('div');r.className='wrow lock';r.dataset.i='more';
+    r.innerHTML='<span>More levels</span><em>🔒</em>';r.onclick=()=>{closeLevels();openUpgrade()};list.appendChild(r)}
+  list.appendChild(pad());
+  lvPanel.hidden=false;lvBtn.setAttribute('aria-expanded','true');
+  wheelPick=levelIdx;wheelLast=levelIdx;list.scrollTop=levelIdx*ROW;styleWheel();
+}
+function styleWheel(){
+  // rows fade and shrink the farther they sit from the middle, like a real picker wheel
+  const list=document.getElementById('wheel'),mid=list.scrollTop/ROW;
+  list.querySelectorAll('.wrow').forEach((r,k)=>{const d=Math.abs(k-mid);
+    r.style.opacity=Math.max(.15,1-d*.32);r.style.transform='scale('+Math.max(.78,1-d*.08)+')';r.classList.toggle('on',d<.5)});
+  const n=Math.round(mid);
+  if(n<=topLevel()){wheelPick=n;if(n!==wheelLast){wheelLast=n;tick()}}
+}
+document.getElementById('wheel').addEventListener('scroll',styleWheel,{passive:true});
+document.getElementById('wheelGo').onclick=()=>{
+  const n=Math.round(document.getElementById('wheel').scrollTop/ROW);closeLevels();
+  if(n>topLevel()){openUpgrade();return}
+  if(wheelPick!==levelIdx){pageTurn();load(wheelPick)}
+};
+document.addEventListener('pointerdown',e=>{if(!lvPanel.hidden&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
+// swipe dial on the level name: about every 26px of drag moves one level; letting go opens that level.
+// A tap without dragging opens the wheel instead.
+let dial=null;
+lvBtn.addEventListener('pointerdown',e=>{dial={y:e.clientY,start:levelIdx,cur:levelIdx,moved:false};lvBtn.setPointerCapture(e.pointerId)});
+lvBtn.addEventListener('pointermove',e=>{
+  if(!dial)return;const dy=dial.y-e.clientY;if(Math.abs(dy)>6)dial.moved=true;if(!dial.moved)return;
+  const n=Math.max(0,Math.min(topLevel(),dial.start+Math.round(dy/26)));
+  // the label slides a little with your finger, then snaps to each new number
+  const off=Math.max(-10,Math.min(10,-(dy-(n-dial.start)*26)*.4));
+  lvBtn.firstChild.style.transform='translateY('+off+'px)';
+  if(n!==dial.cur){dial.cur=n;lvLabel(n);tick()}
+});
+const endDial=()=>{
+  if(!dial)return;const d=dial;dial=null;lvBtn.firstChild.style.transform='';
+  if(!d.moved){lvPanel.hidden?openLevels():closeLevels();return}
+  if(d.cur!==levelIdx){pageTurn();load(d.cur)}else lvLabel(levelIdx);
+};
+lvBtn.addEventListener('pointerup',endDial);lvBtn.addEventListener('pointercancel',endDial);
+document.getElementById('prev').onclick=()=>{if(levelIdx>0){pageTurn();load(levelIdx-1)}};
+document.getElementById('next').onclick=()=>{if(nextAllowed()){pageTurn();load(levelIdx+1)}else if(nextUpsell())openUpgrade()};
+/* upgrade screen: shows the paid versions you don't have yet */
+const upPanel=document.getElementById('upgrade');
+function openUpgrade(){
+  [panel,themesPanel,lvPanel].forEach(p=>{if(p)p.hidden=true});
+  ['tune','paint','lvl'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
+  document.getElementById('up-plus').hidden=tier!=='free';
+  document.getElementById('up-full-note').hidden=tier!=='plus';
+  upPanel.hidden=false;
+}
+function closeUpgrade(){upPanel.hidden=true}
+document.getElementById('upClose').onclick=closeUpgrade;
+upPanel.addEventListener('pointerdown',e=>{if(e.target===upPanel)closeUpgrade()});
+/* Version (preview): try Free, $0.99 and $1.99 without buying anything */
+function setTier(t){
+  tier=t;try{localStorage.setItem('pa2_tier',t)}catch(e){}
+  document.querySelectorAll('#optTier .opt').forEach((b,i)=>b.setAttribute('aria-pressed',['free','plus','full'][i]===t?'true':'false'));
+  refreshThemeLocks();if(!themeOK(theme))setTheme('plain');
+  if(levelIdx>topLevel())load(topLevel());else refreshNav();
+}
+// Developer Mode switch: On opens every level in the level picker and the next arrow
+// Developer Mode: type any level number to jump straight to it
+document.getElementById('devJump').hidden=!devMode;
+// Developer Mode: preview the floor looks for whichever theme is showing
+function refreshLinkOpts(){
+  const row=document.getElementById('devLink'),box=document.getElementById('optLink');if(!row)return;
+  row.hidden=!devMode;box.innerHTML='';
+  // (also re-dress linked pairs, since turning Developer Mode on or off switches the preview on or off)
+  if(typeof blocks!=='undefined'&&blocks.length){for(const c of blocks)if(c.alive&&c.group&&!c.fuseColor)c.mesh.material=materialsFor(c);updateBridges()}
+  [['Frames',false],['One piece',true]].forEach(([label,val])=>{const b=document.createElement('button');b.className='opt';b.textContent=label;
+    b.setAttribute('aria-pressed',linkPiece===val?'true':'false');
+    b.onclick=()=>{linkPiece=val;try{localStorage.setItem('pa2_linkpiece',val?'1':'0')}catch(e){}
+      refreshLinkOpts()};
+    box.appendChild(b)});
+}
+function refreshFloorOpts(){
+  refreshLinkOpts();
+  const row=document.getElementById('devFloor'),box=document.getElementById('optFloor');if(!row)return;
+  row.hidden=!devMode||FLOOR_OPTS[theme].length<2;box.innerHTML=''; // nothing to choose in a theme with one floor
+  const names={plain:{A:'Gray'},brand:{A:'White'},neon:{A:'Grid'}}[theme];
+  FLOOR_OPTS[theme].forEach(k=>{const b=document.createElement('button');b.className='opt';b.id='optFloor-'+k;b.textContent=names[k];
+    b.setAttribute('aria-pressed',floorStyle()===k?'true':'false');
+    b.onclick=()=>{floorPick[theme]=k;try{localStorage.setItem('pa2_floor',JSON.stringify(floorPick))}catch(e){}buildFloor();refreshFloorOpts()};
+    box.appendChild(b)});
+}
+refreshFloorOpts();
+document.getElementById('undo').hidden=!devMode;
+document.getElementById('devJump').addEventListener('submit',e=>{e.preventDefault();
+  const n=Math.max(1,Math.min(50,Math.floor(+document.getElementById('devLevel').value)||1));
+  document.getElementById('devLevel').value=n;
+  panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');
+  pageTurn();load(n-1)});
+(function(){const box=document.getElementById('optDev');
+  [['On',true],['Off',false]].forEach(([label,val],i)=>{const b=document.createElement('button');b.className='opt';b.id='optDev-'+i;b.textContent=label;
+    b.setAttribute('aria-pressed',devMode===val?'true':'false');
+    b.onclick=()=>{devMode=val;try{localStorage.setItem('pa2_dev',val?'1':'0')}catch(e){}
+      box.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+      document.getElementById('devJump').hidden=!val;refreshFloorOpts();buildFloor();document.getElementById('undo').hidden=!val;
+      // Developer Mode opens every level and theme, so the Version preview has nothing to do and hides
+      document.getElementById('tierRow').hidden=val;refreshThemeLocks();if(!themeOK(theme))setTheme('plain');
+      if(levelIdx>topLevel())load(topLevel());else refreshNav()};
+    box.appendChild(b)})})();
+document.getElementById('tierRow').hidden=devMode;
+(function(){const box=document.getElementById('optTier');
+  [['free','Free'],['plus','$0.99'],['full','$1.99']].forEach(([id,label],i)=>{const b=document.createElement('button');b.className='opt';b.id='optTier-'+i;b.textContent=label;
+    b.setAttribute('aria-pressed',tier===id?'true':'false');b.onclick=()=>setTier(id);box.appendChild(b)})})();
+// a barely-there "page turn" when moving between levels: a breath of air and a soft, low blip
+function pageTurn(){
+  if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  hiss(a,'bandpass',900,1800,.8,t,.16,.022,.03);
+  tone(a,'sine',520,560,t,.12,.018,.02);
+}
+var resetZoom=false;
+document.getElementById('reset').onclick=()=>{rewind();resetZoom=true;load(levelIdx)};
+/* reset sounds to choose from (Settings → Reset); tap one to hear it */
+const RESETS=[
+  // a mechanical tape whirr: no squeal, just the hum of reels spinning up, then a soft stop
+  {name:'Whirr',play:(a,t)=>{
+    const n=a.createBufferSource();n.buffer=noiseBuf;
+    const f=a.createBiquadFilter();f.type='bandpass';f.Q.value=6;f.frequency.setValueAtTime(260,t);f.frequency.exponentialRampToValueAtTime(900,t+.5);
+    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.09,t+.12);g.gain.setValueAtTime(.09,t+.4);g.gain.linearRampToValueAtTime(0,t+.55);
+    n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+.57);
+    tone(a,'sine',90,180,t,.5,.05,.1);                    // motor hum rising underneath
+    tone(a,'triangle',120,80,t+.55,.06,.025,.004)}},     // soft stop
+  // a spinning reel: a smooth rising whir that gently pulses, like a spool winding back
+  {name:'Reel',play:(a,t)=>{
+    // the original Reel whir, just louder (peak .06 before, now .22)
+    const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(420,t+.5);
+    const trem=a.createGain();trem.gain.value=.7;const l=a.createOscillator();l.frequency.setValueAtTime(8,t);l.frequency.linearRampToValueAtTime(18,t+.5);
+    const la=a.createGain();la.gain.value=.3;l.connect(la).connect(trem.gain);
+    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.22,t+.08);g.gain.exponentialRampToValueAtTime(.001,t+.55);
+    o.connect(trem).connect(g).connect(sfxBus);[o,l].forEach(x=>{x.start(t);x.stop(t+.57)})}},
+  // a reverse whoosh: air that swells in and pulls back, like time running backwards
+  {name:'Swish back',play:(a,t)=>{
+    const n=a.createBufferSource();n.buffer=noiseBuf;const f=a.createBiquadFilter();f.type='bandpass';f.Q.value=.9;
+    f.frequency.setValueAtTime(2200,t);f.frequency.exponentialRampToValueAtTime(400,t+.45);
+    const g=a.createGain();g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(.1,t+.38);g.gain.linearRampToValueAtTime(0,t+.46);
+    n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+.48)}},
+  // a soft, round "boop" that dips, like the board settling back to the start
+  {name:'Boop',play:(a,t)=>{tone(a,'sine',520,330,t,.2,.08,.008);tone(a,'sine',1040,660,t,.09,.015,.008)}},
+];
+let resetIdx=0;try{resetIdx=Math.min(RESETS.length-1,+localStorage.getItem('pa3_reset')||0)}catch(e){}
+// reset always plays Reel
+function rewind(){if(!soundOn)return;const a=audio();if(a)RESETS.find(r=>r.name==='Reel').play(a,a.currentTime)}
+// the old cassette rewind, kept only for reference; not used
+function rewindOld(){
+  if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime,D=.6,s=t+.05;
+  // softened: rounder tone, lower pitch, gentler flutter, quieter, and rounded-off highs
+  const soft=a.createBiquadFilter();soft.type='lowpass';soft.frequency.value=1800;soft.Q.value=.5;soft.connect(sfxBus);
+  // REW button: a soft, muffled click
+  tone(a,'triangle',170,100,t,.05,.028,.004);hiss(a,'bandpass',1500,1500,1,t,.02,.03,.002);
+  // the tape whirring back: a warbly tone that rises, like garbled audio going backwards
+  const o=a.createOscillator();o.type='triangle';o.frequency.setValueAtTime(220,s);o.frequency.exponentialRampToValueAtTime(880,s+D);
+  const fm=a.createOscillator();fm.frequency.setValueAtTime(9,s);fm.frequency.linearRampToValueAtTime(17,s+D);
+  const fmAmt=a.createGain();fmAmt.gain.setValueAtTime(30,s);fmAmt.gain.linearRampToValueAtTime(110,s+D);fm.connect(fmAmt).connect(o.frequency);
+  const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=1.2;bp.frequency.setValueAtTime(600,s);bp.frequency.exponentialRampToValueAtTime(1500,s+D);
+  // a gentle flutter, like tape moving past the head
+  const trem=a.createGain();trem.gain.value=.75;const fl=a.createOscillator();fl.type='sine';fl.frequency.setValueAtTime(22,s);fl.frequency.linearRampToValueAtTime(32,s+D);
+  const flAmt=a.createGain();flAmt.gain.value=.25;fl.connect(flAmt).connect(trem.gain);
+  const env=a.createGain();env.gain.setValueAtTime(0,s);env.gain.linearRampToValueAtTime(.03,s+.1);env.gain.setValueAtTime(.03,s+D-.12);env.gain.linearRampToValueAtTime(0,s+D);
+  o.connect(bp).connect(trem).connect(env).connect(soft);
+  [o,fm,fl].forEach(n=>{n.start(s);n.stop(s+D+.02)});
+  hiss(a,'bandpass',2500,2500,.6,s,D,.008,.1); // a whisper of tape hiss
+  // deck stops: a soft thunk
+  tone(a,'triangle',140,75,s+D,.07,.03,.004);hiss(a,'bandpass',1200,1200,1,s+D,.025,.03,.002);
+}
+addEventListener('resize',resize);
+
+let prevT=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-prevT)/1000);prevT=now;
+  glow*=Math.pow(.15,dt); // fades out over about a second once you stop
+  for(const fm of floorGlowMats)fm.color.setScalar(blOn()?.7+.3*glow:.6); // Neon floor: dimmer without Blacklight, brighter while turning
+  if(bridgeMats)for(const k in bridgeMats){const m=bridgeMats[k];if(!m.userData.neonBridge)continue;
+    const sc=(blOn()?.82+.18*glow:.85)*neonFillA(blOn());m.color.copy(m.userData.neonBridge).multiplyScalar(sc)}
+  for(const m of glowMats){
+    // neon glyphs glow steadily, and flare a little brighter while turning when Blacklight is on
+    if(m.userData.neonBasic){m.color.setScalar(m.userData.fusedNeon?(blOn()?.94+.06*glow:1):(blOn()?.82+.18*glow:.85));continue}
+    m.emissiveIntensity=blOn()?(m.userData.glowBase||0)+glow*m.userData.glowMax:0;
+    if(!blOn()&&m.specular.getHex())m.specular.setHex(0)} // materials made after switching off stay matte too
+  tweens=tweens.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});
+  renderer.render(scene,camera);requestAnimationFrame(frame);
+}
+window.__test={buildLevel,firstHit,DIRS,turn,K};
+const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
+window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+})();
+</script>
