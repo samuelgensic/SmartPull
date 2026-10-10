@@ -1576,8 +1576,16 @@ function woosh(size){if(!soundOn)return;const a=audio();if(!a)return;const t=a.c
   heavyAir(a,500,180,.6,t,1,.1,.18);heavyAir(a,260,160,.5,t+.04,.9,.05,.2);heavyBody(a,70,46,t+.03,.9,.1,.15);heavyBody(a,140,92,t+.03,.75,.04,.13)}
 // bump = cube right next to another (Pillow); collide = it travelled to hit one farther away (Droplet). Pillow when the cube in the way is right next to it, Droplet when it had to travel to hit one
 const bumpSound=name=>BUMPS.find(b=>b.name===name);
-function thump(delay,far){if(!soundOn)return;const a=audio();if(!a)return;
-  bumpSound(far?'Droplet':'Pillow').play(a,a.currentTime+delay)} // bump (cube right next to another) = Pillow; collide (hits one farther away) = Droplet
+// Latch: two tiny clicks and a soft low ping, like a magnet catch. Smooth fade-outs, so no click at the end.
+function latchTick(a,f,q,t,dur,vol){const n=a.createBufferSource();n.buffer=noiseBuf;const fl=a.createBiquadFilter();fl.type='bandpass';fl.frequency.value=f;fl.Q.value=q;
+  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.002);g.gain.setTargetAtTime(0,t+.002,dur/5);n.connect(fl).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.08)}
+function latchPing(a,f,t,dur,vol){const o=a.createOscillator();o.type='sine';o.frequency.value=f;const g=a.createGain();
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.003);g.gain.setTargetAtTime(0,t+.003,dur/5);o.connect(g).connect(sfxBus);o.start(t);o.stop(t+dur+.1)}
+function latch(a,t){latchTick(a,2600,4,t,.025,.05);latchTick(a,1700,4,t+.04,.03,.04);latchPing(a,230,t+.04,.07,.045)}
+// bump (cube right next to another) = Pillow; collide (a cube glides, then hits one farther away) = Droplet with the Latch right behind it
+function thump(delay,far){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+delay;
+  if(!far){bumpSound('Pillow').play(a,t);return}
+  bumpSound('Droplet').play(a,t);latch(a,t+.12)}
 
 /* sound picker */
 const panel=document.getElementById('panel');
@@ -2687,7 +2695,7 @@ function frame(now){
   {const cur=tweens;tweens=[];const keep=cur.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});tweens=keep.concat(tweens)}
   renderer.render(scene,camera);requestAnimationFrame(frame);
 }
-window.__test={buildLevel,firstHit,DIRS,turn,K,woosh,audio,load,cheerPool,pickLine,cubes:()=>startBlocks};
+window.__test={buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
