@@ -374,7 +374,10 @@ function openTip(){const keys=TIP_AT[levelIdx];if(!keys)return;
   const body=document.getElementById('tipBody');body.replaceChildren(...keys.map(k=>{const d=document.createElement('div');d.className='tipitem';
     d.innerHTML='<div class="tipicon">'+(TIP_ICON[k]||'')+'</div><div><b></b><p></p></div>';if(keys.length>1)d.querySelector('b').textContent=TIPS[k].t;else d.querySelector('b').remove();d.querySelector('p').textContent=TIPS[k].x;return d}));
   tipSheet.hidden=false;keys.forEach(k=>tipsSeen[k]=1);try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}tipBtn.classList.remove('new');
-  if(typeof clickSound==='function')clickSound()}
+  tipSound()}
+// the tip opening: three quiet rising notes over a very faint airy shimmer
+function tipSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  [1046.5,1318.5,1568].forEach((f,i)=>tone(a,'sine',f,f,t+i*.055,.5,.022,.008));hiss(a,'highpass',6000,6000,.7,t,.25,.004,.05)}
 tipBtn.addEventListener('pointerdown',e=>e.stopPropagation());tipBtn.addEventListener('pointerup',e=>e.stopPropagation());
 tipBtn.onclick=e=>{e.stopPropagation();openTip()};
 document.getElementById('tipClose').onclick=e=>{e.stopPropagation();tipSheet.hidden=true};
