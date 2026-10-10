@@ -243,7 +243,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
     <div class="prow"><label class="plab" for="musicVol">Music volume</label><input class="vol" id="musicVol" type="range" min="0" max="100" step="1" value="70"></div>
     <div class="prow"><div class="plab">Sound effects</div><div class="opts" id="optSfx"></div></div>
     <div class="prow"><label class="plab" for="sfxVol">Effects volume</label><input class="vol" id="sfxVol" type="range" min="0" max="100" step="1" value="70"></div>
-    <div class="prow"><div class="plab">Bump &amp; collide sounds <small style="opacity:.6;font-weight:400">Bump: a cube right next to another. Collide: a cube hits one farther away.</small></div><div class="opts" id="optBump"></div></div>
+    
   </div>
   <div class="panel" id="panel" hidden>
     <div class="prow" id="tierRow"><div class="plab">Version (preview)</div><div class="opts" id="optTier"></div></div>
@@ -1479,9 +1479,9 @@ const PULLS=[
   {name:'Silk',       play:(a,t)=>WOOSHES[2].play(a,t)},
 ];
 const pullIdx=1; // Whisper is the one pull sound
-let bumpSel=0,musicIdx=0;
-try{const b=localStorage.getItem('pa3_bump2'),m=localStorage.getItem('pa3_track');
-  if(b!==null)bumpSel=Math.max(0,+b||0);if(m!==null)musicIdx=Math.max(0,+m||0)}catch(e){}
+let musicIdx=0;
+try{const m=localStorage.getItem('pa3_track');
+  if(m!==null)musicIdx=Math.max(0,+m||0)}catch(e){}
 let bumpIdx=0,wooshIdx=0;
 try{bumpIdx=Math.min(BUMPS.length-1,+localStorage.getItem('pa3_bump')||0);wooshIdx=Math.min(WOOSHES.length-1,+localStorage.getItem('pa3_woosh')||0)}catch(e){}
 // the pull sound follows the choice in the Sound panel
@@ -1489,8 +1489,7 @@ function woosh(){if(!soundOn)return;const a=audio();if(a)PULLS[pullIdx].play(a,a
 // bump = cube right next to another (Pillow); collide = it travelled to hit one farther away (Droplet). Pillow when the cube in the way is right next to it, Droplet when it had to travel to hit one
 const bumpSound=name=>BUMPS.find(b=>b.name===name);
 function thump(delay,far){if(!soundOn)return;const a=audio();if(!a)return;
-  if(bumpSel>0&&BUMPS[bumpSel-1]){BUMPS[bumpSel-1].play(a,a.currentTime+delay);return} // a chosen bump sound
-  bumpSound(far?'Droplet':'Pillow').play(a,a.currentTime+delay)} // standard: Pillow up close, Droplet from far away
+  bumpSound(far?'Droplet':'Pillow').play(a,a.currentTime+delay)} // bump (cube right next to another) = Pillow; collide (hits one farther away) = Droplet
 
 /* sound picker */
 const panel=document.getElementById('panel');
@@ -1583,11 +1582,6 @@ function refreshMusicOpts(){pressGroup('optMusic',musicOn?musicIdx+1:0)}
     b.onclick=()=>{if(i===0){setMusic(false)}else{musicIdx=i-1;try{localStorage.setItem('pa3_track',musicIdx)}catch(e){}
       if(mus)stopMusic();setMusic(true)}refreshMusicOpts()};mbox.appendChild(b)});
   refreshMusicOpts();
-  const bbox=document.getElementById('optBump');
-  ['Standard',...BUMPS.map(b=>b.name)].forEach((label,i)=>{const b=document.createElement('button');b.className='opt';b.id='optBump-'+i;b.textContent=label;
-    b.onclick=()=>{bumpSel=i;try{localStorage.setItem('pa3_bump2',i)}catch(e){}pressGroup('optBump',i);
-      const a=audio();if(a)(i>0?BUMPS[i-1]:bumpSound('Pillow')).play(a,a.currentTime+.02)};bbox.appendChild(b)});
-  pressGroup('optBump',Math.min(bumpSel,BUMPS.length));
 })();
 // sound effects on/off now lives in the settings panel
 (function(){const box=document.getElementById('optSfx');
