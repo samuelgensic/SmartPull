@@ -1860,13 +1860,21 @@ function undo(){
   occ.clear();const groups=new Map();
   blocks.forEach((b,i)=>{const s=st.cubes[i];
     Object.assign(b,{alive:s.alive,c:s.c,d:s.d,arrowFace:s.arrowFace,isKey:s.isKey,busy:false,group:null,unlocking:false});
-    b.home.copy(s.home);b.mesh.position.copy(s.home);b.mesh.quaternion.copy(s.q);b.mesh.scale.setScalar(1);
-    if(b.alive){if(!b.mesh.parent)body.add(b.mesh);occ.set(K(...b.c),b)}else if(b.mesh.parent)body.remove(b.mesh);
+    // the move plays backwards, quickly: cubes that left fly back in along their path, fallen or glided cubes slide back up, turned cubes turn back
+    const wasIn=!!b.mesh.parent,p0=b.mesh.position.clone(),q0=b.mesh.quaternion.clone(),sc0=wasIn?b.mesh.scale.x:.4;
+    b.home.copy(s.home);
+    if(b.alive){if(!wasIn){body.add(b.mesh);const dv=new THREE.Vector3(...(st.dir||s.d));p0.copy(s.home).addScaledVector(dv,span+2)}occ.set(K(...b.c),b);
+      const moved=p0.distanceToSquared(s.home)>1e-6||Math.abs(q0.dot(s.q))<.99999||!wasIn||sc0!==1;
+      if(moved){b.busy=true;const q1=s.q.clone();
+        tweens.push({t:0,dur:wasIn?.26:.34,step:k=>{const e=1-Math.pow(1-k,3);b.mesh.position.lerpVectors(p0,s.home,e);THREE.Quaternion.slerp(q0,q1,b.mesh.quaternion,e);b.mesh.scale.setScalar(sc0+(1-sc0)*e)},
+          end:()=>{b.mesh.position.copy(s.home);b.mesh.quaternion.copy(q1);b.mesh.scale.setScalar(1);b.busy=false}})}
+      else{b.mesh.position.copy(s.home);b.mesh.quaternion.copy(s.q);b.mesh.scale.setScalar(1)}}
+    else{b.mesh.position.copy(s.home);b.mesh.quaternion.copy(s.q);b.mesh.scale.setScalar(1);if(wasIn)body.remove(b.mesh)}
   });
   blocks.forEach((b,i)=>{const s=st.cubes[i];if(!s.group)return;const key=s.group.join(',');
     if(!groups.has(key))groups.set(key,{members:s.group.map(id=>blocks[id]),color:s.groupColor});b.group=groups.get(key)});
   blocks.forEach(b=>b.mesh.material=materialsFor(b));
-  body.position.copy(st.bodyPos);
+  {const b0=body.position.clone(),b1=st.bodyPos.clone();if(centerTween)centerTween.dead=true;centerTween={t:0,dur:.3,step:k=>body.position.lerpVectors(b0,b1,1-Math.pow(1-k,3))};tweens.push(centerTween)}
   updateBridges();document.getElementById('stuck').hidden=true;updateLeft();refreshUndo();
   rewindTick();
 }
@@ -1882,7 +1890,7 @@ function slide(b){
   if(unit.some(u=>u.busy))return;
   const hits=unit.map(u=>rayHit(u,b.d,unit));
   if(hits.every(h=>!h)){
-    saveUndo();
+    saveUndo();undoStack[undoStack.length-1].dir=b.d.slice(); // (undo flies the cubes back in along this direction)
     if(!clearing){pulls++;addTotal('pulls')} // a successful pull
     woosh(isFused(b)?b.group.members.filter(m=>m.alive).length:0); // fused pieces sound heavier: Heavy for 2-3 cubes, Heaviest for 4+
     unit.forEach(u=>{u.alive=false;occ.delete(K(...u.c));
