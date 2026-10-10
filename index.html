@@ -2623,7 +2623,8 @@ function frame(now){
     if(m.userData.neonBasic){m.color.setScalar(m.userData.fusedNeon?(blOn()?.94+.06*glow:1):(blOn()?.82+.18*glow:.85));continue}
     m.emissiveIntensity=blOn()?(m.userData.glowBase||0)+glow*m.userData.glowMax:0;
     if(!blOn()&&m.specular.getHex())m.specular.setHex(0)} // materials made after switching off stay matte too
-  tweens=tweens.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});
+  // (animations started while these run, e.g. a landing squash begun when a fall ends, are kept for the next frame)
+  {const cur=tweens;tweens=[];const keep=cur.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});tweens=keep.concat(tweens)}
   renderer.render(scene,camera);requestAnimationFrame(frame);
 }
 window.__test={buildLevel,firstHit,DIRS,turn,K,woosh,audio};
