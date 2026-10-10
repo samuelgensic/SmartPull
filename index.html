@@ -1582,10 +1582,10 @@ function latchTick(a,f,q,t,dur,vol){const n=a.createBufferSource();n.buffer=nois
 function latchPing(a,f,t,dur,vol){const o=a.createOscillator();o.type='sine';o.frequency.value=f;const g=a.createGain();
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.003);g.gain.setTargetAtTime(0,t+.003,dur/5);o.connect(g).connect(sfxBus);o.start(t);o.stop(t+dur+.1)}
 function latch(a,t){latchTick(a,2600,4,t,.025,.05);latchTick(a,1700,4,t+.04,.03,.04);latchPing(a,230,t+.04,.07,.045)}
-// bump (cube right next to another) = Pillow; collide (a cube glides, then hits one farther away) = Droplet with the Latch right behind it
+// bump (cube right next to another) = Pillow; collide (a cube travels, then hits one farther away) = Droplet
 function thump(delay,far){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+delay;
   if(!far){bumpSound('Pillow').play(a,t);return}
-  bumpSound('Droplet').play(a,t);latch(a,t+.12)}
+  bumpSound('Droplet').play(a,t)} // (no Latch click after it)
 
 /* sound picker */
 const panel=document.getElementById('panel');
