@@ -1159,6 +1159,10 @@ function setTheme(t){
 const themesPanel=document.getElementById('themes');
 // the tools button: opens the four tools, and folds them (and any open panel) away again
 const ctrlBox=document.getElementById('controls'),toolsBox=document.getElementById('tools'),moreBtn=document.getElementById('more');
+// the menu button: a soft pop when the tools fold out, a little fall when they fold back in
+function menuSound(open){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  if(theme==='neon'){tone(a,'sine',open?500:900,open?900:400,t,.09,.05,.002);return}
+  tone(a,'sine',open?520:760,open?760:440,t,.1,.05,.003);hiss(a,'bandpass',2200,1600,3,t,.03,.04,.001)}
 function setTools(open){
   ctrlBox.classList.toggle('open',open);document.documentElement.classList.toggle('toolsopen',open);
   moreBtn.setAttribute('aria-expanded',String(open));moreBtn.setAttribute('aria-label',open?'Hide buttons':'Show buttons');
@@ -1167,7 +1171,7 @@ function setTools(open){
     if(th&&!th.hidden){th.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
     if(pn&&!pn.hidden){pn.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}}
 }
-moreBtn.onclick=e=>{e.stopPropagation();setTools(!ctrlBox.classList.contains('open'))};
+moreBtn.onclick=e=>{e.stopPropagation();const open=!ctrlBox.classList.contains('open');menuSound(open);setTools(open)};
 paintBtn.onclick=e=>{e.stopPropagation();themesPanel.hidden=!themesPanel.hidden;paintBtn.setAttribute('aria-expanded',String(!themesPanel.hidden));
   const p=document.getElementById('panel');if(!themesPanel.hidden&&p){p.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}};
 document.addEventListener('pointerdown',e=>{if(!themesPanel.hidden&&!themesPanel.contains(e.target)&&!e.target.closest('#paint')){themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false')}});
@@ -1532,10 +1536,9 @@ soundBtn.setAttribute('aria-pressed',musicOn?'true':'false');
 // a flashlight/light-switch click: a sharp snap plus a tiny plastic "tock" behind it.
 // On is a touch brighter and snappier than off, like the two directions of a real switch.
 function blSound(on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
-  hiss(a,'highpass',on?3800:3000,on?3800:3000,.7,t,.012,on?.22:.16,.0005);        // the snap
-  hiss(a,'bandpass',on?1800:1400,on?1800:1400,4,t+.004,.03,on?.14:.1,.001);          // the click body
-  tone(a,'triangle',on?620:480,on?560:420,t+.006,.05,on?.07:.05,.001);               // the little plastic tock
-  if(on)hiss(a,'highpass',2400,2400,.7,t+.07,.008,.06,.0005)}                        // the faint second click as it seats
+  // turning on: a rising synth power-up with a bright shimmer on top; turning off: a falling sweep with a soft fade
+  if(on){tone(a,'sawtooth',220,1320,t,.16,.03,.01);tone(a,'triangle',1320,1980,t+.12,.12,.03,.005)}
+  else{tone(a,'sawtooth',1100,180,t,.18,.03,.005);hiss(a,'bandpass',900,300,2,t,.1,.035,.005)}}
 document.getElementById('tune').onclick=e=>{e.stopPropagation();
   const tp=document.getElementById('themes');if(tp&&!tp.hidden){tp.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
   panel.hidden=!panel.hidden;document.getElementById('tune').setAttribute('aria-expanded',String(!panel.hidden))};
