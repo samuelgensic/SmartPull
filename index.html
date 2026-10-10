@@ -1866,7 +1866,7 @@ function undo(){
   rewindTick();
 }
 // a tiny reverse "tick" so undo feels like stepping back
-function rewindTick(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;tone(a,'sine',660,440,t,.12,.05,.004)}
+function rewindTick(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;[0,.05,.1].forEach((d,i)=>tone(a,'sine',420+i*120,460+i*120,t+d,.05,.03,.003)) /* Rewind ticks: three tiny ticks climbing up, like a tape winding back */}
 document.getElementById('undo').onclick=e=>{e.stopPropagation();undo()};
 document.addEventListener('keydown',e=>{if(devMode&&(e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}});
 function slide(b){
