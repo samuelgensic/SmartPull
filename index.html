@@ -1047,7 +1047,7 @@ var floorSpec=null,floorGlowMats=[];
    Classic    plain gray slab, no outline (the only option)
    SmartPull  white slab, no border (the only option)
    Neon       glowing neon grid (the only option) */
-const FLOOR_OPTS={plain:['A','W','B'],brand:['A','W','B'],neon:['A','W','B']}; // A = the mode's own floor; W = flat white; B = black with a white outline (all three are Developer Mode choices)
+const FLOOR_OPTS={plain:['A'],brand:['A'],neon:['A','W','B']}; // only Neon has floor choices (Developer Mode): A = its glowing grid, W = flat white, B = black with a white outline
 var floorPick={plain:'A',brand:'A',neon:'A'};
 try{Object.assign(floorPick,JSON.parse(localStorage.getItem('pa2_floor')||'{}'))}catch(e){}
 function floorStyle(){const k=floorPick[theme];return (FLOOR_OPTS[theme]||['A']).includes(k)?k:'A'} // A is the default; W and B are picked in Developer Mode
