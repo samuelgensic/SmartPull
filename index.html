@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>SmartPull · Demo</title>
+<title>SmartPull</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@500&family=Manrope:wght@300;400;600;700&display=swap">
 <style>
@@ -18,15 +18,16 @@ body{background:radial-gradient(120% 90% at 50% 40%, var(--bg) 0%, var(--bg2) 10
 .app{position:relative; height:100%; display:flex; flex-direction:column}
 header{display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:12px; padding:14px 16px 0; position:relative; z-index:2}
 /* top bar: name on the left, the level chooser centered, tools on the right */
-.topspace{justify-self:start; min-width:0}
+.topspace{justify-self:start; min-width:0; display:flex; align-items:center}
 /* Neon's Blacklight switch lives in the top-left corner; on narrow phones it shrinks to just its glowing bulb */
 /* Blacklight: a round flashlight button in the top bar, with its label underneath (the label hides with the button) */
-header .blacklight{position:static; width:38px; height:38px; padding:0; gap:0; justify-content:center}
+/* the Black Light switch sits in the lower right of the play area, label underneath */
+.blbox{position:absolute; right:16px; bottom:12px; z-index:4; display:flex; flex-direction:column; align-items:center}
+.blbox .blacklight{position:static; width:38px; height:38px; padding:0; gap:0; justify-content:center}
 .blacklight .flash{width:20px; height:20px; flex:none}
 .bllabel{display:block; margin-top:3px; text-align:center; font-family:var(--display); font-weight:500; font-size:10px; letter-spacing:.04em; color:var(--muted); white-space:nowrap}
 #blBtn[hidden] + .bllabel{display:none}
 .blacklight[aria-pressed="true"] + .bllabel{color:#B026FF}
-.topspace{display:flex; flex-direction:column; align-items:center}
 /* the SmartPull name and credit sit centered at the bottom of the screen */
 .brandbox.foot{position:absolute; left:50%; bottom:14px; transform:translateX(-50%); z-index:3; align-items:center; text-align:center; pointer-events:none}
 html.immersive .brandbox.foot{display:none}
@@ -155,7 +156,7 @@ canvas{display:block; width:100%; height:100%}
 .left .clock{opacity:.55; font-weight:300}
 /* the level timer: bottom right, quiet gray, with its own small show/hide button beside it
    (in Neon it sits just above the Blacklight switch) */
-.timebox{position:absolute; right:16px; bottom:12px; z-index:4; display:flex; align-items:center; gap:8px}
+.timebox{position:static; z-index:4; display:flex; align-items:center; gap:8px}
 
 .timebox .clock{font-family:var(--display); font-weight:300; font-size:12px; letter-spacing:.08em; font-variant-numeric:tabular-nums; color:var(--muted); opacity:.7}
 /* full screen (web only; iPhone and iPad don't get it): a small button in the top-right corner of the play area */
@@ -165,12 +166,13 @@ button.fsbtn[aria-pressed="true"] .fs-in{display:none} button.fsbtn[aria-pressed
 /* iPhone and iPad in landscape: "immersive" hides the header so the puzzle fills the whole screen (and a TV, when mirrored) */
 html.immersive,html.immersive body{height:100vh; height:100dvh}
 html.immersive .app>header{display:none}
-button.ttoggle{width:30px; height:30px; background:var(--chip); box-shadow:none; color:var(--muted); opacity:.6}
-button.ttoggle svg{width:15px; height:15px}
-button.ttoggle[aria-pressed="true"]{opacity:1; color:var(--ink)}
+/* the timer button is the same size as the menu button, top left, level with it */
+button.ttoggle{width:38px; height:38px; background:var(--chip); color:var(--muted); box-shadow:none}
+button.ttoggle svg{width:18px; height:18px}
+button.ttoggle[aria-pressed="true"]{color:var(--ink); box-shadow:0 0 0 2px var(--accent)}
 @media (max-width:430px){.left{font-size:11px; letter-spacing:.08em}}
 /* small phones: tighter top bar so all the buttons fit beside the wider title font */
-@media (max-width:400px){header{gap:8px} .controls{--step:44px} .tools{gap:8px} .controls,.levelnav{gap:4px} .controls button,.levelnav button:not(.lvl){width:34px; height:34px} button.lvl{padding:0 4px; min-width:0} .lvl{font-size:11px; letter-spacing:.02em}}
+@media (max-width:400px){header{gap:8px} button.ttoggle{width:34px; height:34px} .controls{--step:44px} .tools{gap:8px} .controls,.levelnav{gap:4px} .controls button,.levelnav button:not(.lvl){width:34px; height:34px} button.lvl{padding:0 4px; min-width:0} .lvl{font-size:11px; letter-spacing:.02em}}
 .credit{font-family:"Quicksand", system-ui, sans-serif; font-weight:500; font-size:11px; white-space:nowrap; letter-spacing:0; color:var(--muted); opacity:.85} /* small, thin and tight under the wordmark */
 .hint{font-size:14px; color:var(--muted); transition:opacity .4s; max-width:36ch}
 .done{position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; opacity:0; transition:opacity .5s}
@@ -214,7 +216,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
 
 <div class="app">
   <header>
-    <div class="topspace"><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l-1 6H9z"/><path d="M9 9v10.5a3 3 0 0 0 6 0V9"/></svg></button><span class="bllabel">Black Light</span></div>
+    <div class="topspace"><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div></div>
     <div class="levelnav">
       <button id="prev" aria-label="Previous level"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
       <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe up or down, or tap for the wheel"><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
@@ -276,7 +278,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
     <div class="wheelbox"><div class="wband"></div><div class="wheel" id="wheel"></div></div>
     <button class="opt wgo" id="wheelGo" type="button">Select</button>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><button class="fsbtn" id="fsBtn" type="button" hidden aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button><div class="timebox" id="timebox"><span class="clock" id="clock" hidden>0:00</span><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><button class="fsbtn" id="fsBtn" type="button" hidden aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button><div class="blbox"><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l-1 6H9z"/><path d="M9 9v10.5a3 3 0 0 0 6 0V9"/></svg></button><span class="bllabel">Black Light</span></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
