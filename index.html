@@ -1536,9 +1536,10 @@ soundBtn.setAttribute('aria-pressed',musicOn?'true':'false');
 // a flashlight/light-switch click: a sharp snap plus a tiny plastic "tock" behind it.
 // On is a touch brighter and snappier than off, like the two directions of a real switch.
 function blSound(on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
-  // turning on: a rising synth power-up with a bright shimmer on top; turning off: a falling sweep with a soft fade
-  if(on){tone(a,'sawtooth',220,1320,t,.16,.03,.01);tone(a,'triangle',1320,1980,t+.12,.12,.03,.005)}
-  else{tone(a,'sawtooth',1100,180,t,.18,.03,.005);hiss(a,'bandpass',900,300,2,t,.1,.035,.005)}}
+  // a wall light switch: a bright, sharp click, then a low, hollow thock as the lever reaches its stop
+  // switching on lifts the pitch a little (lever going up); switching off drops it (lever going down)
+  if(on){hiss(a,'bandpass',2200,2200,6,t,.02,.2,.0005);tone(a,'square',260,180,t+.005,.06,.05,.001);hiss(a,'highpass',1200,1200,1,t+.03,.015,.08,.0005)}
+  else{hiss(a,'bandpass',1500,1500,6,t,.025,.18,.0005);tone(a,'square',200,120,t+.01,.07,.05,.001);hiss(a,'bandpass',900,900,2,t+.04,.02,.07,.0005)}}
 document.getElementById('tune').onclick=e=>{e.stopPropagation();
   const tp=document.getElementById('themes');if(tp&&!tp.hidden){tp.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
   panel.hidden=!panel.hidden;document.getElementById('tune').setAttribute('aria-expanded',String(!panel.hidden))};
