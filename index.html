@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.thint{position:absolute;left:50%;transform:translateX(-50%);top:64px;max-width:min(560px,86%);text-align:center;font-size:13px;line-height:1.35;color:var(--ink,#2C3631);background:rgba(255,255,255,.78);border-radius:12px;padding:8px 12px;z-index:3;pointer-events:none}
+html.neon .thint{background:rgba(20,20,30,.8);color:#fff}
+.silbox{position:absolute;right:16px;top:156px;max-width:120px;text-align:center;z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;letter-spacing:.04em;color:#6A7378;pointer-events:none}
+.silbox canvas{display:block;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+</style></head><body>
 <title>SmartPull</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@500&family=Manrope:wght@300;400;600;700&display=swap">
@@ -264,7 +268,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
     <div class="prow"><div class="plab">Developer Mode</div><div class="opts" id="optDev"></div></div>
     <div class="prow" id="devFloor" hidden><div class="plab">Gravity floor</div><div class="opts" id="optFloor"></div></div>
     <form class="prow" id="devJump" hidden><label class="plab" for="devLevel">Preview level (1–50)</label>
-      <div class="opts"><input id="devLevel" type="number" min="1" max="50" step="1" inputmode="numeric" value="1"><button class="opt" type="submit">Go</button></div></form>
+      <div class="opts"><input id="devLevel" type="number" min="1" max="85" step="1" inputmode="numeric" value="1"><button class="opt" type="submit">Go</button></div></form>
     <div class="prow"><div class="plab">Pulls</div><div class="stat" id="totalPulls">0</div></div>
     <div class="prow"><div class="plab">Taps</div><div class="stat" id="totalTaps">0</div></div>
     <div class="prow"><div class="plab">Bumps</div><div class="stat" id="totalOops">0</div></div>
@@ -295,8 +299,8 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
       </div>
       <div class="upcard best">
         <div class="uphead"><span>Complete</span><span class="upprice">$1.99</span></div>
-        <ul><li>All 50 levels</li><li>All three modes, including Neon</li></ul>
-        <div class="upnote" id="up-full-note" hidden>Everything you have now, plus levels 26–50 and the Neon mode.</div>
+        <ul><li>All 85 levels</li><li>All three modes, including Neon</li></ul>
+        <div class="upnote" id="up-full-note" hidden>Everything you have now, plus levels 26–85 and the Neon mode.</div>
       </div>
       <p class="upsmall">Purchases happen through the App Store in the iPhone and iPad app. In this preview, try each version from Settings → Version.</p>
       <button class="opt upclose" id="upClose" type="button">Not now</button>
@@ -306,7 +310,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
     <div class="wheelbox"><div class="wband"></div><div class="wheel" id="wheel"></div></div>
     <button class="opt wgo" id="wheelGo" type="button">Select</button>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -342,7 +346,7 @@ const LEVELS=[
   ()=>box(4,4,3),         ()=>box(4,4,4),
 ];
 /* each level's group, shown under "Level #": [last level of the group, name] */
-const GROUPS=[[3,'Pull'],[7,'Twist'],[15,'Stack'],[20,'Link'],[30,'Drop'],[35,'Lock'],[45,'Mix'],[50,'Fuse']];
+const GROUPS=[[5,'Pull'],[10,'Twist'],[15,'Stack'],[20,'Build'],[25,'Link'],[30,'Glide'],[35,'Drift'],[40,'Drop'],[45,'Tumble'],[50,'Lock'],[55,'Order'],[60,'Count'],[65,'Mix'],[70,'Blend'],[75,'Relay'],[80,'Meld'],[85,'Fuse']];
 const groupOf=i=>(GROUPS.find(g=>i+1<=g[0])||GROUPS[GROUPS.length-1])[1];
 function lvLabel(i){const b=document.getElementById('lvl');if(!b)return;
   b.querySelector('.lvnum').textContent='Level '+(i+1);b.querySelector('.lvsub').textContent=groupOf(i)}
@@ -361,12 +365,12 @@ const TIPS={
   pull:{t:'Pull',x:'Tap an arrow to slide its cube out that way. It can only leave if nothing is in its path. Drag to turn the puzzle and find hidden arrows.'},
   dot:{t:'Dot',x:'Tap the dot to turn its cube a quarter turn. The arrow turns with it, so turn it until the arrow points somewhere clear, then tap the arrow.'},
   link:{t:'Linked cubes',x:'Cubes with matching colored frames are linked. Tap either arrow and both slide out together, so both paths need to be clear.'},
-  pairdot:{t:'Pair dot',x:'A dot on the end of a linked pair turns both cubes together, like rolling one piece. Both arrows turn at once.'},
+  pairdot:{t:'Dot Pair',x:'A dot on the end of a linked pair turns both cubes together, like rolling one piece. Both arrows turn at once.'},
   drop:{t:'Gravity',x:'This puzzle sits on a floor. When a cube leaves, the cubes above it drop down. Plan your order so nothing ends up stuck.'},
   lock:{t:'Locks and keys',x:'A cube with a padlock can\'t move until the cube with the matching key is gone. Free the key first.'},
   chain:{t:'Locked keys',x:'Some padlock cubes also hold a key. Unlock one and its key appears, ready to open the next lock.'},
   fuse:{t:'Fusion',x:'Cubes come in three colors. When cubes of the same color land against each other, they fuse into one piece that moves and falls together. White and gray cubes never fuse; they\'re blockers to work around.'}};
-var TIP_AT={0:['pull'],3:['dot'],15:['link'],18:['pairdot'],20:['drop'],30:['lock'],33:['chain'],45:['fuse']}; // level index (0 = level 1) where each rule first appears
+var TIP_AT={0:['pull'],5:['dot'],20:['link'],23:['pairdot'],25:['glide'],35:['drop'],45:['lock'],48:['chain'],50:['order'],75:['gfuse'],80:['fuse']}; // level index (0 = level 1) where each rule first appears
 let tipsSeen={};try{tipsSeen=JSON.parse(localStorage.getItem('pa3_tips')||'{}')}catch(e){}
 const tipBtn=document.getElementById('tipBtn'),tipSheet=document.getElementById('tipsheet');
 function setTip(){const keys=TIP_AT[levelIdx];tipBtn.hidden=!keys;if(!keys)return;
@@ -385,10 +389,171 @@ tipBtn.onclick=e=>{e.stopPropagation();openTip()};
 document.getElementById('tipClose').onclick=e=>{e.stopPropagation();tipSheet.hidden=true};
 tipSheet.addEventListener('pointerup',e=>e.stopPropagation());
 tipSheet.addEventListener('click',e=>{if(e.target===tipSheet)tipSheet.hidden=true});
+
+/* ---------- SmartPull Test: three new rules to try (Glide, Order, Silhouette) ---------- */
+const TEST_LEVELS=[{"mech": "glide", "blocks": [{"c": [0, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [1, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1]}, {"c": [3, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [0, 1, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [3, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}], "name": "G1", "hint": "Hollow arrows glide: the cube slides until it hits another cube and stops there. With nothing in the way, it leaves."}, {"mech": "glide", "blocks": [{"c": [0, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [1, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [3, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}, {"c": [0, 1, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 1, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [3, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}], "name": "G2", "hint": "Use a glide cube to clear a path, then send it out."}, {"mech": "glide", "blocks": [{"c": [0, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [4, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [0, 1, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 1, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [3, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [4, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [1, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [3, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [0, 3, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 3, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [4, 3, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}], "name": "G3", "hint": "Three glide cubes. Plan where each one stops."}, {"name": "G4", "mech": "glide", "blocks": [{"c": [0, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "axis": [0, 0, 1], "dotFace": [0, 0, -1]}, {"c": [1, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [2, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [4, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}, {"c": [0, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [3, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [4, 1, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}, {"c": [3, 2, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1]}, {"c": [0, 3, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 3, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}, {"c": [4, 3, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}], "hint": "A dot turns its cube a quarter turn. Turn a glider so it slides where you need it."}, {"name": "G5", "mech": "glide", "blocks": [{"c": [0, 0, 0], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "glide": true}, {"c": [0, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [0, 1, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0]}, {"c": [0, 1, 1], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 0, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [1, 0, 1], "d": [0, 0, -1], "arrowFace": [0, 1, 0]}, {"c": [1, 1, 1], "d": [0, 1, 0], "arrowFace": [1, 0, 0]}, {"c": [2, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [2, 1, 1], "d": [0, 0, 1], "arrowFace": [1, 0, 0]}], "hint": "Now in 3D. Turn the puzzle to plan where each hollow arrow will stop."}, {"name": "G6", "mech": "glide", "blocks": [{"c": [0, 0, 0], "d": [0, 0, -1], "arrowFace": [1, 0, 0]}, {"c": [0, 0, 1], "d": [0, -1, 0], "arrowFace": [-1, 0, 0]}, {"c": [0, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [0, 1, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0], "glide": true}, {"c": [0, 2, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [1, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 0, 1], "d": [0, 0, -1], "arrowFace": [0, 1, 0]}, {"c": [1, 1, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "glide": true}, {"c": [1, 2, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}, {"c": [2, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 1, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [2, 1, 1], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 2, 1], "d": [0, 0, -1], "arrowFace": [-1, 0, 0]}], "hint": "More depth and three gliders. Some paths only open after a glide."}, {"name": "G7", "mech": "glide", "blocks": [{"c": [0, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [0, 0, 1], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}, {"c": [0, 1, 0], "d": [0, 1, 0], "arrowFace": [-1, 0, 0]}, {"c": [1, 0, 0], "d": [0, 0, -1], "arrowFace": [0, -1, 0]}, {"c": [1, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [1, 1, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 1, 1], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "axis": [0, 0, -1], "dotFace": [0, 0, -1]}, {"c": [2, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [2, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [2, 1, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}], "hint": "Gliders and a dot, in 3D."}, {"name": "G8", "mech": "glide", "blocks": [{"c": [0, 0, 0], "d": [1, 0, 0], "arrowFace": [0, -1, 0], "glide": true}, {"c": [0, 0, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "axis": [0, -1, 0], "dotFace": [0, -1, 0]}, {"c": [0, 1, 0], "d": [0, 0, -1], "arrowFace": [0, -1, 0]}, {"c": [0, 1, 1], "d": [0, 0, -1], "arrowFace": [0, -1, 0]}, {"c": [1, 0, 0], "d": [0, 0, -1], "arrowFace": [0, -1, 0]}, {"c": [1, 0, 1], "d": [0, 0, -1], "arrowFace": [0, 1, 0]}, {"c": [1, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [2, 0, 1], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [2, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [3, 0, 0], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}, {"c": [3, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [3, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}], "hint": "Glide into the gaps first."}, {"name": "G9", "mech": "glide", "blocks": [{"c": [0, 0, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [0, 1, 0], "d": [0, 1, 0], "arrowFace": [-1, 0, 0]}, {"c": [0, 1, 1], "d": [1, 0, 0], "arrowFace": [0, 1, 0], "glide": true}, {"c": [0, 2, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0]}, {"c": [0, 2, 1], "d": [0, 1, 0], "arrowFace": [-1, 0, 0]}, {"c": [1, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [1, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 2, 0], "d": [0, 0, 1], "arrowFace": [0, 1, 0], "axis": [1, 0, 0], "dotFace": [1, 0, 0]}, {"c": [1, 2, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 0, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "axis": [-1, 0, 0], "dotFace": [-1, 0, 0]}, {"c": [2, 1, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [2, 1, 1], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 2, 0], "d": [1, 0, 0], "arrowFace": [0, 1, 0]}], "hint": "Two dots and three gliders."}, {"name": "G10", "mech": "glide", "blocks": [{"c": [0, 0, 1], "d": [0, 0, 1], "arrowFace": [0, -1, 0]}, {"c": [0, 1, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0], "glide": true}, {"c": [0, 1, 1], "d": [1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [0, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, -1, 0]}, {"c": [0, 2, 1], "d": [0, 0, 1], "arrowFace": [0, -1, 0]}, {"c": [1, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [1, 0, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 1, 0], "d": [0, 0, -1], "arrowFace": [0, 1, 0]}, {"c": [1, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [1, 2, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 0, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0]}, {"c": [2, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "axis": [0, -1, 0], "dotFace": [0, -1, 0]}, {"c": [2, 1, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "axis": [0, 1, 0], "dotFace": [0, 1, 0]}, {"c": [2, 2, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 2, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}], "hint": "The big one: four gliders, two dots."}, {"mech": "order", "blocks": [{"c": [0, 0, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "num": 3}, {"c": [0, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "num": 1}, {"c": [1, 0, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [1, 1, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 1, 0], "d": [0, 1, 0], "arrowFace": [1, 0, 0], "num": 2}], "name": "O1", "hint": "Some cubes have tiny dents like dice pips on one plain side (turn the puzzle so the light catches them). One pip leaves first, then two, then three. Cubes without pips can go any time."}, {"mech": "order", "blocks": [{"c": [0, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1], "num": 2}, {"c": [0, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "num": 3}, {"c": [0, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, -1, 0]}, {"c": [1, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 1, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 2, 0], "d": [1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [2, 0, 0], "d": [0, 1, 0], "arrowFace": [1, 0, 0]}, {"c": [2, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1], "num": 1}, {"c": [2, 2, 0], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "num": 4}], "name": "O2", "hint": "Four in line this time. Clear a path for each one before its turn."}, {"mech": "order", "blocks": [{"c": [0, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "num": 5}, {"c": [0, 0, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0]}, {"c": [0, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "num": 2}, {"c": [0, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "num": 1}, {"c": [1, 0, 0], "d": [0, 1, 0], "arrowFace": [-1, 0, 0]}, {"c": [1, 0, 1], "d": [0, 0, 1], "arrowFace": [0, -1, 0], "num": 3}, {"c": [1, 1, 0], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}, {"c": [1, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 0, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0]}, {"c": [2, 0, 1], "d": [0, -1, 0], "arrowFace": [1, 0, 0], "num": 4}, {"c": [2, 1, 0], "d": [0, 0, 1], "arrowFace": [1, 0, 0]}, {"c": [2, 1, 1], "d": [0, 0, 1], "arrowFace": [0, -1, 0]}], "name": "O3", "hint": "Five in line, in 3D."}, {"name": "O4", "mech": "order", "blocks": [{"c": [0, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "num": 3}, {"c": [0, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "num": 1}, {"c": [0, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [1, 0, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [1, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 2, 0], "d": [0, 0, -1], "arrowFace": [0, 1, 0], "num": 2}, {"c": [2, 0, 0], "d": [1, 0, 0], "arrowFace": [0, -1, 0]}, {"c": [2, 1, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "axis": [0, 0, -1], "dotFace": [0, 0, 1]}, {"c": [2, 2, 0], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "num": 4}], "hint": "A dot turns its cube a quarter turn. Use it to line up a cube's way out in time for its turn."}, {"name": "O5", "mech": "order", "blocks": [{"c": [0, 0, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [0, 0, 1], "d": [0, 0, 1], "arrowFace": [-1, 0, 0], "num": 3}, {"c": [0, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "num": 2}, {"c": [0, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, -1, 0]}, {"c": [1, 0, 0], "d": [0, 0, -1], "arrowFace": [0, -1, 0]}, {"c": [1, 0, 1], "d": [0, 1, 0], "arrowFace": [1, 0, 0], "num": 1}, {"c": [1, 1, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0]}, {"c": [1, 1, 1], "d": [0, -1, 0], "arrowFace": [1, 0, 0], "axis": [0, 0, -1], "dotFace": [0, 0, 1]}, {"c": [2, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "num": 4}, {"c": [2, 0, 1], "d": [0, 1, 0], "arrowFace": [1, 0, 0]}, {"c": [2, 1, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 1, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}], "hint": "In 3D: each ordered cube shows its pips on one face only."}, {"name": "O6", "mech": "order", "blocks": [{"c": [0, 0, 0], "d": [0, 0, 1], "arrowFace": [0, -1, 0]}, {"c": [0, 0, 1], "d": [0, 1, 0], "arrowFace": [1, 0, 0]}, {"c": [1, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 0, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "axis": [0, 1, 0], "dotFace": [0, -1, 0]}, {"c": [1, 1, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "num": 2}, {"c": [1, 1, 1], "d": [0, 0, -1], "arrowFace": [0, -1, 0]}, {"c": [2, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "num": 1}, {"c": [2, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "axis": [0, 0, -1], "dotFace": [0, 0, -1]}, {"c": [2, 1, 0], "d": [0, 1, 0], "arrowFace": [1, 0, 0], "num": 4}, {"c": [2, 1, 1], "d": [0, 0, -1], "arrowFace": [0, -1, 0]}, {"c": [2, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "num": 3}, {"c": [2, 2, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}], "hint": "Two dots on the stairs."}, {"name": "O7", "mech": "order", "blocks": [{"c": [0, 0, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "num": 3}, {"c": [0, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1], "num": 4}, {"c": [0, 1, 0], "d": [0, 0, 1], "arrowFace": [-1, 0, 0], "num": 5}, {"c": [0, 1, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "num": 2}, {"c": [1, 0, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [1, 0, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "axis": [0, -1, 0], "dotFace": [0, 1, 0]}, {"c": [1, 1, 0], "d": [0, 1, 0], "arrowFace": [1, 0, 0], "axis": [0, 0, -1], "dotFace": [0, 0, -1]}, {"c": [1, 1, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "num": 1}, {"c": [2, 0, 0], "d": [0, 0, -1], "arrowFace": [0, 1, 0]}, {"c": [2, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 1, 0], "d": [0, 1, 0], "arrowFace": [-1, 0, 0]}, {"c": [2, 1, 1], "d": [0, 0, 1], "arrowFace": [-1, 0, 0]}, {"c": [3, 0, 0], "d": [0, 0, 1], "arrowFace": [0, -1, 0]}, {"c": [3, 0, 1], "d": [0, 1, 0], "arrowFace": [-1, 0, 0]}, {"c": [3, 1, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0]}, {"c": [3, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}], "hint": "Five in line, two dots."}, {"name": "O8", "mech": "order", "blocks": [{"c": [0, 0, 1], "d": [0, -1, 0], "arrowFace": [0, 0, 1]}, {"c": [0, 1, 0], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}, {"c": [0, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1], "num": 2}, {"c": [0, 2, 0], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "axis": [0, 0, 1], "dotFace": [0, 0, -1], "num": 1}, {"c": [0, 2, 1], "d": [-1, 0, 0], "arrowFace": [0, -1, 0]}, {"c": [1, 0, 0], "d": [0, 0, -1], "arrowFace": [1, 0, 0]}, {"c": [1, 0, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}, {"c": [1, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "num": 6}, {"c": [1, 1, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}, {"c": [1, 2, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0]}, {"c": [1, 2, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "num": 4}, {"c": [2, 0, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "axis": [0, 1, 0], "dotFace": [0, -1, 0]}, {"c": [2, 0, 1], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 1, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "num": 5}, {"c": [2, 1, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0], "num": 3}, {"c": [2, 2, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}], "hint": "Plan ahead: some numbered cubes are free long before their turn."}, {"name": "O9", "mech": "order", "blocks": [{"c": [0, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1], "num": 1}, {"c": [0, 0, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [0, 1, 0], "d": [0, 0, -1], "arrowFace": [0, 1, 0]}, {"c": [0, 1, 1], "d": [0, 1, 0], "arrowFace": [-1, 0, 0], "num": 2}, {"c": [1, 0, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "axis": [0, 1, 0], "dotFace": [0, -1, 0]}, {"c": [1, 1, 0], "d": [0, 0, -1], "arrowFace": [0, 1, 0], "num": 6}, {"c": [1, 1, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 2, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 2, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1], "num": 5}, {"c": [2, 0, 0], "d": [0, 0, 1], "arrowFace": [1, 0, 0]}, {"c": [2, 1, 0], "d": [0, 0, -1], "arrowFace": [0, -1, 0], "num": 3}, {"c": [2, 1, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 2, 1], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "axis": [-1, 0, 0], "dotFace": [1, 0, 0]}, {"c": [3, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "axis": [1, 0, 0], "dotFace": [1, 0, 0]}, {"c": [3, 0, 1], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "num": 4}, {"c": [3, 1, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1]}, {"c": [3, 1, 1], "d": [1, 0, 0], "arrowFace": [0, -1, 0]}], "hint": "Three dots, five in line."}, {"name": "O10", "mech": "order", "blocks": [{"c": [0, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [0, 1, 0], "d": [0, 0, -1], "arrowFace": [0, -1, 0], "num": 5}, {"c": [0, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "num": 1}, {"c": [0, 1, 2], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}, {"c": [0, 2, 1], "d": [0, -1, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 0, 0], "d": [0, 0, 1], "arrowFace": [1, 0, 0], "num": 2}, {"c": [1, 0, 1], "d": [0, -1, 0], "arrowFace": [-1, 0, 0]}, {"c": [1, 0, 2], "d": [0, 0, 1], "arrowFace": [0, -1, 0]}, {"c": [1, 1, 0], "d": [1, 0, 0], "arrowFace": [0, -1, 0], "axis": [0, 0, 1], "dotFace": [0, 0, -1], "num": 6}, {"c": [1, 1, 2], "d": [0, 0, -1], "arrowFace": [0, -1, 0], "axis": [1, 0, 0], "dotFace": [1, 0, 0], "num": 4}, {"c": [1, 2, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0]}, {"c": [1, 2, 1], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [1, 2, 2], "d": [0, -1, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 0, 1], "d": [1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [2, 1, 0], "d": [0, 1, 0], "arrowFace": [-1, 0, 0]}, {"c": [2, 1, 1], "d": [0, -1, 0], "arrowFace": [1, 0, 0], "axis": [0, 0, -1], "dotFace": [0, 0, -1]}, {"c": [2, 1, 2], "d": [1, 0, 0], "arrowFace": [0, -1, 0], "num": 3}, {"c": [2, 2, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}], "hint": "The big one: three dots, five in line."}, {"name": "M1", "mech": "mix", "fuse": false, "blocks": [{"c": [0, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "num": 1}, {"c": [0, 0, 1], "d": [0, 0, 1], "arrowFace": [0, -1, 0], "num": 2}, {"c": [0, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [0, 1, 1], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [1, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 0, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1]}, {"c": [1, 1, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0]}, {"c": [2, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "num": 3}, {"c": [2, 1, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [2, 1, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0]}], "hint": ""}, {"name": "M2", "mech": "mix", "fuse": false, "blocks": [{"c": [0, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "glide": true}, {"c": [0, 0, 1], "d": [0, 0, 1], "arrowFace": [-1, 0, 0], "num": 2}, {"c": [0, 1, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "num": 3}, {"c": [0, 1, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0]}, {"c": [0, 2, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [1, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [1, 1, 1], "d": [0, 0, -1], "arrowFace": [0, -1, 0], "axis": [-1, 0, 0], "dotFace": [1, 0, 0], "num": 1}, {"c": [1, 2, 0], "d": [0, 1, 0], "arrowFace": [1, 0, 0]}, {"c": [1, 2, 1], "d": [1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [2, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "glide": true}, {"c": [2, 1, 1], "d": [0, 0, -1], "arrowFace": [0, 1, 0]}, {"c": [2, 2, 1], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}], "hint": ""}, {"name": "M3", "mech": "mix", "fuse": false, "blocks": [{"c": [0, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [0, 0, 1], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "num": 4}, {"c": [0, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [0, 1, 1], "d": [0, 0, 1], "arrowFace": [1, 0, 0], "glide": true}, {"c": [1, 0, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "num": 1}, {"c": [1, 0, 1], "d": [0, 0, 1], "arrowFace": [0, -1, 0], "num": 2}, {"c": [1, 1, 1], "d": [1, 0, 0], "arrowFace": [0, 0, 1]}, {"c": [2, 0, 0], "d": [0, 0, 1], "arrowFace": [0, -1, 0]}, {"c": [2, 0, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0], "glide": true}, {"c": [2, 1, 0], "d": [0, 0, -1], "arrowFace": [0, 1, 0], "num": 3}, {"c": [3, 0, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0]}, {"c": [3, 1, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0]}, {"c": [3, 1, 1], "d": [0, 0, -1], "arrowFace": [0, 1, 0]}], "hint": ""}, {"name": "M4", "mech": "mix", "fuse": false, "blocks": [{"c": [0, 0, 1], "d": [0, 0, -1], "arrowFace": [-1, 0, 0]}, {"c": [0, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [0, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "glide": true}, {"c": [0, 2, 0], "d": [0, 1, 0], "arrowFace": [-1, 0, 0]}, {"c": [0, 2, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1], "num": 3}, {"c": [1, 0, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "num": 1}, {"c": [1, 0, 1], "d": [0, 0, -1], "arrowFace": [0, -1, 0], "num": 4}, {"c": [1, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [1, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 2, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "axis": [-1, 0, 0], "dotFace": [1, 0, 0]}, {"c": [2, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 0, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "num": 2}, {"c": [2, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [2, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "glide": true}, {"c": [2, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}], "hint": ""}, {"name": "M5", "mech": "mix", "fuse": false, "blocks": [{"c": [0, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "num": 2}, {"c": [0, 1, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "num": 3}, {"c": [0, 1, 1], "d": [0, -1, 0], "arrowFace": [0, 0, -1]}, {"c": [0, 2, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "glide": true}, {"c": [0, 2, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1]}, {"c": [1, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "num": 5}, {"c": [1, 0, 1], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "num": 6}, {"c": [1, 1, 0], "d": [0, 0, 1], "arrowFace": [-1, 0, 0]}, {"c": [1, 2, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "glide": true}, {"c": [1, 2, 1], "d": [0, 0, -1], "arrowFace": [0, 1, 0], "num": 4}, {"c": [2, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 1, 0]}, {"c": [2, 0, 1], "d": [0, 0, -1], "arrowFace": [0, 1, 0], "axis": [-1, 0, 0], "dotFace": [1, 0, 0], "num": 1}, {"c": [2, 1, 0], "d": [0, 0, -1], "arrowFace": [1, 0, 0]}, {"c": [2, 1, 1], "d": [1, 0, 0], "arrowFace": [0, 0, -1]}, {"c": [2, 2, 0], "d": [0, 0, 1], "arrowFace": [-1, 0, 0], "axis": [0, -1, 0], "dotFace": [0, -1, 0]}, {"c": [2, 2, 1], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "glide": true}], "hint": ""}, {"name": "F1", "mech": "gfuse", "fuse": true, "blocks": [{"c": [0, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "col": 1}, {"c": [0, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "col": 0}, {"c": [0, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 1, 0], "glide": true, "col": 1}, {"c": [0, 1, 1], "d": [1, 0, 0], "arrowFace": [0, 1, 0], "col": 2}, {"c": [1, 0, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "col": 0}, {"c": [1, 0, 1], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "col": 2}, {"c": [1, 1, 1], "d": [0, 0, -1], "arrowFace": [0, -1, 0], "col": 2}, {"c": [2, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 1, 0], "col": 0}, {"c": [2, 1, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0], "col": 1}, {"c": [2, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "glide": true, "col": 2}], "hint": ""}, {"name": "F2", "mech": "gfuse", "fuse": true, "blocks": [{"c": [0, 0, 0], "d": [0, -1, 0], "arrowFace": [1, 0, 0], "col": 1}, {"c": [0, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, 1], "col": 1}, {"c": [0, 1, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "col": 2}, {"c": [0, 1, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0], "col": 0}, {"c": [0, 2, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "glide": true, "col": 1}, {"c": [1, 0, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "col": 0}, {"c": [1, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "col": 0}, {"c": [1, 1, 1], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "col": 1}, {"c": [1, 2, 0], "d": [0, 0, 1], "arrowFace": [0, -1, 0], "col": 0}, {"c": [1, 2, 1], "d": [1, 0, 0], "arrowFace": [0, 0, 1], "col": 1}, {"c": [2, 0, 0], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "col": 2}, {"c": [2, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "glide": true, "col": 2}, {"c": [2, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "col": 2}, {"c": [2, 2, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "col": 0}], "hint": ""}, {"name": "F3", "mech": "gfuse", "fuse": true, "blocks": [{"c": [0, 0, 0], "d": [1, 0, 0], "arrowFace": [0, 1, 0], "col": 0}, {"c": [0, 0, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "col": 2}, {"c": [0, 1, 0], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "col": 1}, {"c": [0, 1, 1], "d": [0, 0, 1], "arrowFace": [0, -1, 0], "col": 0}, {"c": [1, 0, 0], "d": [0, 0, 1], "arrowFace": [0, 1, 0], "col": 0}, {"c": [1, 0, 1], "d": [0, 0, 1], "arrowFace": [0, 1, 0], "glide": true, "col": 1}, {"c": [1, 1, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "col": 1}, {"c": [2, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "glide": true, "col": 0}, {"c": [2, 0, 1], "d": [-1, 0, 0], "arrowFace": [0, 1, 0], "glide": true, "col": 2}, {"c": [2, 1, 0], "d": [0, 0, -1], "arrowFace": [0, 1, 0], "col": 2}, {"c": [3, 0, 0], "d": [0, 0, 1], "arrowFace": [1, 0, 0], "col": 0}, {"c": [3, 1, 0], "d": [0, 0, -1], "arrowFace": [0, -1, 0], "col": 2}, {"c": [3, 1, 1], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "col": 1}], "hint": ""}, {"name": "F4", "mech": "gfuse", "fuse": true, "blocks": [{"c": [0, 0, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "glide": true, "col": 1}, {"c": [0, 1, 0], "d": [0, 0, -1], "arrowFace": [0, -1, 0], "col": 1}, {"c": [0, 1, 1], "d": [0, 1, 0], "arrowFace": [-1, 0, 0], "col": 1}, {"c": [0, 2, 0], "d": [1, 0, 0], "arrowFace": [0, -1, 0], "glide": true, "col": 2}, {"c": [0, 2, 1], "d": [0, -1, 0], "arrowFace": [1, 0, 0], "col": 1}, {"c": [1, 0, 0], "d": [0, 1, 0], "arrowFace": [-1, 0, 0], "col": 1}, {"c": [1, 0, 1], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "col": 2}, {"c": [1, 1, 0], "d": [0, 1, 0], "arrowFace": [-1, 0, 0], "col": 1}, {"c": [1, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "col": 2}, {"c": [1, 2, 1], "d": [0, 0, 1], "arrowFace": [0, -1, 0], "col": 0}, {"c": [2, 0, 0], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "col": 0}, {"c": [2, 0, 1], "d": [0, -1, 0], "arrowFace": [-1, 0, 0], "col": 2}, {"c": [2, 1, 0], "d": [0, -1, 0], "arrowFace": [0, 0, -1], "col": 1}, {"c": [2, 1, 1], "d": [-1, 0, 0], "arrowFace": [0, 0, -1], "glide": true, "col": 1}, {"c": [2, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "col": 2}], "hint": ""}, {"name": "F5", "mech": "gfuse", "fuse": true, "blocks": [{"c": [0, 0, 1], "d": [0, 1, 0], "arrowFace": [-1, 0, 0], "glide": true, "col": 1}, {"c": [0, 1, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "col": 2}, {"c": [0, 1, 1], "d": [0, 0, -1], "arrowFace": [1, 0, 0], "col": 0}, {"c": [0, 2, 0], "d": [0, 1, 0], "arrowFace": [0, 0, -1], "col": 2}, {"c": [0, 2, 1], "d": [1, 0, 0], "arrowFace": [0, 1, 0], "col": 1}, {"c": [1, 0, 0], "d": [0, -1, 0], "arrowFace": [0, 0, 1], "col": 0}, {"c": [1, 0, 1], "d": [0, 1, 0], "arrowFace": [0, 0, 1], "glide": true, "col": 2}, {"c": [1, 1, 0], "d": [-1, 0, 0], "arrowFace": [0, -1, 0], "col": 0}, {"c": [1, 2, 0], "d": [0, 0, -1], "arrowFace": [0, 1, 0], "glide": true, "col": 1}, {"c": [1, 2, 1], "d": [0, 0, 1], "arrowFace": [-1, 0, 0], "col": 2}, {"c": [2, 0, 0], "d": [0, 1, 0], "arrowFace": [1, 0, 0], "glide": true, "col": 1}, {"c": [2, 0, 1], "d": [0, 1, 0], "arrowFace": [1, 0, 0], "col": 0}, {"c": [2, 1, 0], "d": [1, 0, 0], "arrowFace": [0, 0, -1], "col": 2}, {"c": [2, 1, 1], "d": [1, 0, 0], "arrowFace": [0, 1, 0], "col": 1}, {"c": [2, 2, 0], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "col": 0}, {"c": [2, 2, 1], "d": [0, 0, -1], "arrowFace": [-1, 0, 0], "col": 0}], "hint": ""}];
+function testLevel(L){const T=TEST_LEVELS[Math.min(L,TEST_LEVELS.length-1)];curSrc=T;
+  const {mn,mx}=bounds(T.blocks.map(b=>b.c));const ext=Math.max(...[0,1,2].map(i=>mx[i]-mn[i]+1));
+  return {span:12,ext,gravity:false,fuse:!!T.fuse,target:T.target||null,hint:T.hint,
+    blocks:T.blocks.map(b=>({c:b.c.slice(),d:b.d.slice(),arrowFace:b.arrowFace.slice(),pair:null,pairColor:null,
+      lock:null,lockColor:null,keyColor:null,isKey:false,glide:!!b.glide,num:b.num||0,pipFace:b.num?pipFaceFor(T,b):null,
+      axis:b.axis?b.axis.slice():null,dotFace:b.dotFace?b.dotFace.slice():null,dotColor:b.axis?DOT_COLORS[(b.c[0]*3+b.c[1]*5+b.c[2]*7)%DOT_COLORS.length]:null,
+      fuseIdx:T.fuse&&b.col!=null?b.col:undefined,fuseColor:T.fuse&&b.col!=null?FUSE[b.col]:null}))}}
+// Order pips go on ONE plain face: the first open one (no cube against it at the start), trying the top first, then the sides
+function pipFaceFor(T,b){const occ=new Set(T.blocks.map(o=>o.c.join(',')));const eq=(p,q)=>p[0]===q[0]&&p[1]===q[1]&&p[2]===q[2];
+  const order=[[0,1,0],[0,0,1],[1,0,0],[-1,0,0],[0,0,-1],[0,-1,0]].filter(f=>!eq(f,b.arrowFace)&&!(b.dotFace&&eq(f,b.dotFace)));
+  return order.find(f=>!occ.has([b.c[0]+f[0],b.c[1]+f[1],b.c[2]+f[2]].join(',')))||order[0]}
+const pipOnly=(dc,b,n)=>b.pipFace&&dot(n,b.pipFace)===1?dc:dc.split(';').filter(x=>!x.startsWith('pips')).join(';');
+TIPS.glide={t:'Glide',x:'A Chevron (the hollow arrow) means the cube glides: it slides until it bumps into another cube and stops right there. If nothing is in the way, it leaves like any other cube. Use glides to move cubes out of the way.'};TIPS.order={t:'Order',x:'Some cubes have small dents like dice pips on one of their plain sides. They must leave in order: one pip first, then two, then three. Cubes without pips can go any time. In Neon, the pips only show under Black Light.'};TIP_ICON.glide='<svg viewBox="0 0 24 24"><path d="M8.5 4.5Q12 8 15.5 12Q12 16 8.5 19.5" stroke-width="5"/><path d="M8.5 4.5Q12 8 15.5 12Q12 16 8.5 19.5" stroke="var(--bg2)" stroke-width="1.8"/></svg>';TIP_ICON.order='<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.6" fill="currentColor" stroke="none"/></svg>';TIPS.gfuse={t:'Meld',x:'When a glide cube slides up against a cube of the same color, they fuse into one piece, just like regular fuse. Different colors just bump. Tap any arrow on a fused piece and the whole piece slides that way, so every part needs a clear path. A fused piece no longer glides.'};TIP_ICON.gfuse=TIP_ICON.fuse;let curLv=null,silWall=null,silBox=null;
+const NUM_COL='#007493';
+function silInfo(){const all=curLv.allCells,xs=all.map(c=>c[0]),ys=all.map(c=>c[1]);
+  return {x0:Math.min(...xs),x1:Math.max(...xs),y0:Math.min(...ys),y1:Math.max(...ys)}}
+function silProj(){const s=new Set();blocks.forEach(b=>{if(b.alive)s.add(b.c[0]+','+b.c[1])});return s}
+function silState(){const p=silProj(),t=new Set(curLv.target.map(c=>c[0]+','+c[1]));
+  for(const k of t)if(!p.has(k))return 'fail';if(p.size===t.size)return 'win';return 'go'}
+function drawSilOn(cv,cell,pad){const I=silInfo(),W=I.x1-I.x0+1,H=I.y1-I.y0+1;cv.width=W*cell+pad*2;cv.height=H*cell+pad*2;
+  const g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);
+  g.fillStyle='rgba(255,255,255,.72)';g.beginPath();g.roundRect?g.roundRect(0,0,cv.width,cv.height,pad):g.rect(0,0,cv.width,cv.height);g.fill();
+  const p=silProj(),t=new Set(curLv.target.map(c=>c[0]+','+c[1]));
+  for(let x=I.x0;x<=I.x1;x++)for(let y=I.y0;y<=I.y1;y++){const k=x+','+y,X=pad+(x-I.x0)*cell,Y=pad+(I.y1-y)*cell,m=cell*.06;
+    if(t.has(k)){g.fillStyle='rgba(241,123,49,.30)';g.fillRect(X+m,Y+m,cell-2*m,cell-2*m)}
+    if(p.has(k)){g.fillStyle='rgba(52,54,58,.62)';g.fillRect(X+m*2,Y+m*2,cell-4*m,cell-4*m)}
+    if(t.has(k)){g.strokeStyle='#F17B31';g.lineWidth=Math.max(2,cell*.08);g.strokeRect(X+m,Y+m,cell-2*m,cell-2*m)}}}
+function drawSil(){if(!curLv||!curLv.target)return;
+  if(silWall){drawSilOn(silWall.userData.cv,64,10);silWall.material.map.needsUpdate=true}
+  if(silBox)drawSilOn(silBox.querySelector('canvas'),18,4)}
+function setupTest(lv,ctr){curLv=lv;lv.src=curSrc;curSrc=null;
+  const h=document.getElementById('thint');h.hidden=true; // explanations now live behind the tip button
+  if(silBox){silBox.remove();silBox=null}
+  if(!lv.target)return;
+  lv.allCells=lv.blocks.map(b=>b.c.slice());
+  const I=silInfo(),W=I.x1-I.x0+1,H=I.y1-I.y0+1,zmin=Math.min(...lv.allCells.map(c=>c[2]));
+  const cv=document.createElement('canvas'),tex=new THREE.CanvasTexture(cv);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(W+20/64,H+20/64),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));
+  m.userData.cv=cv;m.position.set((I.x0+I.x1)/2-ctr[0],(I.y0+I.y1)/2-ctr[1],zmin-ctr[2]-1.7);body.add(m);silWall=m;
+  silBox=document.createElement('div');silBox.className='silbox';silBox.innerHTML='<canvas></canvas><div>Goal: the shadow on the back wall</div>';
+  document.getElementById('stage').appendChild(silBox);drawSil();
+}
+// Order: each ordered cube that leaves rings one soft mallet note, one step higher each time;
+// the last one in line adds a gentle note above it, so the run feels finished
+function orderChime(n,last){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+.12;
+  // soft and low: one mellow note an octave lower than before, a slow attack, no bright overtone
+  const NOTES=[293.7,329.6,370,440,493.9,587.3],f=NOTES[Math.min(n-1,NOTES.length-1)];
+  tone(a,'sine',f,f,t,.9,.032,.03);
+  if(last){const f2=f*1.25;tone(a,'sine',f2,f2,t+.22,1.1,.022,.04)}}
+// Order: a cube tapped before its turn gives a small "not yet" shake and a soft, low double tap (two muted notes stepping down)
+function orderWait(b){if(b.busy)return;b.busy=true;const home=b.home.clone(),side=new THREE.Vector3(...(b.arrowFace||[1,0,0]));
+  if(soundOn){const a=audio();if(a){const t=a.currentTime;tone(a,'sine',392,388,t,.16,.05,.006);tone(a,'sine',330,326,t+.11,.2,.045,.006)}}
+  tweens.push({t:0,dur:.32,step:k=>{b.mesh.position.copy(home).addScaledVector(side,.025*Math.sin(k*Math.PI*4)*(1-k))},end:()=>{b.mesh.position.copy(home);b.busy=false}})}
+// Glide meets a cube: they touch flush, then both budge a little in the slide's direction and settle (like a bumped cube),
+// with the regular collide sound. done() runs once they've settled (used to show a fusion)
+function glideKiss(b,o,done){
+  const dv=new THREE.Vector3(...b.d),movers=[b];if(o&&o.alive)unitOf(o).forEach(u=>{if(!movers.includes(u))movers.push(u)});
+  const homes=movers.map(m=>m.home.clone());movers.forEach(m=>m.busy=true);thump(0,true);
+  tweens.push({t:0,dur:.38,step:k=>{const off=.045*Math.sin(Math.PI*k)*(1-.3*k);movers.forEach((m,i)=>m.mesh.position.copy(homes[i]).addScaledVector(dv,off))},
+    end:()=>{movers.forEach((m,i)=>{m.mesh.position.copy(homes[i]);m.busy=false});if(done)done()}})}
+// dead ends: a few times a second, check whether the puzzle can still be finished from here; if not, show the restart message
+const TCK=(x,y,z)=>((x+20)*64+(y+20))*64+(z+20);
+function trotN(v,a,k){for(let t=0;t<k;t++)v=turn(v,a);return v}
+function tnorm(g){const m=new Map();return g.map(x=>{if(!m.has(x))m.set(x,m.size);return m.get(x)})}
+function expandT(L,opts){
+  const B=L.blocks,n=B.length,stops=opts.stops!==false,dots=opts.dots!==false,fuse=!!(opts.fuse??L.fuse);
+  const gl=B.map((b,i)=>b.glide?i:-1).filter(i=>i>=0),dt=B.map((b,i)=>b.axis?i:-1).filter(i=>i>=0);
+  const R=B.map(b=>b.axis?[0,1,2,3].map(k=>({d:trotN(b.d,b.axis,k),f:trotN(b.arrowFace,b.axis,k)})):[{d:b.d,f:b.arrowFace}]);
+  const start={m:(2**n)-1,rot:B.map(()=>0),pos:B.map(b=>b.c.slice()),gid:tnorm(B.map((b,i)=>b.g!=null?b.g:i))};
+  const key=s=>s.m+'|'+dt.map(i=>s.rot[i]).join('')+'|'+gl.map(i=>s.pos[i].join(',')).join(';')+(fuse?'|'+tnorm(s.gid.map((g,i)=>(s.m&(2**i))?g:-1)).join(','):'');
+  function moves(s){const out=[];
+    const occ=new Map();for(let i=0;i<n;i++)if(s.m&(2**i))occ.set(TCK(...s.pos[i]),i);
+    let minNum=99;for(let i=0;i<n;i++)if((s.m&(2**i))&&B[i].num&&B[i].num<minNum)minNum=B[i].num;
+    for(let i=0;i<n;i++){if(!(s.m&(2**i)))continue;const p=s.pos[i],b=B[i];
+      if(dots&&b.axis){const f=b.dotFace;if(!occ.has(TCK(p[0]+f[0],p[1]+f[1],p[2]+f[2]))){const rot=s.rot.slice();rot[i]=(rot[i]+1)%4;out.push([{m:s.m,rot,pos:s.pos,gid:s.gid},['dot',i]])}}
+      const {d,f}=R[i][s.rot[i]];
+      if(occ.has(TCK(p[0]+f[0],p[1]+f[1],p[2]+f[2])))continue;
+      if(b.num&&b.num!==minNum)continue;
+      const unit=fuse?[...Array(n).keys()].filter(j=>(s.m&(2**j))&&s.gid[j]===s.gid[i]):[i];
+      let hit=0,hj=-1;
+      for(const u of unit){const q=s.pos[u];for(let k=1;k<=12;k++){const o=occ.get(TCK(q[0]+d[0]*k,q[1]+d[1]*k,q[2]+d[2]*k));if(o!==undefined&&!unit.includes(o)){if(!hit||k<hit){hit=k;hj=o}break}}}
+      if(!hit){let m=s.m;unit.forEach(u=>m-=2**u);out.push([{m,rot:s.rot,pos:s.pos,gid:s.gid},['go',i]])}
+      else if(unit.length===1&&b.glide&&stops&&hit>1){const pos=s.pos.slice();pos[i]=[p[0]+d[0]*(hit-1),p[1]+d[1]*(hit-1),p[2]+d[2]*(hit-1)];
+        let gid=s.gid;if(fuse){const np=pos[i],cI=B[i].col,merge=new Set();for(const f of DIRS){const o=occ.get(TCK(np[0]+f[0],np[1]+f[1],np[2]+f[2]));if(o!==undefined&&o!==i&&(cI==null?o===hj:B[o].col===cI))merge.add(s.gid[o])}if(merge.size)gid=s.gid.map(g=>merge.has(g)?s.gid[i]:g)}
+        out.push([{m:s.m,rot:s.rot,pos,gid},['glide',i]])}
+    }
+    return out}
+  return {start,key,moves};
+}
+function solveTest(L,opts={}){const limit=opts.limit||300000;const {start,key,moves}=expandT(L,opts);
+  const seen=new Map([[key(start),null]]);const q=[start];let qi=0,found=null;
+  while(qi<q.length){if(seen.size>limit)return {fail:'limit'};const s=q[qi++];if(s.m===0){found=s;break}
+    const ks=key(s);for(const [ns,mv] of moves(s)){const k=key(ns);if(!seen.has(k)){seen.set(k,[ks,mv]);q.push(ns)}}}
+  if(!found)return {fail:'none',states:seen.size};
+  const path=[];let k=key(found);while(seen.get(k)){const [pk,mv]=seen.get(k);path.unshift(mv);k=pk}
+  return {path,states:seen.size}}
+function graphTest(L,opts={}){const {start,key,moves}=expandT(L,opts);const adj=new Map(),q=[start];adj.set(key(start),[]);let qi=0;
+  while(qi<q.length){const s=q[qi++],out=adj.get(key(s));for(const [ns] of moves(s)){const k=key(ns);out.push(k);if(!adj.has(k)){adj.set(k,[]);q.push(ns)}}if(adj.size>(opts.limit||300000))return null}
+  const rev=new Map();for(const [k,o] of adj)for(const t of o){if(!rev.has(t))rev.set(t,[]);rev.get(t).push(k)}
+  const good=new Set([...adj.keys()].filter(k=>k.startsWith('0|')));const bq=[...good];while(bq.length){const k=bq.pop();for(const p of rev.get(k)||[])if(!good.has(p)){good.add(p);bq.push(p)}}
+  return {states:adj.size,dead:adj.size-good.size}}
+
+let stuckSig='';
+setInterval(()=>{if(!curLv||!curLv.src||clearing||blocks.some(b=>b.busy))return;
+  const alive=blocks.filter(b=>b.alive);const sig=levelIdx+'#'+alive.map(b=>b.id+':'+b.c.join(',')+':'+b.d.join(',')+':'+(b.group?b.group.members.length:0)).join('|');if(sig===stuckSig)return;stuckSig=sig;
+  const L={fuse:!!curLv.fuse,blocks:alive.map(b=>{const t=curLv.src.blocks[b.id];let af=t.arrowFace;
+    if(t.axis){for(let k=0;k<4;k++){let d=t.d;for(let j=0;j<k;j++)d=turn(d,t.axis);if(d.join()===b.d.join()){for(let j=0;j<k;j++)af=turn(af,t.axis);break}}}
+    return {c:b.c.slice(),d:b.d.slice(),arrowFace:af,glide:b.glide,num:b.num,axis:t.axis||null,dotFace:t.dotFace||null,col:t.col,g:b.group?Math.min(...b.group.members.map(m=>m.id)):b.id}})};
+  const r=solveTest(L,{limit:60000});const el=document.getElementById('stuck');
+  if(!r.path&&r.fail==='none'){el.textContent='No way to finish from here. Tap ↺ to try again.';el.hidden=false}else el.hidden=true},700);
+// Glide + Fuse: a glider that stops next to cubes of its own color fuses with them into one piece (like regular fuse).
+// The pieces join right away; the look and the fuse sound come once the bump has settled.
+function fuseGlide(b){const m=new Set();
+  for(const f of DIRS){const o=occ.get(K(b.c[0]+f[0],b.c[1]+f[1],b.c[2]+f[2]));if(o&&o.alive&&o!==b&&o.fuseIdx===b.fuseIdx)unitOf(o).forEach(u=>m.add(u))}
+  if(!m.size)return null;const mem=[...new Set([b,...unitOf(b),...m])];
+  const g={members:mem,color:b.fuseColor};mem.forEach(u=>{u.group=g;u.fuseColor=b.fuseColor});return mem}
+function showFuse(mem){mem.forEach(m=>{if(m.alive)m.mesh.material=materialsFor(m)});updateBridges();fuseSound()}
+// a glide cube moves this many steps and stays
+function glideMove(b,steps){
+  saveUndo();if(!clearing){pulls++;addTotal('pulls')}woosh();
+  occ.delete(K(...b.c));b.c=b.c.map((v,i)=>v+b.d[i]*steps);occ.set(K(...b.c),b);
+  const from=b.home.clone(),to=from.clone().add(new THREE.Vector3(...b.d).multiplyScalar(steps));b.home.copy(to);b.busy=true;
+  const other=occ.get(K(b.c[0]+b.d[0],b.c[1]+b.d[1],b.c[2]+b.d[2])); // the cube it glides up against
+  tweens.push({t:0,dur:.22+.07*steps,step:k=>{const e=1-Math.pow(1-k,3);b.mesh.position.lerpVectors(from,to,e)},
+    end:()=>{b.mesh.position.copy(to);setTimeout(()=>{const mem=curLv&&curLv.fuse?fuseGlide(b):null;glideKiss(b,other,mem?()=>showFuse(mem):null)},0)}}); // (after this frame: tweens added while tweens are running would be dropped)
+  updateLeft();setTimeout(()=>recenter(false),300);
+}
+
+
+// ---------- the 85 levels: where each one comes from ----------
+// {o:k}: the original generated level k (0-based, from the 50-level game); {o:k,shape}: that generator with a new shape;
+// {t:k}: a hand-checked level from the Glide / Order / Relay / Meld set
+var SHAPE_OVR=null,curSrc=null;
+var LEVEL_MAP=(()=>{const M=[],o=a=>M.push({o:a}),t=a=>M.push({t:a}),run=(a,b,f)=>{for(let i=a;i<=b;i++)f(i)};
+  run(0,2,o);M.push({o:2,shape:()=>box(2,2,1)},{o:2,shape:()=>box(3,2,1)}); // Pull 1–5
+  run(3,6,o);M.push({o:6,shape:()=>box(4,2,1)});                            // Twist 6–10
+  run(7,11,o);                                                              // Stack 11–15
+  run(12,14,o);M.push({o:14,shape:()=>box(3,3,2)},{o:14,shape:()=>stairs(4,2)}); // Build 16–20
+  run(15,19,o);                                                             // Link 21–25
+  run(0,9,t);                                                               // Glide 26–30, Drift 31–35
+  run(20,29,o);                                                             // Drop 36–40, Tumble 41–45
+  run(30,34,o);                                                             // Lock 46–50
+  run(10,19,t);                                                             // Order 51–55, Count 56–60
+  run(35,44,o);                                                             // Mix 61–65, Blend 66–70
+  run(20,29,t);                                                             // Relay 71–75, Meld 76–80
+  run(45,49,o);                                                             // Fuse 81–85 (85: the full 4×4×4 cube)
+  return M})();
+var NLEV=LEVEL_MAP.length;
+// saved progress from the 50-level layout moves to the new level numbers (once)
+(function(){try{if(localStorage.getItem('pa4_layout')==='85')return;
+  const map={};LEVEL_MAP.forEach((m,i)=>{if(m.o!=null&&!m.shape)map[m.o]=i});
+  const mv=k=>{const v=localStorage.getItem(k);if(!v)return;const o=JSON.parse(v),n={};for(const j in o)if(map[j]!=null)n[map[j]]=o[j];localStorage.setItem(k,JSON.stringify(n))};
+  if(localStorage.getItem('pa3_unlocked')!=null||localStorage.getItem('pa2_besttaps')!=null){
+    const u=+localStorage.getItem('pa3_unlocked')||0;localStorage.setItem('pa3_unlocked',u>=50?NLEV:(map[u]??u));
+    const l=+localStorage.getItem('pa2_lvl')||0;localStorage.setItem('pa2_lvl',map[l]??l);
+    ['pa2_besttaps','pa2_besttimes','pa2_lvlstats'].forEach(mv)}
+  localStorage.setItem('pa4_layout','85')}catch(e){}})();
 const ROTATOR_START=3; // first level with dot blocks (level 4)
 const DOT_COLORS=['#C0B50A','#000000','#ABABA8','#007493','#F17B31'];
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function shapeFor(i){
+  if(SHAPE_OVR)return SHAPE_OVR();
   if(i>=NEW_FROM)return PLAN[Math.min(i-NEW_FROM,PLAN.length-1)][0]();
   if(i<LEVELS.length) return LEVELS[i]();
   // endless: boxes keep growing, then stay at the largest size
@@ -426,7 +591,8 @@ function difficulty(cells,dirs,span){
   }
   return waves*3+stuck0/cells.length*4;
 }
-function buildLevel(L){
+function buildLevel(L,raw){
+  if(!raw){const m=LEVEL_MAP[Math.min(L,NLEV-1)];if(m.t!=null)return testLevel(m.t);SHAPE_OVR=m.shape||null;try{return buildLevel(m.o,1)}finally{SHAPE_OVR=null}}
   if(L>=NEW_FROM)return buildLevelNew(L);
   const cells=shapeFor(L),n=cells.length;
   const {mn,mx}=bounds(cells);const ext=Math.max(...[0,1,2].map(i=>mx[i]-mn[i]+1));const span=ext+2;
@@ -472,14 +638,16 @@ function buildLevel(L){
    chains:  a key cube that is itself locked (key A opens lock B, and B holds the key to lock C)
    Each row: [shape, pairs, gravity, locks, fusion, chains]. New rules get a few easy levels on their own first. */
 const NEW_FROM=15; // levels 1–15 come from LEVELS above (Pull 1–3, Twist 4–7, Stack 8–15); the plan below starts at 16
+const skyline=h=>{const o=[];h.forEach((row,z)=>row.forEach((n,x)=>{for(let y=0;y<n;y++)o.push([x,y,z])}));return o};
+const GRAV_PICK={29:0,36:0,41:0,43:0}; // gravity layouts chosen by an exhaustive check (no dead ends)
 const PLAN=[
   [()=>box(3,3,1),1,0,0],[()=>box(3,2,2),2,0,0],[()=>stairs(3,2),2,0,0],[()=>box(3,3,2),3,0,0],[()=>cross(2),2,0,0],       // 16–20 Link (linked pairs)
   [()=>box(2,2,2),0,1,0],[()=>box(3,2,1),0,1,0],[()=>stairs(3,1),0,1,0],[()=>box(3,1,2),0,1,0],[()=>pyramid(3),0,1,0],   // 21–25 Drop (gravity, easy start)
-  [()=>box(3,2,2),0,1,0],[()=>stairs(3,2),0,1,0],[()=>box(3,3,2),0,1,0],[()=>box(3,3,2),1,1,0],[()=>pyramid(5),0,1,0],     // 26–30 Drop (gravity, harder)
+  [()=>box(3,2,2),0,1,0],[()=>stairs(3,2),0,1,0],[()=>box(3,3,2),0,1,0],[()=>box(3,3,2),1,1,0],[()=>skyline([[1,1,1,1],[1,2,3,1],[1,3,2,1],[1,1,1,1]]),0,1,0],     // 26–30 Drop (gravity, harder)
   [()=>box(3,3,2),0,0,1],[()=>box(4,3,2),0,0,1],[()=>stairs(4,2),0,0,1],[()=>box(3,3,3),1,0,3,0,1],[()=>box(4,2,3),0,1,2],     // 31–35 locks (31–33: one lock each; 34: first chain)
-  [()=>hollowCube(4),3,0,2],[()=>stairs(4,3),2,1,0],[()=>box(4,3,2),2,1,2],[()=>box(4,4,2),4,0,0],[()=>box(3,3,3),0,1,3,0,1],  // 36–40 mixes
-  [()=>filter(box(3,3,3),([x,y,z])=>!(x!==1&&y!==1&&z!==1)),3,0,3],[()=>pyramid(5),2,1,1],[()=>box(4,3,3),0,0,4,0,2],
-  [()=>box(4,3,3),3,1,0],[()=>box(4,4,2),4,0,2,0,1],                                                                           // 41–45
+  [()=>hollowCube(4),3,0,2],[()=>skyline([[1,2,3,4],[1,2,3,4],[0,1,2,3]]),2,1,0],[()=>box(4,3,2),2,1,2],[()=>box(4,4,2),4,0,0],[()=>box(3,3,3),0,1,3,0,1],  // 36–40 mixes
+  [()=>filter(box(3,3,3),([x,y,z])=>!(x!==1&&y!==1&&z!==1)),3,0,3],[()=>skyline([[1,1,2,1,1],[1,2,3,2,1],[1,1,2,1,1]]),2,1,1],[()=>box(4,3,3),0,0,4,0,2],
+  [()=>skyline([[1,2,2,1],[2,3,3,2],[1,2,2,1]]),3,1,0],[()=>box(4,4,2),4,0,2,0,1],                                                                           // 41–45
   [()=>box(4,3,2),0,1,0,1],[()=>stairs(4,3),0,1,0,1],[()=>box(4,4,2),0,1,0,1],[()=>box(4,3,3),0,1,0,1],[()=>box(4,4,4),0,1,0,1], // 46–50 color fusion (50: the full 4×4×4 cube)
 ];
 // pair frames and lock/key symbols use brand colors only (orange, teal, olive, charcoal); Neon swaps in its neons
@@ -628,6 +796,7 @@ function buildLevelNew(L){
   const grav=PLAN[Math.min(L-NEW_FROM,PLAN.length-1)][2];
   const pd=L>=18; // pair dots start at level 19
   if(!grav)return buildLevelNewSeed(L,0,pd);
+  if(GRAV_PICK[L]!=null)return buildLevelNewSeed(L,GRAV_PICK[L],pd);
   let best=0,bestRate=-1;
   for(let salt=0;salt<6;salt++){
     const lv=buildLevelNewSeed(L,salt);let ok=0;const tries=12;
@@ -825,7 +994,7 @@ function pressedDot(g,color,fillC){
    button. The 3D lighting uses it to shade the dent, as if it were really carved into the cube. */
 /* Locks and keys are pressed into the face the same way: the symbol's shape, softened at its edges, becomes a
    shallow dent that the scene's light shades (the keyhole stays at face level, like a little island). */
-const symbolOf=deco=>{const m=/(?:^|;)(lock|unlock|key)\|/.exec(deco||'');return m?m[1]:null};
+const symbolOf=deco=>{const m=/(?:^|;)(lock|unlock|key|pips\d)\|/.exec(deco||'');return m?m[1]:null};
 const symDents={};
 function symbolDent(type){
   if(symDents[type])return symDents[type];
@@ -837,7 +1006,7 @@ function symbolDent(type){
     for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const xx=x+k;if(xx>=0&&xx<s){sum+=a[y*s+xx];n++}}t[y*s+x]=sum/n}
     for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const yy=y+k;if(yy>=0&&yy<s){sum+=t[yy*s+x];n++}}o[y*s+x]=sum/n}return o};
   h=blur(blur(h,2),2);
-  const D=SYMBOL_DEPTH,img=g.createImageData(s,s),d=img.data,H=(x,y)=>-D*h[Math.min(s-1,Math.max(0,y))*s+Math.min(s-1,Math.max(0,x))];
+  const D=type.startsWith('pips')?32:SYMBOL_DEPTH,img=g.createImageData(s,s),d=img.data,H=(x,y)=>-D*h[Math.min(s-1,Math.max(0,y))*s+Math.min(s-1,Math.max(0,x))];
   for(let y=0;y<s;y++)for(let x=0;x<s;x++){
     const dx=(H(x+1,y)-H(x-1,y))/2,dy=(H(x,y+1)-H(x,y-1))/2;let nx=-dx,ny=dy,nz=1;const L=Math.hypot(nx,ny,nz);nx/=L;ny/=L;nz/=L;
     const k=(y*s+x)*4;d[k]=(nx*.5+.5)*255;d[k+1]=(ny*.5+.5)*255;d[k+2]=(nz*.5+.5)*255;d[k+3]=255}
@@ -860,7 +1029,22 @@ function dentNormals(){
   }
   g.putImageData(img,0,0);dentTex=new THREE.CanvasTexture(cv);return dentTex;
 }
+// the arrow on a cube face (drawn pointing right, already rotated and scaled):
+// Glide = a hollow outline chevron; Order = the normal chevron moved back a little, plus 1-3 tiny chevrons in the top corner
+function arrowGlyph(g,glideK,ordN){
+  const lw=g.lineWidth;
+  if(glideK){
+    // the normal curved chevron, drawn hollow: a thick stroke with a thinner one cut out of its middle (on a scratch canvas, so the cube face underneath stays)
+    const oc=document.createElement('canvas');oc.width=g.canvas.width;oc.height=g.canvas.height;const o=oc.getContext('2d');
+    o.setTransform(g.getTransform());o.strokeStyle=g.strokeStyle;o.lineCap='round';o.lineJoin='round';
+    o.beginPath();o.moveTo(-26,-50);o.quadraticCurveTo(3,-22,30,0);o.quadraticCurveTo(3,22,-26,50);
+    o.lineWidth=40;o.stroke();o.globalCompositeOperation='destination-out';o.lineWidth=17;o.stroke();
+    g.save();g.setTransform(1,0,0,1,0,0);g.drawImage(oc,0,0);g.restore()}
+  else{g.save();if(ordN)g.translate(-14,0);g.beginPath();g.moveTo(-26,-50);g.quadraticCurveTo(3,-22,30,0);g.quadraticCurveTo(3,22,-26,50);g.stroke();g.restore()}
+  for(let k=0;k<ordN;k++){g.save();g.translate(100-k*32,-98);g.scale(.31,.31);g.lineWidth=42;g.beginPath();g.moveTo(-26,-50);g.quadraticCurveTo(3,-22,30,0);g.quadraticCurveTo(3,22,-26,50);g.stroke();g.restore()}
+  g.lineWidth=lw}
 function faceTex(fillC,kind,color,deco){
+  const km=/^(g)?(?:o(\d))?(right|left|up|down)$/.exec(kind),glideK=!!(km&&km[1]),ordN=km&&km[2]?+km[2]:0;if(km)kind=km[3];
   // dark cubes get a lighter rim so their edges still read; light cubes get a darker one
   const lighten=(h,k)=>'#'+hexRGB(h).map(v=>Math.round(v+(255-v)*k).toString(16).padStart(2,'0')).join('');
   const edgeC=deco&&deco.includes('seamless')?fillC:fillC===PLAIN?'#E6E1D5':isDark(fillC)?lighten(fillC,.07):shade(fillC,.08); // only a faint rim, so a cube reads as one color
@@ -875,7 +1059,7 @@ function faceTex(fillC,kind,color,deco){
     g.strokeStyle=color||(isDark(fillC)?LIGHT_INK:INK);g.lineWidth=22;g.lineCap='round';g.lineJoin='round';
     // a chunky rounded chevron with softly bowed arms
     g.lineWidth=28;
-    g.beginPath();g.moveTo(-26,-50);g.quadraticCurveTo(3,-22,30,0);g.quadraticCurveTo(3,22,-26,50);g.stroke();
+    arrowGlyph(g,glideK,ordN);
   }
   const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
 }
@@ -892,6 +1076,7 @@ function dotMask(){
 let maskTex=null;
 const neonFillA=halo=>halo?1:.9; // fused Neon pieces: full-strength neon color
 function neonTex(kind,color,halo,deco,fill,edgeC){
+  const km=/^(g)?(?:o(\d))?(right|left|up|down)$/.exec(kind),glideK=!!(km&&km[1]),ordN=km&&km[2]?+km[2]:0;if(km)kind=km[3];
   const s=256,cv=document.createElement('canvas');cv.width=cv.height=s;const g=cv.getContext('2d');
   g.fillStyle='#000';g.fillRect(0,0,s,s);
   if(fill){
@@ -915,7 +1100,7 @@ function neonTex(kind,color,halo,deco,fill,edgeC){
     if(kind==='dot'){g.fillStyle=color;g.beginPath();g.arc(0,0,44,0,Math.PI*2);g.fill();return}
     g.save();g.rotate({right:0,up:-Math.PI/2,left:Math.PI,down:Math.PI/2}[kind]);g.scale(.8,.8);
     g.strokeStyle=color;g.lineWidth=28;g.lineCap='round';g.lineJoin='round';
-    g.beginPath();g.moveTo(-26,-50);g.quadraticCurveTo(3,-22,30,0);g.quadraticCurveTo(3,22,-26,50);g.stroke();g.restore();
+    arrowGlyph(g,glideK,ordN);g.restore();
   };
   // with Blacklight on: a soft neon halo first, then the crisp glyph on top. Off: just the flat color.
   if(halo&&!fill){g.shadowColor=color;g.shadowBlur=26;draw();g.shadowBlur=12;draw();g.shadowBlur=0} // (fused pieces: crisp, no halo)
@@ -979,6 +1164,7 @@ function decoFor(b,neon){
   // a locked key (part of a chain) shows only its padlock; its key appears once that lock opens,
   // so a face never carries two symbols (the unlock wobble points you to it)
   if(b.isKey&&!(b.lockKey&&b.lockKey.alive)&&!b.unlocking)parts.push('key|'+c(b.keyColor||b.lockColor));
+  if(b.num&&b.alive)parts.push('pips'+b.num+'|'+(neon?'neon':'none'));
   return parts.join(';');
 }
 // frames and corner marks go on every face; padlocks and keys only on the plain sides
@@ -1006,6 +1192,17 @@ function drawDeco(g,s,deco,fillC,glowing){
     // fusion color: a small rounded triangle tucked into each corner
     const a=40,p=24;[[p,p,1,1],[s-p,p,-1,1],[p,s-p,1,-1],[s-p,s-p,-1,-1]].forEach(([x,y,sx,sy])=>{
       g.beginPath();g.moveTo(x,y);g.lineTo(x+sx*a,y);g.lineTo(x,y+sy*a);g.closePath();g.fill()});
+  }else if(type.startsWith('pips')){
+    // Order: tiny dice pips. Drawn only into the dent (normal) map, so they show as shadows, not color; Neon shows them only under Black Light
+    const n=+type.slice(4),d=50,P={1:[[0,0]],2:[[-d,-d],[d,d]],3:[[-d,-d],[0,0],[d,d]],4:[[-d,-d],[d,-d],[-d,d],[d,d]],5:[[-d,-d],[d,-d],[0,0],[-d,d],[d,d]],6:[[-d,-d],[-d,0],[-d,d],[d,-d],[d,0],[d,d]]}[n]||[];
+    g.translate(s/2,s/2);
+    if(col0.toLowerCase()==='#ffffff'){g.fillStyle='#ffffff';P.forEach(([x,y])=>{g.beginPath();g.arc(x,y,16.5,0,7);g.fill()})}
+    else if(col0==='none'){ // Classic / SmartPull: a soft shadow inside each dent (darker toward the top, where the rim hides the light) so it reads as a hole
+      P.forEach(([x,y])=>{const gr=g.createRadialGradient(x,y+5,3,x,y,16.5);gr.addColorStop(0,'rgba(0,0,0,.09)');gr.addColorStop(.75,'rgba(0,0,0,.2)');gr.addColorStop(1,'rgba(0,0,0,0)');
+        g.fillStyle=gr;g.beginPath();g.arc(x,y,16.5,0,7);g.fill()})}
+    else if(col0==='neon'&&glowing){g.shadowColor='rgba(190,140,255,.9)';g.shadowBlur=10;g.strokeStyle='rgba(205,170,255,.75)';g.lineWidth=3.5;P.forEach(([x,y])=>{g.beginPath();g.arc(x,y,14.3,0,7);g.stroke()})} // Neon: hidden until Black Light is on
+  }else if(type==='num'){
+    g.translate(s/2,s/2);g.font='800 132px system-ui, -apple-system, sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(deco.split('|')[2],0,8);
   }else if(type==='frame'){
     // a thick colored frame just inside the edge: this cube is linked to the neighbor with the same frame
     const p=28,rr=24;g.lineWidth=14;g.beginPath();g.moveTo(p+rr,p);g.arcTo(s-p,p,s-p,s-p,rr);g.arcTo(s-p,s-p,p,s-p,rr);g.arcTo(p,s-p,p,p,rr);g.arcTo(p,p,s-p,p,rr);g.closePath();g.stroke();
@@ -1052,8 +1249,8 @@ function materialsFor(b){
       const lo=isLinkPiece(b)?'outline|'+(NEON_OF[b.group.color||b.pairColor]||b.group.color||b.pairColor)+'|'+outerEdges(b,f):'';
       const dc=[decoFor(b,true),lo].filter(Boolean).join(';'),fr=[faceDeco(dc),lo].filter(Boolean).join(';'),nskin=b.neutral?'neon~'+NEON_NEUTRAL[b.neutral]:isFused(b)?'neon'+(NEON_OF[b.fuseColor]||b.fuseColor):b.fuseColor?'neon~'+(NEON_OF[b.fuseColor]||b.fuseColor):'neon';
       if(b.dotFace&&dot(n,b.dotFace)===1)return mat(nskin,'dot',b.neonDot,fr);
-      if(dot(n,b.arrowFace)===1){const u=dot(FACE_U[f],b.d),v=dot(FACE_V[f],b.d);return mat(nskin,u===1?'right':u===-1?'left':v===1?'up':'down',b.neutral?NEON_NEUTRAL[b.neutral]:b.fuseColor?(isFused(b)?'#0A0712':(NEON_OF[b.fuseColor]||b.neonColor)):b.neonColor,fr)}
-      return mat(nskin,'blank',undefined,dc);
+      if(dot(n,b.arrowFace)===1){const u=dot(FACE_U[f],b.d),v=dot(FACE_V[f],b.d);return mat(nskin,(b.glide?'g':'')+(u===1?'right':u===-1?'left':v===1?'up':'down'),b.neutral?NEON_NEUTRAL[b.neutral]:b.fuseColor?(isFused(b)?'#0A0712':(NEON_OF[b.fuseColor]||b.neonColor)):b.neonColor,fr)}
+      return mat(nskin,'blank',undefined,pipOnly(dc,b,n));
     });
   }
   // colored mode: each cube takes its brand color; its dot uses a different one
@@ -1070,8 +1267,8 @@ function materialsFor(b){
     // a linked pair shown as one piece: each face outlines only the edges on the outside of the whole shape
     const ol=isLinkPiece(b)?'outline|'+(b.group.color||b.pairColor)+'|'+outerEdges(b,f):'';
     if(b.dotFace&&dot(n,b.dotFace)===1)return mat(skin,'dot',dotC,join(fr,ol));
-    if(dot(n,b.arrowFace)===1){const u=dot(FACE_U[f],b.d),v=dot(FACE_V[f],b.d);return mat(skin,u===1?'right':u===-1?'left':v===1?'up':'down',!colorMode&&b.fuseColor?b.fuseColor:undefined,join(fr,ol))}
-    return mat(skin,'blank',undefined,join(dc,ol));
+    if(dot(n,b.arrowFace)===1){const u=dot(FACE_U[f],b.d),v=dot(FACE_V[f],b.d);return mat(skin,(b.glide?'g':'')+(u===1?'right':u===-1?'left':v===1?'up':'down'),!colorMode&&b.fuseColor?b.fuseColor:undefined,join(fr,ol))}
+    return mat(skin,'blank',undefined,join(pipOnly(dc,b,n),ol));
   });
 }
 
@@ -1133,7 +1330,7 @@ function floorTex(W,D,draw){
   const g=cv.getContext('2d');draw(g,cv.width,cv.height,px);const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
 }
 // each gravity level takes the next color in the theme's list, so back-to-back gravity levels never match
-const GRAVITY_LEVELS=[];for(let L=NEW_FROM;L<50;L++)if(PLAN[Math.min(L-NEW_FROM,PLAN.length-1)][2])GRAVITY_LEVELS.push(L);
+const GRAVITY_LEVELS=[];LEVEL_MAP.forEach((m,i)=>{if(m.o!=null&&m.o>=NEW_FROM&&PLAN[Math.min(m.o-NEW_FROM,PLAN.length-1)][2])GRAVITY_LEVELS.push(i)});
 function pickFloor(list){const n=Math.max(0,GRAVITY_LEVELS.indexOf(levelIdx));return list[n%list.length]}
 const tintUp=(h,k)=>'#'+hexRGB(h).map(v=>Math.round(v+(255-v)*k).toString(16).padStart(2,'0')).join('');
 /* the gravity floor: a slab with the same rounded edges and corners as the cubes */
@@ -1211,10 +1408,10 @@ try{best=+localStorage.getItem('pa3_unlocked')||0;levelIdx=Math.min(+localStorag
 /* ---------- versions (App Store pricing) ----------
    Free:  levels 1–10, Classic theme only
    $0.99: levels 1–25, Classic + SmartPull themes
-   $1.99: levels 1–50, all three themes
+   $1.99: levels 1–85, all three themes
    Real purchases happen through the App Store in the iOS app; this web preview has a
    "Version (preview)" switch in settings to try each one. */
-const TIERS={free:{max:10,themes:['plain']},plus:{max:25,themes:['plain','brand']},full:{max:50,themes:['plain','brand','neon']}};
+const TIERS={free:{max:10,themes:['plain']},plus:{max:25,themes:['plain','brand']},full:{max:85,themes:['plain','brand','neon']}};
 let tier='free';try{tier=localStorage.getItem('pa2_tier')||'free'}catch(e){}
 if(!TIERS[tier])tier='free';
 const maxLevel=()=>TIERS[tier].max;
@@ -1222,7 +1419,7 @@ const maxLevel=()=>TIERS[tier].max;
 // whatever version is selected. Your real progress isn't changed by it.
 const DEV_ALWAYS_ON=true; // for now, Developer Mode starts on every time the game opens (set to false to go back to the saved choice)
 let devMode=DEV_ALWAYS_ON;if(!DEV_ALWAYS_ON){try{devMode=localStorage.getItem('pa2_dev')==='1'}catch(e){}}
-const topLevel=()=>devMode?49:Math.min(best,maxLevel()-1);       // furthest level you can open right now
+const topLevel=()=>devMode?NLEV-1:Math.min(best,maxLevel()-1);       // furthest level you can open right now
 const capCleared=()=>best>=maxLevel();                 // every level in this version is cleared
 const themeOK=t=>{try{if(devMode)return true}catch(e){}return TIERS[tier].themes.includes(t)}; // Developer Mode opens every theme
 const THEME_PRICE={brand:'$0.99',neon:'$1.99'};
@@ -1298,6 +1495,7 @@ function load(i){
   undoStack.length=0;
   levelIdx=Math.max(0,i);clearing=false;waiting=false;taps=0;pulls=0;bumps=0;resetTimer();
   try{localStorage.setItem('pa2_lvl',levelIdx)}catch(e){}
+  if(silWall){body.remove(silWall);silWall=null}{const st=document.getElementById('stuck');st.textContent='No moves left. Tap ↺ to try again.'}
   for(const b of blocks)body.remove(b.mesh);blocks=[];occ.clear();tweens=[];centerTween=null;body.position.set(0,0,0);
   const lv=buildLevel(levelIdx);
   span=lv.span;camDist=Math.max(5,lv.ext*2.6+2.5);
@@ -1326,7 +1524,7 @@ function load(i){
   });
   // linked pairs shown as one piece: now that every cube is placed, give them their outline and smooth shape
   if(linkPieceOn()){blocks.forEach(b=>{if(isLinkPiece(b))b.mesh.material=materialsFor(b)});updateBridges()}
-  recenter(true);startBlocks=blocks.length;
+  setupTest(lv,ctr);recenter(true);startBlocks=blocks.length;
   pivot.quaternion.setFromEuler(new THREE.Euler(.5,-.65,0));
   if(resetZoom){
     // restart: the puzzle grows from small up to full size, with a gentle overshoot that settles
@@ -1843,7 +2041,7 @@ var undoStack=[];let lastMoveAt=-1e9;
 function saveUndo(){
   lastMoveAt=performance.now();
   undoStack.push({taps,pulls,bumps,bodyPos:body.position.clone(),
-    cubes:blocks.map(b=>({alive:b.alive,c:b.c.slice(),d:b.d.slice(),arrowFace:b.arrowFace&&b.arrowFace.slice(),
+    cubes:blocks.map(b=>({alive:b.alive,fuseColor:b.fuseColor,c:b.c.slice(),d:b.d.slice(),arrowFace:b.arrowFace&&b.arrowFace.slice(),
       home:b.home.clone(),q:b.mesh.quaternion.clone(),isKey:b.isKey,
       group:b.group?b.group.members.map(m=>m.id):null,groupColor:b.group?b.group.color:null}))});
   if(undoStack.length>200)undoStack.shift();
@@ -1859,7 +2057,7 @@ function undo(){
   taps=st.taps;pulls=st.pulls||0;bumps=st.bumps;
   occ.clear();const groups=new Map();
   blocks.forEach((b,i)=>{const s=st.cubes[i];
-    Object.assign(b,{alive:s.alive,c:s.c,d:s.d,arrowFace:s.arrowFace,isKey:s.isKey,busy:false,group:null,unlocking:false});
+    Object.assign(b,{alive:s.alive,fuseColor:s.fuseColor,c:s.c,d:s.d,arrowFace:s.arrowFace,isKey:s.isKey,busy:false,group:null,unlocking:false});
     // the move plays backwards, quickly: cubes that left fly back in along their path, fallen or glided cubes slide back up, turned cubes turn back
     const wasIn=!!b.mesh.parent,p0=b.mesh.position.clone(),q0=b.mesh.quaternion.clone(),sc0=wasIn?b.mesh.scale.x:.4;
     b.home.copy(s.home);
@@ -1886,6 +2084,8 @@ function slide(b){
   for(const m of unitOf(b))endWobble(m);
   // a locked cube can't move until its key cube is gone: it just jiggles against the lock
   if(b.lockKey&&b.lockKey.alive){if(!clearing){taps++;addTotal('taps');updateLeft()}lockedJiggle(b);return} // counts as a Tap
+  // Order: a numbered cube waits until every lower number is gone
+  if(b.num&&blocks.some(o=>o.alive&&o.num&&o.num<b.num)){if(!clearing){taps++;addTotal('taps');updateLeft()}orderWait(b);return}
   const unit=unitOf(b); // linked pairs and fused pieces always move together, the way the tapped arrow points
   if(unit.some(u=>u.busy))return;
   const hits=unit.map(u=>rayHit(u,b.d,unit));
@@ -1898,6 +2098,8 @@ function slide(b){
       tweens.push({t:0,dur:.75,step:k=>{u.mesh.position.copy(start).addScaledVector(dv,dist*k*k);u.mesh.scale.setScalar(1-.6*Math.max(0,k-.5)*2)},end:()=>body.remove(u.mesh)});
     });
     afterRemoval(unit);
+  }else if(b.glide&&unit.length===1&&Math.min(...hits.filter(h=>h>0))>1){
+    glideMove(b,Math.min(...hits.filter(h=>h>0))-1); // Glide: slide up to the cube in the way and stay there
   }else{
     bumps++;addTotal('oops');updateLeft(); // an oops: the cube bumped and stayed
     const hit=Math.min(...hits.filter(h=>h>0)); // the pair stops where the first of the two would hit
@@ -1912,6 +2114,10 @@ function slide(b){
 // everything that happens after cubes leave: unlock locks, let cubes fall, check for a win or a dead end
 function afterRemoval(unit){
   updateLeft();
+  for(const u of unit)if(u.num)orderChime(u.num,!blocks.some(o=>o.alive&&o.num));
+  if(curLv&&curLv.target){drawSil();const st=silState();
+    if(st==='win'){clearing=true;setTimeout(win,350);return}
+    if(st==='fail'){const el=document.getElementById('stuck');el.textContent='Too much of the shadow is gone. Tap ↺ to try again.';el.hidden=false}}
   // keys open their locks
   for(const u of unit)for(const b of blocks)if(b.alive&&b.lockKey===u){
     b.unlocking=true;b.mesh.material=materialsFor(b);clickSound();unlockWobble(b);unlockSound();
@@ -2302,7 +2508,7 @@ function cheerPool(){
   else if(startBlocks<=3)p=['tiny'];
   else if(startBlocks>=12)p=dt?['big','twist']:['big'];
   else p=dt?['twist']:['big'];
-  if(startBlocks>=24||levelIdx>=39)p.push('hard');
+  if(startBlocks>=24||levelIdx>=64)p.push('hard');
   return p.flatMap(k=>CHEERS[k]);
 }
 // a random line from that pool, skipping the last 20 shown so repeats are rare
@@ -2358,8 +2564,8 @@ function win(){
   try{localStorage.setItem('pa3_unlocked',best)}catch(e){}
   refreshNav();
   // what tapping does next: the next level, the upgrade screen, or (after level 50) the level picker
-  const atEnd=levelIdx+1>=(devMode?50:maxLevel());
-  document.querySelector('#done small').textContent=!atEnd?'Tap to continue':tier==='full'?'All 50 levels cleared! Tap to pick any level':'Tap to unlock more levels';
+  const atEnd=levelIdx+1>=(devMode?NLEV:maxLevel());
+  document.querySelector('#done small').textContent=!atEnd?'Tap to continue':tier==='full'?'All 85 levels cleared! Tap to pick any level':'Tap to unlock more levels';
   // the message stays until the player taps or clicks anywhere
   // the message and stats appear first; the continue button joins after a pause so there's time to read them
   setTimeout(()=>{if(clearing)document.getElementById('done').classList.add('show')},450);
@@ -2368,7 +2574,7 @@ function win(){
 let waiting=false,readyTimer=0;
 function advance(){
   if(!waiting)return;waiting=false;pageTurn();
-  if(levelIdx+1>=(devMode?50:maxLevel())){load(levelIdx);if(tier==='full')openLevels();else openUpgrade();return} // end of this version
+  if(levelIdx+1>=(devMode?NLEV:maxLevel())){load(levelIdx);if(tier==='full')openLevels();else openUpgrade();return} // end of this version
   load(levelIdx+1);
 }
 // next arrow: on to an unlocked level, or, at the end of the free or $0.99 levels, the upgrade screen
@@ -2452,7 +2658,7 @@ function fitCredit(){const m=document.querySelector('.mark'),c=document.querySel
 fitCredit();addEventListener('resize',fitCredit);
 try{document.fonts.ready.then(fitCredit);document.fonts.addEventListener('loadingdone',fitCredit)}catch(e){}
 /* ---------- scorecard ---------- */
-const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack · $0.99','Levels 11–25',10,25],['full','Complete · $1.99','Levels 26–50',25,50]];
+const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack · $0.99','Levels 11–25',10,25],['full','Complete · $1.99','Levels 26–85',25,85]];
 function openScorecard(){
   [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   bankPlay(elapsed());if(timeStart!==null)timeStart=performance.now();timeMs=0; // count the time on the current level so far
@@ -2620,7 +2826,7 @@ function refreshFloorOpts(){
 refreshFloorOpts();
 document.getElementById('undo').hidden=!devMode;
 document.getElementById('devJump').addEventListener('submit',e=>{e.preventDefault();
-  const n=Math.max(1,Math.min(50,Math.floor(+document.getElementById('devLevel').value)||1));
+  const n=Math.max(1,Math.min(NLEV,Math.floor(+document.getElementById('devLevel').value)||1));
   document.getElementById('devLevel').value=n;
   panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');
   pageTurn();load(n-1)});
