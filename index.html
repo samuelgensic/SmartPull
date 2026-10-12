@@ -251,15 +251,17 @@ html.toolsopen .panel:not(.levels){left:auto; right:66px}
 @media (max-width:520px){.app:has(#fsBtn:not([hidden])) .timebox .clock{position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); white-space:nowrap}}
 .botrow .blacklight{white-space:nowrap}
 
-/* Neon's Black Light: a round bulb button in the top-left corner; its name shows when you hover over it */
-header .hleft{grid-column:1; grid-row:1; justify-self:start; position:relative; z-index:4}
+/* Neon's Black Light: a round bulb button in the top right, just left of the menu button; its name shows when you hover over it */
+header .hleft{grid-column:3; grid-row:1; justify-self:end; margin-right:46px; position:relative; z-index:4}
+html.neon header .topspace{padding-right:92px}
 header .blacklight{position:relative; right:auto; bottom:auto; width:38px; height:38px; padding:0; gap:0; justify-content:center}
 header .blacklight .flash{width:20px; height:20px}
-header .blacklight::after{content:attr(data-tip); position:absolute; top:calc(100% + 8px); left:0; padding:5px 10px; border-radius:8px; background:var(--chip); color:var(--ink);
+header .blacklight::after{content:attr(data-tip); position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); padding:5px 10px; border-radius:8px; background:var(--chip); color:var(--ink);
   font-family:var(--display); font-weight:500; font-size:11px; letter-spacing:.04em; white-space:nowrap; box-shadow:0 0 0 1px rgba(244,236,255,.22); opacity:0; pointer-events:none; transition:opacity .15s}
 @media (hover:hover){header .blacklight:hover::after{opacity:1}}
 header .blacklight:focus-visible::after{opacity:1}
-@media (max-width:400px){header .blacklight{width:34px; height:34px}}
+@media (max-width:480px){html.neon header .topspace{grid-column:1; justify-self:start; padding-right:0} html.neon header button.tipbtn{right:auto; left:0}}
+@media (max-width:400px){header .blacklight{width:34px; height:34px} header .hleft{margin-right:42px} html.neon header .topspace{padding-right:84px}}
 </style>
 
 <div class="app">
@@ -414,7 +416,7 @@ function openTip(){const keys=TIP_AT[levelIdx];if(!keys)return;
 function blackLightTip(){if(tipsSeen.blacklight)return;tipsSeen.blacklight=1;try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}
   setTimeout(()=>{document.getElementById('tipTitle').textContent='New: Black Light';const d=document.createElement('div');d.className='tipitem';
     d.innerHTML='<div class="tipicon"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></div><div><p></p></div>';
-    d.querySelector('p').textContent='The bulb in the top-left corner is the Black Light. Tap it to turn it on and off. With it on, the cubes glow; turn it off for a darker, calmer look.';
+    d.querySelector('p').textContent='The bulb next to the menu button is the Black Light. Tap it to turn it on and off. With it on, the cubes glow; turn it off for a darker, calmer look.';
     document.getElementById('tipBody').replaceChildren(d);tipSheet.hidden=false;tipSound()},450)}
 // the tip opening: three quiet rising notes
 function tipSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
