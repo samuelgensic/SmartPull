@@ -188,6 +188,11 @@ html.neon button.trlv.clr{background:transparent; color:var(--c); box-shadow:0 0
 button.trlv.now{border:2px solid var(--ink); color:var(--ink)}
 button.trlv:disabled{opacity:.35; cursor:default}
 button.trlv.samp{border-style:dashed}
+/* a clean clear (no bumps, at par or better): a small ring tucked on the pill's top right */
+button.trlv{position:relative}
+button.trlv.cln::after{content:''; position:absolute; top:-3px; right:-3px; width:8px; height:8px; border-radius:50%; background:var(--chip); box-shadow:inset 0 0 0 2px var(--c,var(--accent))}
+html.neon button.trlv.cln::after{box-shadow:inset 0 0 0 2px var(--c),0 0 6px var(--c)}
+.med .lockBadge.strk{width:auto; min-width:16px; padding:0 4px; border-radius:8px; color:var(--accent); font:700 9px var(--body); font-variant-numeric:tabular-nums}
 button.unlockPill{width:auto; display:inline-flex; align-items:center; gap:5px; border:0; box-shadow:none; border-radius:14px; height:28px; padding:0 10px; background:none; color:var(--muted); font:700 10.5px var(--body); cursor:pointer; flex:none}
 button.unlockPill svg{width:10px; height:10px}
 button.lvl{touch-action:none; overflow:visible; white-space:nowrap; justify-content:flex-start}
@@ -363,6 +368,7 @@ header .blacklight:focus-visible::after{opacity:1}
     
   </div>
   <div class="panel" id="panel" hidden>
+    <div class="prow"><div class="plab">Undo</div><div class="opts" id="optUndo"></div></div>
     <div class="prow" id="tierRow"><div class="plab">Version (preview)</div><div class="opts" id="optTier"></div></div>
     <div class="prow"><div class="plab">Developer Mode</div><div class="opts" id="optDev"></div></div>
     <div class="prow" id="devFloor" hidden><div class="plab">Gravity floor</div><div class="opts" id="optFloor"></div></div>
@@ -625,13 +631,18 @@ function graphTest(L,opts={}){const {start,key,moves}=expandT(L,opts);const adj=
   const good=new Set([...adj.keys()].filter(k=>k.startsWith('0|')));const bq=[...good];while(bq.length){const k=bq.pop();for(const p of rev.get(k)||[])if(!good.has(p)){good.add(p);bq.push(p)}}
   return {states:adj.size,dead:adj.size-good.size}}
 
+// the board as the solvers see it: every cube still in play, with its current arrow, dot, glide, pips, gear, glass and echo twin
+const solverFor=()=>['pivot','echo','glass'].includes((curLv.src.mech||''))?S4.solve:solveTest;
+function liveSpec(){const alive=blocks.filter(b=>b.alive);
+  return {fuse:!!curLv.fuse,blocks:alive.map(b=>{const t=curLv.src.blocks[b.id];let af=t.arrowFace;
+    if(t.axis){for(let k=0;k<4;k++){let d=t.d;for(let j=0;j<k;j++)d=turn(d,t.axis);if(d.join()===b.d.join()){for(let j=0;j<k;j++)af=turn(af,t.axis);break}}}
+    return {c:b.c.slice(),d:b.d.slice(),arrowFace:af,glide:b.glide,num:b.num,axis:t.axis||null,dotFace:t.dotFace||null,col:t.col,pivot:!!t.pivot,glass:!!t.glass,crack:b.crack||'',echo:b.echo!=null&&blocks[b.echo].alive?alive.indexOf(blocks[b.echo]):null,g:b.group?Math.min(...b.group.members.map(m=>m.id)):b.id}})};
+}
 let stuckSig='';
 setInterval(()=>{if(!curLv||!curLv.src||clearing||blocks.some(b=>b.busy))return;
   const alive=blocks.filter(b=>b.alive);const sig=levelIdx+'#'+alive.map(b=>b.id+':'+b.c.join(',')+':'+b.d.join(',')+':'+(b.group?b.group.members.length:0)).join('|');if(sig===stuckSig)return;stuckSig=sig;
-  const L={fuse:!!curLv.fuse,blocks:alive.map(b=>{const t=curLv.src.blocks[b.id];let af=t.arrowFace;
-    if(t.axis){for(let k=0;k<4;k++){let d=t.d;for(let j=0;j<k;j++)d=turn(d,t.axis);if(d.join()===b.d.join()){for(let j=0;j<k;j++)af=turn(af,t.axis);break}}}
-    return {c:b.c.slice(),d:b.d.slice(),arrowFace:af,glide:b.glide,num:b.num,axis:t.axis||null,dotFace:t.dotFace||null,col:t.col,pivot:!!t.pivot,glass:!!t.glass,crack:b.crack||'',echo:b.echo!=null&&blocks[b.echo].alive?alive.indexOf(blocks[b.echo]):null,g:b.group?Math.min(...b.group.members.map(m=>m.id)):b.id}})};
-  const r=(['pivot','echo','glass'].includes((curLv.src.mech||''))?S4.solve:solveTest)(L,{limit:60000});const el=document.getElementById('stuck');
+  const L=liveSpec();
+  const r=solverFor()(L,{limit:60000});const el=document.getElementById('stuck');
   if(!r.path&&r.fail==='none'){el.textContent='No way to finish from here. Tap ↺ to try again.';el.hidden=false}else el.hidden=true},700);
 // Glide + Fuse: a glider that stops next to cubes of its own color fuses with them into one piece (like regular fuse).
 // The pieces join right away; the look and the fuse sound come once the bump has settled.
@@ -639,7 +650,7 @@ function fuseGlide(b){const m=new Set();
   for(const f of DIRS){const o=occ.get(K(b.c[0]+f[0],b.c[1]+f[1],b.c[2]+f[2]));if(o&&o.alive&&o!==b&&o.fuseIdx===b.fuseIdx)unitOf(o).forEach(u=>m.add(u))}
   if(!m.size)return null;const mem=[...new Set([b,...unitOf(b),...m])];
   const g={members:mem,color:b.fuseColor};mem.forEach(u=>{u.group=g;u.fuseColor=b.fuseColor});return mem}
-function showFuse(mem){mem.forEach(m=>{if(m.alive)m.mesh.material=materialsFor(m)});updateBridges();fuseSound()}
+function showFuse(mem){lifeAdd('fusions');mem.forEach(m=>{if(m.alive)m.mesh.material=materialsFor(m)});updateBridges();fuseSound()}
 // a glide cube moves this many steps and stays
 function glideMove(b,steps){
   saveUndo();if(!clearing){pulls++;addTotal('pulls')}woosh();
@@ -748,7 +759,7 @@ const isFreeGlass=g=>!DIRS.some(v=>{const o=occ.get(K(g.c[0]+v[0],g.c[1]+v[1],g.
 // Each cube tucks in a little as it turns, so the corners never brush the cubes beside it, then settles back to full size;
 // the turns ripple out from the gear. The cubes stay turned (the gear keeps its new angle).
 function pivotTurn(b){const p=b.c,layer=blocks.filter(u=>u.alive&&u.c[1]===p[1]&&Math.abs(u.c[0]-p[0])<=1&&Math.abs(u.c[2]-p[2])<=1);
-  if(layer.some(u=>u.busy))return;saveUndo();pivotSound();const Yv=new THREE.Vector3(0,1,0);
+  if(layer.some(u=>u.busy))return;saveUndo();pivotSound();lifeAdd('gears');const Yv=new THREE.Vector3(0,1,0);
   layer.forEach(u=>{u.d=rotY(u.d);u.busy=true;const q0=u.mesh.quaternion.clone(),q1=new THREE.Quaternion().setFromAxisAngle(Yv,Math.PI/2).multiply(q0);
     const ring=Math.max(Math.abs(u.c[0]-p[0]),Math.abs(u.c[2]-p[2]))+(Math.abs(u.c[0]-p[0])+Math.abs(u.c[2]-p[2])>1?.6:0),delay=ring*.05;
     tweens.push({t:-delay,dur:.36,step:k=>{k=Math.max(0,k);THREE.Quaternion.slerp(q0,q1,u.mesh.quaternion,ease(k));u.mesh.scale.setScalar(1-.27*Math.sin(Math.PI*k))},
@@ -759,7 +770,7 @@ function localD(b){if(!b.mesh)return b.d;const v=new THREE.Vector3(...b.d).apply
 // Echo: twins leave together, each the way its own arrow points; both paths must be clear
 function echoSlide(b){const tw=blocks[b.echo],unit=[b,tw];if(unit.some(u=>u.busy))return;
   const hits=unit.map(u=>rayHit(u,u.d,unit));
-  if(hits.every(h=>!h)){saveUndo();undoStack[undoStack.length-1].dir=null;if(!clearing){pulls++;addTotal('pulls')}woosh(0);echoSound();
+  if(hits.every(h=>!h)){saveUndo();undoStack[undoStack.length-1].dir=null;if(!clearing){pulls++;addTotal('pulls')}woosh(0);echoSound();lifeAdd('cubes',2);lifeAdd('echoes');
     unit.forEach((u,j)=>{u.alive=false;occ.delete(K(...u.c));const dv=new THREE.Vector3(...u.d),start=u.mesh.position.clone(),dist=span+6;
       tweens.push({t:-j*.06,dur:.75,step:k=>{k=Math.max(0,k);u.mesh.position.copy(start).addScaledVector(dv,dist*k*k);u.mesh.scale.setScalar(1-.6*Math.max(0,k-.5)*2)},end:()=>body.remove(u.mesh)})});
     afterRemoval(unit.concat(shatterPath(unit)))}
@@ -848,7 +859,7 @@ function shardMats(){const neon=theme==='neon';
     :new THREE.MeshPhongMaterial({color:0xBFE3EE,specular:0xffffff,shininess:90,transparent:true,opacity:.66,depthWrite:false,side:THREE.DoubleSide});
   const e=new THREE.LineBasicMaterial({color:neon?ICE:theme==='brand'?0x4F8F9E:0x6FA3B3,transparent:true,opacity:neon?.9:.75,depthWrite:false,blending:neon?THREE.AdditiveBlending:THREE.NormalBlending});
   return [m,e]}
-function shatterGlass(o){const p=new THREE.Vector3();o.mesh.getWorldPosition(p);body.remove(o.mesh);shatterSound();
+function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.getWorldPosition(p);body.remove(o.mesh);shatterSound();
   const sc=pivot.scale.x,V=THREE.Vector3;
   for(let i=0;i<42;i++){const g=shardTriGeo((.09+Math.random()*.12)*sc,.018*sc),[m,e]=shardMats();
     const mesh=new THREE.Mesh(g,m),edges=new THREE.LineSegments(new THREE.EdgesGeometry(g,25),e);mesh.add(edges);mesh.renderOrder=5;edges.renderOrder=6;
@@ -2016,6 +2027,7 @@ function load(i){
   lv.blocks.forEach((b,i)=>{b.id=i;b.alive=true;b.group=null;b.partner=b.pair!=null?lv.blocks[b.pair]:null;b.lockKey=b.lock!=null?lv.blocks[b.lock]:null});
   // a linked pair is a two-cube piece from the start
   lv.blocks.forEach(b=>{if(b.partner&&!b.group){const g={members:[b,b.partner],color:b.pairColor};b.group=g;b.partner.group=g}});
+  setTimeout(()=>{const e=PAR[levelIdx];curPar=e&&e[0]===levelSig()?e[1]:null},0); // (blocks are in place by then)
   floorSpec=gravity?{w:mx[0]-mn[0]+1.5,dz:mx[2]-mn[2]+1.5,x:(mn[0]+mx[0])/2-ctr[0],y:-ctr[1]-.56,z:(mn[2]+mx[2])/2-ctr[2]}:null;
   buildFloor(); // gravity levels sit on a floor, so it's clear which way is down
   lv.blocks.forEach(b=>{
@@ -2078,6 +2090,25 @@ const TOTALS={pulls:'pa2_totaltaps',taps:'pa2_totaldots',oops:'pa2_totaloops'},t
 try{for(const k in TOTALS)totals[k]=+localStorage.getItem(TOTALS[k])||0}catch(e){}
 function showTotal(){for(const [k,id] of [['pulls','totalPulls'],['taps','totalTaps'],['oops','totalOops']]){const t=document.getElementById(id);if(t)t.textContent=totals[k].toLocaleString()}}
 function addTotal(k){totals[k]++;try{localStorage.setItem(TOTALS[k],totals[k])}catch(e){}showTotal();lvAdd(levelIdx,{pulls:'p',taps:'t',oops:'b'}[k],1)}
+/* lifetime totals for the Scorecard: just for fun, never shown while playing (Undo never takes them back) */
+const LIFE_KEY='pa4_life';let life={cubes:0,dots:0,gears:0,echoes:0,fusions:0,glass:0};
+try{Object.assign(life,JSON.parse(localStorage.getItem(LIFE_KEY)||'{}'))}catch(e){}
+function lifeAdd(k,n=1){if(!(n>0))return;life[k]=(life[k]||0)+n;try{localStorage.setItem(LIFE_KEY,JSON.stringify(life))}catch(e){}}
+/* clean clears: a level cleared with no bumps, in par moves or fewer (or with no bumps where a level has no par yet) */
+let cleanSet={};try{cleanSet=JSON.parse(localStorage.getItem('pa4_clean')||'{}')||{}}catch(e){}
+/* daily streak: clear Today's level on back-to-back days (a missed day starts it over) */
+let streak={last:-1,n:0,best:0};try{Object.assign(streak,JSON.parse(localStorage.getItem('pa4_streak')||'{}'))}catch(e){}
+const streakNow=()=>streak.last>=dayN0()-1?streak.n:0;
+function dayN0(){return Math.floor(Date.now()/864e5-new Date().getTimezoneOffset()/1440)}
+function streakClear(){const d=dayN0();if(streak.last===d)return;streak.n=streak.last===d-1?streak.n+1:1;streak.last=d;streak.best=Math.max(streak.best||0,streak.n);
+  try{localStorage.setItem('pa4_streak',JSON.stringify(streak))}catch(e){}}
+/* par: the fewest moves (pulls + taps) that clear each level, found ahead of time by the game's own solvers and checked by
+   playing that solution through the game. Each entry carries the level's fingerprint: if a level is ever changed, its par
+   quietly disappears instead of being wrong (re-run the par check to bring it back). Levels with no entry show no par. */
+const PAR={0:['1-1mnn6k8',1],1:['2-qw4k8',2],2:['3-1rlluvq',3],3:['4-v4m315',4],4:['6-8rt9dk',6],5:['4-syo7ec',4],6:['6-nf6ntk',8],7:['6-swtq61',6],8:['7-1lrxgoo',7],9:['8-1jedkfo',9],10:['8-ro64pg',8],11:['9-1pp96d4',11],12:['10-1u1f039',10],13:['12-18oyj2x',16],14:['12-1sbxce1',14],15:['12-g5c9f8',14],16:['13-wzx2tx',13],17:['16-1xv01nd',17],18:['18-16ozzdh',21],19:['20-tlqxo9',24],20:['9-e8tadw',12],21:['18-3gwlw4',21],22:['13-pycdtl',17],23:['21-1kotbw8',24],24:['17-1ep1jma',18],25:['9-1adi55h',10],26:['12-dmo3wi',11],27:['12-8qn4dz',12],28:['18-6syu0o',16],29:['13-7nnvb0',12],30:['6-scxos6',5],31:['9-jgyaoo',7],32:['12-12aaxom',10],33:['16-1ra2azd',17],34:['18-1j0dpgj',18],35:['8-1pw17jt',9],36:['8-j1res9',10],37:['13-pnq71t',16],38:['13-op09u9',14],39:['10-5q8lga',11],40:['14-16qnpcp',15],41:['10-1m5c4fu',12],42:['13-1ang1dl',16],43:['14-9587tn',18],44:['16-5x4rg4',20],45:['8-l0qi55',8],46:['6-17p69ug',7],47:['6-b4rvy1',6],48:['6-4qmifp',6],49:['10-1wacuew',10],50:['12-101a255',12],51:['12-19lr31w',12],52:['18-1hny5px',19],53:['18-1djizzn',18],54:['22-hl4heh',25],55:['18-1fa9ofj',19],56:['24-e47176',28],57:['20-1319h5q',22],58:['27-1e79umd',28],59:['24-xicpt6',29],60:['4-1t3zehg',5],61:['8-t8a8vp',9],62:['12-agrf5l',14],63:['18-usme49',23],64:['24-1lhfcvo',31],65:['6-kru2d1',6],66:['9-ebspw1',9],67:['12-wtsy54',12],68:['9-16k4ku4',12],69:['12-8l750d',15],70:['12-1prd6eo',18],71:['16-1fsd5q0',21],72:['16-ylq4im',22],73:['18-13k5xul',24],74:['18-1409cpd',26],75:['32-17qrl05',31],76:['26-5leyd7',30],77:['24-1uibfir',24],79:['27-zdgus7',29],80:['19-vppy9w',17],81:['21-4ixmxf',19],83:['22-esikt6',21],85:['10-ssce6y',11],86:['14-3w6394',17],87:['13-vfsx8d',14],88:['15-m2ynsh',19],89:['16-wtgosy',20],90:['10-1mf6t2',10],91:['14-1h1vadw',14],92:['13-14ua99g',13],93:['15-eqokcq',15],94:['16-1qo8ogq',16]}; // key = level number - 1
+function levelSig(){let h=5381;const str=blocks.map(b=>[b.c,b.d,b.arrowFace,b.dotFace||'',b.axis||'',b.lock??'',b.pair??'',b.glide?1:0,b.num||0,b.glass?1:0,b.pivot?1:0,b.echo??'',b.fuseIdx??''].join('/')).join('|');
+  for(let i=0;i<str.length;i++)h=((h*33)^str.charCodeAt(i))>>>0;return blocks.length+'-'+h.toString(36)}
+let curPar=null; // set when a level loads
 /* per-level stats for the scorecard: pulls, taps, bumps, time played and clears for each level, kept on this device */
 let lvStats={};try{lvStats=JSON.parse(localStorage.getItem('pa2_lvlstats')||'{}')||{}}catch(e){}
 function lvAdd(L,k,n){if(!k||!(n>0))return;const o=lvStats[L]||(lvStats[L]={p:0,t:0,b:0,ms:0,c:0});o[k]=(o[k]||0)+n;
@@ -2121,11 +2152,18 @@ const STAT_COLORS={
 function statColors(){const t=STAT_COLORS[theme]||STAT_COLORS.plain;
   let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
   return (dark&&t.dark)||t.light}
+/* Pulls Left: how many pulls the board still needs. A linked pair or fused piece is one pull, echo twins leave on one pull,
+   and glass isn't pulled (it cracks and shatters) unless glass is all that's left, when each pane takes a tap to break */
+function pullsLeft(){const al=blocks.filter(b=>b.alive),solid=al.filter(b=>!b.glass);if(!solid.length)return al.length;
+  const seen=new Set();let n=0;
+  for(const b of solid){const k=b.group?'g'+Math.min(...b.group.members.map(m=>m.id)):b.echo!=null&&blocks[b.echo]&&blocks[b.echo].alive?'e'+Math.min(b.id,b.echo):'c'+b.id;
+    if(!seen.has(k)){seen.add(k);n++}}
+  return n}
 function updateLeft(){const n=occ.size;
   const el=document.getElementById('left');el.textContent='';
   const line=(txt,cls)=>{const d=document.createElement('div');d.textContent=txt;if(cls)d.className=cls;el.appendChild(d);return d};
   const sc=statColors(),col=(d,k)=>{d.style.color=sc[k];return d};
-  col(line(stat(pulls,'Pull'),'tapc'),'pulls');
+  col(line('Pulls Left '+pullsLeft(),'tapc'),'pulls');
   // taps show on levels with dots; bumps show once there's been one
   if(taps||blocks.some(b=>b.dotFace))col(line(stat(taps,'Tap')),'taps');
   if(oopsCount())col(line(stat(oopsCount(),'Bump')),'bumps');
@@ -2552,7 +2590,7 @@ function rayHit(b,d,ignore){
   }
   return 0;
 }
-/* ---------- Undo (Developer Mode) ----------
+/* ---------- Undo (a Settings switch, Off unless the player turns it on) ----------
    Before each move (a cube or piece sliding out, or a dot turn) the whole board is saved.
    Undo puts every cube back exactly where it was, including falls, fusions and locks. Bumps change nothing. */
 var undoStack=[];let lastMoveAt=-1e9;
@@ -2568,11 +2606,11 @@ function saveUndo(){
 function refreshUndo(){const u=document.getElementById('undo');if(u)u.disabled=!undoStack.length}
 setInterval(refreshUndo,400);
 function undo(){
-  if(!devMode||!undoStack.length||clearing||waiting)return;
+  if(!undoOn||!undoStack.length||clearing||waiting)return;
   // wait for the last move to finish animating (falls and fusions settle within about a second)
   if(performance.now()-lastMoveAt<900||blocks.some(b=>b.busy))return;
   const st=undoStack.pop();
-  taps=st.taps;pulls=st.pulls||0;bumps=st.bumps;
+  // the move comes back, but its count doesn't: pulls, taps and bumps already made stay on the level's tally
   occ.clear();const groups=new Map();
   blocks.forEach((b,i)=>{const s=st.cubes[i];
     Object.assign(b,{alive:s.alive,fuseColor:s.fuseColor,c:s.c,d:s.d,arrowFace:s.arrowFace,isKey:s.isKey,busy:false,group:null,unlocking:false});if(b.glass&&b.crack!==s.crack){b.crack=s.crack;setCrackLook(b)}
@@ -2597,7 +2635,7 @@ function undo(){
 // a tiny reverse "tick" so undo feels like stepping back
 function rewindTick(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;[0,.05,.1].forEach((d,i)=>tone(a,'sine',420+i*120,460+i*120,t+d,.05,.03,.003)) /* Rewind ticks: three tiny ticks climbing up, like a tape winding back */}
 document.getElementById('undo').onclick=e=>{e.stopPropagation();undo()};
-document.addEventListener('keydown',e=>{if(devMode&&(e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}});
+document.addEventListener('keydown',e=>{if(undoOn&&(e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}});
 function slide(b){
   for(const m of unitOf(b))endWobble(m);
   if(b.glass){glassTap(b);return}
@@ -2612,6 +2650,7 @@ function slide(b){
   if(hits.every(h=>!h)){
     saveUndo();undoStack[undoStack.length-1].dir=b.d.slice(); // (undo flies the cubes back in along this direction)
     if(!clearing){pulls++;addTotal('pulls')} // a successful pull
+    lifeAdd('cubes',unit.length);
     woosh(isFused(b)?b.group.members.filter(m=>m.alive).length:0); // fused pieces sound heavier: Heavy for 2-3 cubes, Heaviest for 4+
     unit.forEach(u=>{u.alive=false;occ.delete(K(...u.c));
       const dv=new THREE.Vector3(...b.d),start=u.mesh.position.clone(),dist=span+6;
@@ -2621,7 +2660,6 @@ function slide(b){
   }else if(b.glide&&unit.length===1&&Math.min(...hits.filter(h=>h>0))>1){
     glideMove(b,Math.min(...hits.filter(h=>h>0))-1); // Glide: slide up to the cube in the way and stay there
   }else{
-    bumps++;addTotal('oops');updateLeft(); // an oops: the cube bumped and stayed
     const hit=Math.min(...hits.filter(h=>h>0)); // the pair stops where the first of the two would hit
     const glassHit=strikeGlass(unit,hits,hit,()=>b.d);
     if(glassHit.length){saveUndo();if(!clearing){taps++;addTotal('taps')}updateLeft()} // pushing on glass is a move (a Tap), not an oops
@@ -2722,7 +2760,7 @@ function fuseAfterFall(before){
   // an arrow now buried inside its piece moves to an outside side of its cube, so the piece can always be tapped
   for(const m of fused)if(m.alive)m.arrowFace=rehomeArrow(m.c,m.d,m.arrowFace,p=>{const o=occ.get(K(...p));return o&&o.alive&&o.group===m.group},p=>{const o=occ.get(K(...p));return !!(o&&o.alive)});
   // show it as the fall lands: the pieces get their linked frame, give a little pulse, and a soft "fuse" sound
-  setTimeout(()=>{for(const m of fused)if(m.alive){m.mesh.material=materialsFor(m);pulse(m,.07,.36)}updateBridges();fuseSound()},420);
+  lifeAdd('fusions');setTimeout(()=>{for(const m of fused)if(m.alive){m.mesh.material=materialsFor(m);pulse(m,.07,.36)}updateBridges();fuseSound()},420);
 }
 // SmartPull: between two fused neighbors, a thin filler block closes the rounded groove,
 // so a fused piece looks like one continuous shape. It rides along on the cube, so it moves with the piece.
@@ -3016,7 +3054,7 @@ function lockedJiggle(b){
 function spin(b){
   // a dot on a linked pair turns the whole pair: both cubes roll a quarter turn about the line through them
   const unit=b.pairDot&&b.group?unitOf(b):[b];if(unit.some(u=>u!==b&&u.busy))return;
-  unit.forEach(endWobble);saveUndo();click();
+  unit.forEach(endWobble);saveUndo();click();lifeAdd('dots');
   const qa=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(...b.axis),Math.PI/2),ax=b.axis;
   unit.forEach(u=>{u.busy=true;const q0=u.mesh.quaternion.clone(),q1=qa.clone().multiply(q0);u.d=turn(u.d,ax);
     tweens.push({t:0,dur:.28,step:k=>THREE.Quaternion.slerp(q0,q1,u.mesh.quaternion,ease(k)),end:()=>{u.mesh.quaternion.copy(q1);u.busy=false}})});
@@ -3084,8 +3122,15 @@ function win(){
   // two lines with a little breathing room between them: the counts, then the total moves and best
   const l1=document.createElement('div');parts.forEach(([w,n,k],i)=>{if(i)l1.append('  ·  ');const lb=document.createElement('span');lb.textContent=w;lb.style.color=sc[k];l1.append(lb,' '+n)});
   const l2=document.createElement('div');l2.className='movesline';const mv=document.createElement('span');{const ml=document.createElement('span');ml.textContent='Moves';ml.style.color=movesColor();mv.append(ml,' '+moves)} // the word in color, the number plain like the counts above
+  if(curPar!=null){const pl=document.createElement('span');pl.textContent='Par';pl.style.color=movesColor();mv.append('  ·  ',pl,' '+curPar)}
   l2.append(bestBit(mv,prev===undefined?'':isBest?'  ·  New best!':'  ·  Best: '+prev));
-  tl.replaceChildren(l1,l2);
+  const lines=[l1,l2];
+  // a clean clear: no bumps, in par or fewer (no bumps is enough on a level without a par). It marks the level's pill in the menu.
+  if(oopsCount()===0&&(curPar==null||moves<=curPar)){const first=!cleanSet[levelIdx];cleanSet[levelIdx]=1;try{localStorage.setItem('pa4_clean',JSON.stringify(cleanSet))}catch(e){}
+    const l3=document.createElement('div');l3.className='movesline';const c=document.createElement('span');c.textContent=first?'Clean clear!':'Clean clear';c.style.color=BEST_COLOR[theme]||BEST_COLOR.plain;l3.append(c);lines.push(l3)}
+  // Today's level keeps a daily streak going
+  if(previewMode&&previewKey===dailyKey){streakClear();const l4=document.createElement('div');l4.className='movesline';l4.textContent='Daily streak '+plural(streak.n,'day');lines.push(l4)}
+  tl.replaceChildren(...lines);
   tl.classList.remove('best');
   // time is always recorded, but only shown when the player has turned the timer on
   pauseTimer();const ms=timeMs,pt=bestTimes[levelIdx],tBest=pt===undefined||ms<pt;
@@ -3206,6 +3251,11 @@ function openScorecard(){
   const owned=v=>devMode||TIERS[tier].max>=TIERS[v].max;
   const fmtLong=ms=>{const m=Math.floor(ms/60000),h=Math.floor(m/60);return h?h+'h '+(m%60)+'m':m+'m '+Math.floor(ms/1000)%60+'s'};
   const box=document.getElementById('scCards');box.innerHTML='';
+  {const c=document.createElement('div');c.className='sccard';c.style.setProperty('--sc',pal[0]);
+    const cell=(val,lab)=>`<div><b>${val}</b><span>${lab}</span></div>`,n=v=>(v||0).toLocaleString();
+    let g=cell(n(life.cubes),'Cubes pulled')+cell(n(Object.keys(cleanSet).length),'Clean clears')+cell(streakNow(),'Daily streak')+(streak.best?cell(streak.best,'Best streak'):'');
+    [['dots','Dots turned'],['gears','Gears turned'],['echoes','Echoes paired'],['fusions','Fusions made'],['glass','Glass shattered']].forEach(([k,lab])=>{if(life[k])g+=cell(n(life[k]),lab)});
+    c.innerHTML=`<div class="schead"><span>Lifetime</span><small>Every level</small></div><div class="scgrid">${g}</div>`;box.appendChild(c)}
   SC_VERSIONS.forEach(([v,name,range,a,z],i)=>{
     let p=0,t=0,b=0,ms=0,cleared=0,bestSum=0;
     for(let L=a;L<z;L++){const o=lvStats[L]||{};p+=o.p||0;t+=o.t||0;b+=o.b||0;ms+=o.ms||0;if(bestTaps[L]!==undefined){cleared++;bestSum+=bestTaps[L]}}
@@ -3272,6 +3322,7 @@ function uiSfx(kind,on){if(!soundOn)return;const a=audio();if(!a)return;const t=
   if(kind==='sound')return on?panel(294,370):panel(370,294);      // warmer and lower
   if(kind==='sfx')return sw(587,.03);
   if(kind==='dev')return sw(392,.024);
+  if(kind==='undo')return sw(440,.024);
   if(kind==='timer'){hiss(a,'bandpass',3200,3200,4,t,.018,.04,.001);return tone(a,'sine',on?700:787,on?787:700,t+.01,.08,.018,.008)}
   if(kind==='fs')return hiss(a,'lowpass',on?500:1100,on?1100:500,.6,t,.14,.035,.03);
   if(kind==='score'){[523,659,784].forEach((f,i)=>tone(a,'sine',f,f,t+i*.06,.35,.022,.01));return}
@@ -3324,14 +3375,14 @@ function openLevels(){
   const col=document.getElementById('lvcol');col.classList.remove('show');
   const top=topLevel();let h='',start=0,delay=0;
   const dg=groupOf(DAILY);
-  h+=`<div class="chrow" data-r="d"><button class="med" type="button" style="--c:var(--accent);transition-delay:0ms" aria-label="Today's daily level"><span class="disc">${SUN_ICON}</span></button>`+
+  h+=`<div class="chrow" data-r="d"><button class="med" type="button" style="--c:var(--accent);transition-delay:0ms" aria-label="Today's daily level"><span class="disc">${SUN_ICON}</span>${streakNow()?`<span class="lockBadge strk" aria-label="${plural(streakNow(),'day')} streak">${streakNow()}</span>`:''}</button>`+
      `<div class="tray"><span class="trnm">Today</span><span class="trnm" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-weight:600">${dg} ${DAILY+1}</span><button class="trlv${sampled.has(dailyKey)?' clr':''}${previewKey===dailyKey?' now':''}" type="button" data-play="d" style="width:auto;padding:0 10px;border-radius:14px">${sampled.has(dailyKey)?'Again':'Play'}</button></div></div>`;
   GROUPS.forEach(([end,name],k)=>{
     const s=start;start=end;delay+=24;
     const locked=chLocked(s),c=chColor(k),cur=Math.floor(levelIdx/5)===k;
     let tray;
     if(locked){tray=`<button class="trlv samp${sampled.has(String(s))?' clr':''}${previewKey===String(s)?' now':''}" type="button" data-samp="${s}" aria-label="Free sampler, level ${s+1}">${s+1}</button><button class="unlockPill" type="button" data-unlock="1">${LOCK_SVG}4 more</button>`}
-    else{tray='';for(let i=s;i<end;i++)tray+=`<button class="trlv${i<best?' clr':''}${i===levelIdx&&!previewMode?' now':''}" type="button" data-lv="${i}"${i>top?' disabled':''}>${i+1}</button>`}
+    else{tray='';for(let i=s;i<end;i++)tray+=`<button class="trlv${i<best?' clr':''}${cleanSet[i]?' cln':''}${i===levelIdx&&!previewMode?' now':''}" type="button" data-lv="${i}"${i>top?' disabled':''}${cleanSet[i]?` aria-label="Level ${i+1}, clean clear"`:''}>${i+1}</button>`}
     h+=`<div class="chrow" data-r="${k}"><button class="med${cur?' cur':''}${locked?' locked':''}" type="button" style="--c:${c};transition-delay:${delay}ms" aria-label="${name}, levels ${s+1} to ${end}">${ringSvg(s,locked,c)}<span class="disc">${chapterIcon(name)}</span>${locked?`<span class="lockBadge">${LOCK_SVG}</span>`:''}</button>`+
        `<div class="tray" style="--c:${c}"><span class="trnm">${name}</span>${tray}</div></div>`;
   });
@@ -3475,7 +3526,14 @@ function refreshFloorOpts(){
     box.appendChild(b)});
 }
 refreshFloorOpts();
-document.getElementById('undo').hidden=!devMode;
+let undoOn=false;try{undoOn=localStorage.getItem('pa4_undo')==='1'}catch(e){}
+document.getElementById('undo').hidden=!undoOn;
+(function(){const box=document.getElementById('optUndo');
+  [['On',true],['Off',false]].forEach(([label,val])=>{const b=document.createElement('button');b.className='opt';b.textContent=label;
+    b.setAttribute('aria-pressed',undoOn===val?'true':'false');
+    b.onclick=()=>{uiSfx('undo',val);undoOn=val;try{localStorage.setItem('pa4_undo',val?'1':'0')}catch(e){}
+      box.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));document.getElementById('undo').hidden=!val};
+    box.appendChild(b)})})();
 document.getElementById('devJump').addEventListener('submit',e=>{e.preventDefault();
   const n=Math.max(1,Math.min(NLEV,Math.floor(+document.getElementById('devLevel').value)||1));
   document.getElementById('devLevel').value=n;
@@ -3486,7 +3544,7 @@ document.getElementById('devJump').addEventListener('submit',e=>{e.preventDefaul
     b.setAttribute('aria-pressed',devMode===val?'true':'false');
     b.onclick=()=>{uiSfx('dev',val);devMode=val;try{localStorage.setItem('pa2_dev',val?'1':'0')}catch(e){}
       box.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
-      document.getElementById('devJump').hidden=!val;refreshFloorOpts();buildFloor();document.getElementById('undo').hidden=!val;
+      document.getElementById('devJump').hidden=!val;refreshFloorOpts();buildFloor();
       // Developer Mode opens every level and theme, so the Version preview has nothing to do and hides
       document.getElementById('tierRow').hidden=val;refreshThemeLocks();if(!themeOK(theme))setTheme('plain');
       if(levelIdx>topLevel())load(topLevel());else refreshNav()};
@@ -3574,7 +3632,7 @@ function frame(now){
   renderer.render(scene,camera);requestAnimationFrame(frame);
 }
 window.__test={buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
-  blocks:()=>blocks,slide,spin,pivotTurn,glassTap,S4,src:()=>curLv&&curLv.src,state:()=>({levelIdx,clearing,best,busy:blocks.some(b=>b.busy)})};
+  blocks:()=>blocks,slide,spin,pivotTurn,glassTap,S4,solveTest,liveSpec,solverFor,settle,rayBlocked,levelSig,pullsLeft,par:()=>curPar,grav:()=>gravity,counts:()=>({pulls,taps,bumps}),src:()=>curLv&&curLv.src,state:()=>({levelIdx,clearing,best,busy:blocks.some(b=>b.busy)})};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
