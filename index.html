@@ -397,7 +397,7 @@ header .blacklight:focus-visible::after{opacity:1}
         <ul><li>Levels 1–25</li><li>SmartPull color mode</li></ul>
       </div>
       <div class="upcard best">
-        <div class="uphead"><span>Complete</span><span class="upprice">$1.99</span></div>
+        <div class="uphead"><span>Complete</span><span class="upprice">$2.99</span></div>
         <ul><li>All 100 levels</li><li>All three modes, including Neon</li></ul>
         <div class="upnote" id="up-full-note" hidden>Everything you have now, plus levels 26–100 and the Neon mode.</div>
       </div>
@@ -1896,7 +1896,7 @@ try{best=+localStorage.getItem('pa3_unlocked')||0;levelIdx=Math.min(+localStorag
 /* ---------- versions (App Store pricing) ----------
    Free:  levels 1–10, Classic theme only
    $0.99: levels 1–25, Classic + SmartPull themes
-   $1.99: levels 1–100, all three themes
+   $2.99: levels 1–100, all three themes
    Real purchases happen through the App Store in the iOS app; this web preview has a
    "Version (preview)" switch in settings to try each one. */
 const TIERS={free:{max:10,themes:['plain']},plus:{max:25,themes:['plain','brand']},full:{max:100,themes:['plain','brand','neon']}};
@@ -1911,7 +1911,7 @@ let devMode=DEV_ALWAYS_ON;if(!DEV_ALWAYS_ON){try{devMode=localStorage.getItem('p
 const topLevel=()=>devMode?NLEV-1:Math.min(best,maxLevel()-1);       // furthest level you can open right now
 const capCleared=()=>best>=maxLevel();                 // every level in this version is cleared
 const themeOK=t=>{try{if(devMode)return true}catch(e){}return TIERS[tier].themes.includes(t)}; // Developer Mode opens every theme
-const THEME_PRICE={brand:'$0.99',neon:'$1.99'};
+const THEME_PRICE={brand:'$0.99',neon:'$2.99'};
 levelIdx=Math.min(levelIdx,topLevel());
 // color themes: plain off-white, brand kit, or retro neon
 // [id, name, swatch colors, swatch backdrop]
@@ -3193,7 +3193,7 @@ function fitCredit(){const m=document.querySelector('.mark'),c=document.querySel
 fitCredit();addEventListener('resize',fitCredit);
 try{document.fonts.ready.then(fitCredit);document.fonts.addEventListener('loadingdone',fitCredit)}catch(e){}
 /* ---------- scorecard ---------- */
-const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack · $0.99','Levels 11–25',10,25],['full','Complete · $1.99','Levels 26–100',25,100]];
+const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack · $0.99','Levels 11–25',10,25],['full','Complete · $2.99','Levels 26–100',25,100]];
 function openScorecard(){
   [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   bankPlay(elapsed());if(timeStart!==null)timeStart=performance.now();timeMs=0; // count the time on the current level so far
@@ -3416,7 +3416,7 @@ function openUpgrade(){
 function closeUpgrade(){upPanel.hidden=true}
 document.getElementById('upClose').onclick=closeUpgrade;
 upPanel.addEventListener('pointerdown',e=>{if(e.target===upPanel)closeUpgrade()});
-/* Version (preview): try Free, $0.99 and $1.99 without buying anything */
+/* Version (preview): try Free, $0.99 and $2.99 without buying anything */
 function setTier(t){
   tier=t;try{localStorage.setItem('pa2_tier',t)}catch(e){}
   document.querySelectorAll('#optTier .opt').forEach((b,i)=>b.setAttribute('aria-pressed',['free','plus','full'][i]===t?'true':'false'));
@@ -3468,7 +3468,7 @@ document.getElementById('devJump').addEventListener('submit',e=>{e.preventDefaul
     box.appendChild(b)})})();
 document.getElementById('tierRow').hidden=devMode;
 (function(){const box=document.getElementById('optTier');
-  [['free','Free'],['plus','$0.99'],['full','$1.99']].forEach(([id,label],i)=>{const b=document.createElement('button');b.className='opt';b.id='optTier-'+i;b.textContent=label;
+  [['free','Free'],['plus','$0.99'],['full','$2.99']].forEach(([id,label],i)=>{const b=document.createElement('button');b.className='opt';b.id='optTier-'+i;b.textContent=label;
     b.setAttribute('aria-pressed',tier===id?'true':'false');b.onclick=()=>setTier(id);box.appendChild(b)})})();
 // a barely-there "page turn" when moving between levels: a breath of air and a soft, low blip
 function pageTurn(){
