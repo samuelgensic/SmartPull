@@ -988,12 +988,24 @@ function shardSim(tw){let dt=tw.t-tw.last;tw.last=tw.t;if(dt<=0)return;
     if(S.age>=S.life){scene.remove(S.pts);S.pts.geometry.dispose();S.mat.dispose();shardsLive=shardsLive.filter(x=>x!==S.pts);S.gone=true}}
   SHARD.sparks=SHARD.sparks.filter(S=>!S.gone)}
 
-// a hidden frame meter for testing on a phone: open the game with #perf at the end of the link
-if(/perf/.test(location.hash)){const d=document.createElement('div');d.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 4px);left:50%;transform:translateX(-50%);z-index:99;font:11px ui-monospace,monospace;background:rgba(0,0,0,.65);color:#fff;padding:3px 8px;border-radius:8px;pointer-events:none;white-space:nowrap';
-  document.body.appendChild(d);let l=performance.now(),t0=l,fr=0,worst=0;const hitches=[];
-  (function w(n){const g=n-l;l=n;fr++;if(g>worst)worst=g;if(g>45)hitches.push(Math.round(g));
-    if(n-t0>=1000){d.textContent=fr+' fps · worst '+Math.round(worst)+' ms'+(hitches.length?' · hitches '+hitches.slice(-5).join(', '):'');fr=0;worst=0;t0=n}
-    requestAnimationFrame(w)})(l)}
+// a hidden frame meter for testing on a phone: open the game with #perf at the end of the link.
+// Each hitch (a frame over 45 ms) is labeled with what the game did during it, with how long each step took.
+if(/perf/.test(location.hash))setTimeout(()=>{
+  const d=document.createElement('div');d.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 4px);left:8px;right:8px;z-index:99;font:10.5px/1.35 ui-monospace,monospace;background:rgba(0,0,0,.72);color:#fff;padding:4px 8px;border-radius:8px;pointer-events:none;white-space:pre-wrap';
+  document.body.appendChild(d);const ev=[],hitches=[];
+  const wrap=(name,f)=>function(...a){const t=performance.now();try{return f.apply(this,a)}finally{const dt=performance.now()-t;if(dt>3)ev.push([name,t,dt])}};
+  try{load=wrap('level',load)}catch(e){} try{shatterGlass=wrap('break',shatterGlass)}catch(e){} try{setCrackLook=wrap('crack',setCrackLook)}catch(e){}
+  try{warmShards=wrap('warm',warmShards)}catch(e){} try{recordGlassSounds=wrap('rec-snd',recordGlassSounds)}catch(e){} try{shardSim=wrap('shards',shardSim)}catch(e){}
+  try{setTheme=wrap('mode',setTheme)}catch(e){} try{spin=wrap('dot',spin)}catch(e){} try{slide=wrap('pull',slide)}catch(e){} try{shatterSound=wrap('snd',shatterSound)}catch(e){}
+  try{win=wrap('win',win)}catch(e){}
+  const rr=renderer.render.bind(renderer);renderer.render=function(a,b){const p0=renderer.info.programs.length,t=performance.now();rr(a,b);const dt=performance.now()-t,dp=renderer.info.programs.length-p0;if(dt>3||dp)ev.push(['draw'+(dp?'+'+dp+'prog':''),t,dt])};
+  const rc=renderer.compile.bind(renderer);renderer.compile=function(a,b){const t=performance.now();rc(a,b);ev.push(['compile',t,performance.now()-t])};
+  let l=performance.now(),t0=l,fr=0,worst=0;
+  (function w(n){const g=n-l;
+    if(g>45){const what=ev.filter(e=>e[1]>=l-2&&e[1]<=n).map(e=>e[0]+' '+Math.round(e[2])).join(', ')||'no game code (graphics/browser)';hitches.push(Math.round(g)+' ms: '+what);if(hitches.length>6)hitches.shift()}
+    while(ev.length&&ev[0][1]<n-3000)ev.shift();l=n;fr++;if(g>worst)worst=g;
+    if(n-t0>=1000){d.textContent=fr+' fps · worst '+Math.round(worst)+' ms'+(hitches.length?'\n'+hitches.join('\n'):'');fr=0;worst=0;t0=n}
+    requestAnimationFrame(w)})(l)},0);
 function shatterSound(){if(!soundOn)return;const a=audio();if(!a)return;
   if(GLASS_SND.shatter.length){playBuf(GLASS_SND.shatter[Math.floor(Math.random()*GLASS_SND.shatter.length)]);return} // the recorded break (see recordGlassSounds)
   recordGlassSounds();shatterSoundTo(a,a.currentTime)}
