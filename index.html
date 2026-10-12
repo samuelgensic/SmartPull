@@ -2804,11 +2804,13 @@ function tick(){ // the tiniest click as the dial or wheel passes each level
 function menuSfx(which,open){
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   if(which==='level'){
-    if(open){tone(a,'sine',480,720,t,.085,.06,.006);tone(a,'triangle',720,1080,t+.01,.075,.022,.004)}
-    else{tone(a,'sine',720,480,t,.085,.06,.079);tone(a,'triangle',1080,720,t+.013,.075,.022,.071)}
+    // a warm two-note marimba pop for the level wheel
+    if(open){tone(a,'sine',440,660,t,.11,.075,.008);tone(a,'sine',660,990,t+.016,.09,.03,.005)}
+    else{tone(a,'sine',660,440,t,.11,.075,.094);tone(a,'sine',990,660,t+.02,.09,.03,.07)}
   }else{
-    if(open){tone(a,'triangle',600,850,t,.055,.055,.004);tone(a,'sine',1400,1700,t,.022,.018,.003)}
-    else{tone(a,'triangle',850,600,t,.055,.055,.051);tone(a,'sine',1700,1400,t,.022,.018,.019)}
+    // a crisp, mechanical click for the settings panel — noise-based, a different texture from the chime above
+    if(open){hiss(a,'highpass',2600,2600,4,t,.035,.11,.002);tone(a,'triangle',700,950,t,.04,.05,.003)}
+    else{hiss(a,'highpass',2600,2600,4,t,.035,.11,.09);tone(a,'triangle',950,700,t,.04,.05,.036)}
   }
 }
 const stageEl=document.getElementById('stage');
