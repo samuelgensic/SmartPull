@@ -131,6 +131,9 @@ html.neon .lvsub{color:#FF2E97}
 .wlv small{font-family:var(--display); font-size:8.5px; font-weight:400; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-top:2px}
 .wrow.on{color:var(--accent)}
 .wrow.lock span{color:var(--muted)}
+.wic{width:16px; height:16px; flex:none; margin-right:8px; opacity:.7}
+.wrow.soon{cursor:default}
+.wrow.soon .wic{opacity:.4}
 button.wgo{align-self:stretch; height:40px; background:var(--accent); color:var(--chip)}
 .lvgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:6px}
 button.lv{width:100%; height:40px; border-radius:10px; background:var(--bg2); box-shadow:none; font-family:var(--display); font-weight:500; font-size:13px; font-variant-numeric:tabular-nums}
@@ -145,7 +148,8 @@ button.topt[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
 header{row-gap:8px}
 button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 button svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
-#stage{flex:1; min-height:0; position:relative; touch-action:none; cursor:grab}
+#stage{flex:1; min-height:0; position:relative; touch-action:none; cursor:grab; transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .35s; transform-origin:center}
+#stage.dim{opacity:.55; transform:scale(.96)}
 #stage:active{cursor:grabbing}
 canvas{display:block; width:100%; height:100%}
 /* the credit sits under the SmartPull wordmark, top left */
@@ -379,6 +383,28 @@ const LEVELS=[
 /* each level's group, shown under "Level #": [last level of the group, name] */
 const GROUPS=[[5,'Pull'],[10,'Twist'],[15,'Stack'],[20,'Build'],[25,'Link'],[30,'Glide'],[35,'Drift'],[40,'Drop'],[45,'Tumble'],[50,'Lock'],[55,'Order'],[60,'Count'],[65,'Mix'],[70,'Blend'],[75,'Relay'],[80,'Meld'],[85,'Fuse']];
 const groupOf=i=>(GROUPS.find(g=>i+1<=g[0])||GROUPS[GROUPS.length-1])[1];
+// one glyph per chapter, matching the final medallion designs from the level-menu preview
+const ICONS={
+  Pull:'<path d="M7.8 4 Q12.5 8.5 16.8 12 Q12.5 15.5 7.8 20" stroke-width="4.2"/>',
+  Twist:'<path d="M18.5 12a6.5 6.5 0 1 1-1.9-4.6"/><path d="M18.5 4.5v3.4h-3.4"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
+  Stack:'<rect x="6.5" y="3" width="11" height="5" rx="1.2"/><rect x="6.5" y="9.5" width="11" height="5" rx="1.2"/><rect x="6.5" y="16" width="11" height="5" rx="1.2"/>',
+  Build:'<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16"/>',
+  Link:'<rect x="2.5" y="6.5" width="19" height="11" rx="3"/><path d="M12 6.5v11"/>',
+  Glide:'<path d="M5 6.5l5.5 5.5L5 17.5"/><path d="M12 6.5l5.5 5.5-5.5 5.5"/>',
+  Drift:'<path d="M5 16c3-9 10-12 14-10"/><path d="M15 4.5l4 1.5-1.5 4"/>',
+  Drop:'<rect x="8" y="3" width="8" height="8" rx="1.8"/><path d="M12 13.5v4.5M9.6 15.8l2.4 2.4 2.4-2.4M4 21h16"/>',
+  Tumble:'<rect x="8" y="3" width="11" height="5" rx="1.2" transform="rotate(20 13.5 5.5)"/><rect x="6.5" y="9.5" width="11" height="5" rx="1.2"/><rect x="6.5" y="16" width="11" height="5" rx="1.2"/>',
+  Lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>',
+  Order:'<path d="M4 4h10v6H6v6h10"/><path d="M13 19l3-3-3-3"/>',
+  Count:'<rect x="4" y="4" width="16" height="16" rx="3.5"/><g fill="currentColor" stroke="none"><circle cx="8.7" cy="8.7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="15.3" cy="15.3" r="1.5"/></g>',
+  Mix:'<rect x="4" y="4" width="10" height="10" rx="2"/><rect x="10" y="10" width="10" height="10" rx="2"/>',
+  Blend:'<circle cx="12" cy="8.5" r="4.3"/><circle cx="8.6" cy="14.6" r="4.3"/><circle cx="15.4" cy="14.6" r="4.3"/>',
+  Relay:'<path d="M4 7l5 5-5 5M10 7l5 5-5 5"/><circle cx="19.5" cy="12" r="1.9" fill="currentColor" stroke="none"/>',
+  Meld:'<path d="M3.5 8l4 4-4 4"/><rect x="10.5" y="7" width="10" height="10" rx="2.8"/>',
+  Fuse:'<rect x="3" y="8" width="8" height="8" rx="1.6"/><rect x="13" y="8" width="8" height="8" rx="1.6"/><path d="M12 6v2M12 16v2M9.6 7.1l1 1.5M14.4 7.1l-1 1.5M9.6 16.9l1-1.5M14.4 16.9l-1-1.5"/>',
+  Soon:'<circle cx="12" cy="12" r="8.5"/><path d="M9.2 9.3a2.8 2.8 0 1 1 4.3 2.4c-1 .6-1.5 1.1-1.5 2.3"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/>'
+};
+const chapterIcon=name=>`<svg class="wic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.Soon}</svg>`;
 function lvLabel(i){const b=document.getElementById('lvl');if(!b)return;
   b.querySelector('.lvnum').textContent='Level '+(i+1);b.querySelector('.lvsub').textContent=groupOf(i)}
 /* ---------- tips: the first time a new rule shows up, a small tip button appears on that level ----------
@@ -2005,8 +2031,9 @@ function blSound(on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.c
   else{hiss(a,'bandpass',1900,1900,5,t,.014,.11,.0005);tone(a,'sine',800,560,t,.012,.035,.0005)}}
 document.getElementById('tune').onclick=e=>{e.stopPropagation();closeSoundPanel();
   const tp=document.getElementById('themes');if(tp&&!tp.hidden){tp.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
-  panel.hidden=!panel.hidden;document.getElementById('tune').setAttribute('aria-expanded',String(!panel.hidden))};
-document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!e.target.closest('#tune')){panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}});
+  const opening=panel.hidden;panel.hidden=!panel.hidden;document.getElementById('tune').setAttribute('aria-expanded',String(!panel.hidden));
+  if(stageEl)stageEl.classList.toggle('dim',opening);menuSfx('tools',opening)};
+document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!e.target.closest('#tune')){panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim')}});
 function click(){
   // the dot turn: Twist knob (soft clicks): three quiet knob detents over a gentle rising glide, with smooth fade-outs
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
@@ -2773,23 +2800,42 @@ function tick(){ // the tiniest click as the dial or wheel passes each level
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   hiss(a,'bandpass',3200,3200,4,t,.018,.05,.001);
 }
-function closeLevels(){lvPanel.hidden=true;lvBtn.setAttribute('aria-expanded','false')}
+// open and close are literal time-reverses of each other: the frequency sweep and the attack/decay shape both flip
+function menuSfx(which,open){
+  if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  if(which==='level'){
+    if(open){tone(a,'sine',480,720,t,.085,.06,.006);tone(a,'triangle',720,1080,t+.01,.075,.022,.004)}
+    else{tone(a,'sine',720,480,t,.085,.06,.079);tone(a,'triangle',1080,720,t+.013,.075,.022,.071)}
+  }else{
+    if(open){tone(a,'triangle',600,850,t,.055,.055,.004);tone(a,'sine',1400,1700,t,.022,.018,.003)}
+    else{tone(a,'triangle',850,600,t,.055,.055,.051);tone(a,'sine',1700,1400,t,.022,.018,.019)}
+  }
+}
+const stageEl=document.getElementById('stage');
+function closeLevels(){lvPanel.hidden=true;lvBtn.setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim');menuSfx('level',false)}
 let wheelPick=0,wheelLast=-1;
 function openLevels(){
   panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');
   themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false');
+  if(stageEl)stageEl.classList.add('dim');menuSfx('level',true);
   const list=document.getElementById('wheel');list.innerHTML='';
   const pad=()=>{const s=document.createElement('div');s.className='wpad';return s};
   list.appendChild(pad());
   for(let i=0;i<=topLevel();i++){
     const r=document.createElement('div');r.className='wrow';r.dataset.i=i;
-    r.innerHTML='<span class="wlv">Level '+(i+1)+'<small>'+groupOf(i)+'</small></span><em>'+(i<best?'✓':'new')+'</em>';
+    r.innerHTML=chapterIcon(groupOf(i))+'<span class="wlv">Level '+(i+1)+'<small>'+groupOf(i)+'</small></span><em>'+(i<best?'✓':'new')+'</em>';
     // tapping any level picks it right away (no need to press Select): it rolls to the middle, then opens
     r.onclick=()=>{list.scrollTo({top:i*ROW,behavior:'smooth'});tick();
       setTimeout(()=>{closeLevels();if(i!==levelIdx){pageTurn();load(i)}},220)};list.appendChild(r);
   }
   if(tier!=='full'&&!devMode){const r=document.createElement('div');r.className='wrow lock';r.dataset.i='more';
     r.innerHTML='<span>More levels</span><em>🔒</em>';r.onclick=()=>{closeLevels();openUpgrade()};list.appendChild(r)}
+  // chapters 18–20 (levels 86–100) aren't designed yet — shown as a locked teaser, not playable
+  ['Chapter 18','Chapter 19','Chapter 20'].forEach(name=>{
+    const r=document.createElement('div');r.className='wrow lock soon';
+    r.innerHTML=chapterIcon('Soon')+'<span class="wlv">'+name+'<small>Coming soon</small></span>';
+    list.appendChild(r);
+  });
   list.appendChild(pad());
   lvPanel.hidden=false;lvBtn.setAttribute('aria-expanded','true');
   wheelPick=levelIdx;wheelLast=levelIdx;list.scrollTop=levelIdx*ROW;styleWheel();
