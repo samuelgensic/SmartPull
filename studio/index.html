@@ -538,9 +538,25 @@ const TRACKS=[
   opts:[['Current',CUR.gen('strings')]]},
 ];
 let A=null,master=null,playing=null,tick=null;
-function ctx(){if(!A){A=new (window.AudioContext||window.webkitAudioContext)();try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
-  master=A.createGain();master.gain.value=Math.pow(+vol.value/70,2);master.connect(A.destination)}
-  if(A.state!=='running')A.resume();return A}
+/* iPhone/iPad: the same setup the game uses. Mark the page as "playback" audio as soon as it loads (so the ring/silent
+   switch doesn't mute it); on older iOS, a silent looping clip started on the first tap does the same job. */
+try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+let keepAlive=null;
+function silentClip(){const n=2000,buf=new ArrayBuffer(44+n),v=new DataView(buf),w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);
+  for(let i=0;i<n;i++)v.setUint8(44+i,128);return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}))}
+function unlockPlayback(){if(navigator.audioSession||keepAlive)return;
+  try{keepAlive=new Audio(silentClip());keepAlive.loop=true;keepAlive.setAttribute('playsinline','');keepAlive.play().catch(()=>{keepAlive=null})}catch(e){keepAlive=null}}
+function ctx(){unlockPlayback();
+  if(!A){A=new (window.AudioContext||window.webkitAudioContext)();
+    A.onstatechange=()=>{if(A.state!=='running'&&!document.hidden)A.resume().catch(()=>{})};
+    master=A.createGain();master.gain.value=Math.pow(+vol.value/70,2);master.connect(A.destination);
+    try{const b=A.createBuffer(1,1,A.sampleRate),s=A.createBufferSource();s.buffer=b;s.connect(A.destination);s.start(0)}catch(e){}
+    GrandPiano(A)} // start loading the piano right away
+  if(A.state!=='running')A.resume().catch(()=>{});return A}
+// every tap makes sure sound is awake (iOS only lets it start inside a tap)
+['touchend','pointerup','click'].forEach(ev=>document.addEventListener(ev,()=>{if(A&&A.state!=='running')A.resume().catch(()=>{})},{passive:true,capture:true}));
 const vol=document.getElementById('vol');vol.oninput=()=>{if(master)master.gain.setTargetAtTime(Math.pow(+vol.value/70,2),A.currentTime,.05)};
 const fast=document.getElementById('fast');fast.onchange=()=>{EVO.s=fast.checked?.3:1};
 function stop(){if(!playing)return;const p=playing;playing=null;clearInterval(tick);const t=A.currentTime;
@@ -563,5 +579,5 @@ TRACKS.forEach(tr=>{const c=document.createElement('section');c.className='card'
     b.innerHTML=`<span class="ic"></span>${label}`;b.onclick=()=>play(c,b,fn,label);bb.appendChild(b)});
   box.appendChild(c)});
 document.getElementById('stopAll').onclick=stop;
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&A&&A.state!=='running')A.resume().catch(()=>{})});
 </script></body></html>
