@@ -884,7 +884,7 @@ function warmShards(){recordGlassSounds();const th=theme;
   requestAnimationFrame(()=>requestAnimationFrame(()=>scene.remove(g)))}
 function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.getWorldPosition(p);body.remove(o.mesh);shatterSound();warmShards();
   const sc=pivot.scale.x,V=THREE.Vector3,pool=shardPool(),[m,e]=shardMats();
-  for(let i=0;i<42;i++){const sh=pool[i%pool.length],k=(.09+Math.random()*.12)*sc/.85; // a shape from the pool, sized like before
+  for(let i=0;i<24;i++){const sh=pool[i%pool.length],k=(.11+Math.random()*.13)*sc/.85; // 24 shards from the pool, a touch larger so the burst looks as full
     const mesh=shardMesh(),edges=mesh.children[0];mesh.geometry=sh.geo;mesh.material=m;edges.geometry=sh.edges;edges.material=e;mesh.scale.setScalar(k);
     const off=new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(.8*sc),pos=p.clone().add(off);
     const vel=off.clone().normalize().multiplyScalar((2.6+Math.random()*2)*sc).addScaledVector(SH_UP,(1.6+Math.random())*sc);
@@ -990,7 +990,7 @@ function shardSim(tw){let dt=tw.t-tw.last;tw.last=tw.t;if(dt<=0)return;
 if(/perf/.test(location.hash))setTimeout(()=>{
   const d=document.createElement('div');d.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 4px);left:8px;right:8px;z-index:99;font:10.5px/1.35 ui-monospace,monospace;background:rgba(0,0,0,.72);color:#fff;padding:4px 8px;border-radius:8px;pointer-events:none;white-space:pre-wrap';
   document.body.appendChild(d);const ev=[],hitches=[];
-  const wrap=(name,f)=>function(...a){const t=performance.now();try{return f.apply(this,a)}finally{const dt=performance.now()-t;if(dt>3)ev.push([name,t,dt])}};
+  const last={},wrap=(name,f)=>function(...a){const t=performance.now();last[name]=t;try{return f.apply(this,a)}finally{const dt=performance.now()-t;if(dt>3)ev.push([name,t,dt])}};
   try{load=wrap('level',load)}catch(e){} try{shatterGlass=wrap('break',shatterGlass)}catch(e){} try{setCrackLook=wrap('crack',setCrackLook)}catch(e){}
   try{warmShards=wrap('warm',warmShards)}catch(e){} try{recordGlassSounds=wrap('rec-snd',recordGlassSounds)}catch(e){} try{shardSim=wrap('shards',shardSim)}catch(e){}
   try{setTheme=wrap('mode',setTheme)}catch(e){} try{spin=wrap('dot',spin)}catch(e){} try{slide=wrap('pull',slide)}catch(e){} try{shatterSound=wrap('snd',shatterSound)}catch(e){}
@@ -999,8 +999,8 @@ if(/perf/.test(location.hash))setTimeout(()=>{
   const rc=renderer.compile.bind(renderer);renderer.compile=function(a,b){const t=performance.now();rc(a,b);ev.push(['compile',t,performance.now()-t])};
   let l=performance.now(),t0=l,fr=0,worst=0;
   (function w(n){const g=n-l;
-    if(g>45){const what=ev.filter(e=>e[1]>=l-2&&e[1]<=n).map(e=>e[0]+' '+Math.round(e[2])).join(', ')||'no game code (graphics/browser)';hitches.push(Math.round(g)+' ms: '+what);if(hitches.length>6)hitches.shift()}
-    while(ev.length&&ev[0][1]<n-3000)ev.shift();l=n;fr++;if(g>worst)worst=g;
+    if(g>45&&g<5000&&!document.hidden){const what=ev.filter(e=>e[1]>=l-2&&e[1]<=n).map(e=>e[0]+' '+Math.round(e[2])).join(', ')||'no game code (graphics/browser)';const ago=(nm,lb)=>{const e=last[nm];return e&&n-e<4000?' · '+((n-e)/1000).toFixed(1)+'s after '+lb:''};hitches.push(Math.round(g)+' ms: '+what+(ago('level','level open')||ago('break','break')||ago('crack','crack')));if(hitches.length>6)hitches.shift()}
+    while(ev.length&&ev[0][1]<n-5000)ev.shift();l=n;fr++;if(g>worst)worst=g;
     if(n-t0>=1000){d.textContent=fr+' fps · worst '+Math.round(worst)+' ms'+(hitches.length?'\n'+hitches.join('\n'):'');fr=0;worst=0;t0=n}
     requestAnimationFrame(w)})(l)},0);
 function shatterSound(){if(!soundOn)return;const a=audio();if(!a)return;
