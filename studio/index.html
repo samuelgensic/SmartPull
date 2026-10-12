@@ -121,6 +121,14 @@ const INST={
     additive(d,sr,f,parts,Math.floor(sr*.002));
     let y=0,y2=0;const hk=Math.floor(sr*.018),kc=clamp(f/3000,.08,.45);for(let i=0;i<hk;i++){y+=kc*((R()*2-1)-y);y2+=.04*((R()*2-1)-y2);d[i]+=(y*.12+y2*.5)*Math.exp(-i/(sr*.004))}
     finish(d,sr,.002,.5);return{buf:b,rate:1}},
+  // soft wooden marimba bar: fundamental, the bar's 4th-ish overtone, a faint high one, a felt-mallet thud
+  marimba(A,midi){const sr=A.sampleRate,f=MT(midi),b=A.createBuffer(1,Math.floor(sr*2.6),sr),d=b.getChannelData(0),tau=clamp(1.5-(midi-50)*.03,.45,1.5);
+    additive(d,sr,f,[[1,1,tau],[3.93,.16,tau*.18],[9.2,.04,tau*.06]],Math.floor(sr*.003));
+    let y=0;for(let i=0;i<sr*.012;i++){y+=.05*((R()*2-1)-y);d[i]+=y*.5*Math.sin(Math.PI*i/(sr*.012))}
+    finish(d,sr,.003,.3);return{buf:b,rate:1}},
+  // warm electric-piano bell: round fundamental, a soft octave, a little chorus
+  ep(A,midi){const sr=A.sampleRate,f=MT(midi),b=A.createBuffer(1,Math.floor(sr*4),sr),d=b.getChannelData(0);
+    additive(d,sr,f,[[1,1,2.4,0],[1,.45,2.2,5],[2,.16,1.1,0],[3,.04,.5,0]],Math.floor(sr*.004));finish(d,sr,.004,.4);return{buf:b,rate:1}},
   // soft bell for Calm's rare high notes
   bell(A,midi){const sr=A.sampleRate,f=MT(midi),b=A.createBuffer(1,Math.floor(sr*5),sr),d=b.getChannelData(0);
     additive(d,sr,f,[[1,1,2.6],[2.76,.18,1],[5.4,.06,.4],[.5,.12,2]],Math.floor(sr*.03));finish(d,sr,.03,.5);return{buf:b,rate:1}}
@@ -331,17 +339,18 @@ NEW.boxDuet=function(A,out,ui){const soft=A.createBiquadFilter();soft.type='lowp
    the kick on every bar, a soft rim or finger snap on 2 and 4, a whisper of shaker or hi-hat on the eighths,
    all low and dusty, over the turning run-out groove of a finished record. Sections swap the little percussion around. */
 NEW.lantern=function(A,out,ui){const mix=Mix(A,out,{verbSec:6,dark:.9}),stops=[];const bus=mix.bus(.45,.7);
-  const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1250;lp.Q.value=.4;lp.connect(bus);
-  const tcr=Crusher(A,7,8);tcr.output.connect(lp);
+  const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=.4;lp.connect(bus);
+  const tcr={input:lp};
   const wob=A.createOscillator();wob.frequency.value=.35;const wg=A.createGain();wg.gain.value=14;wob.connect(wg);wob.start();stops.push(wob);
-  {const sr=A.sampleRate,L=Math.floor(sr*1.8),gb=A.createBuffer(2,L,sr);
-    const pops=[...Array(5)].map(()=>[Math.floor(R()*L),.15+R()*.35,R()<.5?0:1]);
-    for(let c=0;c<2;c++){const g=gb.getChannelData(c);let y=0,z=0;
-      for(let i=0;i<L;i++){y+=.12*((R()*2-1)-y);g[i]=y*.05}
-      for(let i=0;i<sr*.09;i++){z+=.03*((R()*2-1)-z);g[(i+Math.floor(sr*.4))%L]+=z*2.2*Math.exp(-i/(sr*.022))*(1-c*.15)}
-      for(const[p,a,ch]of pops){if(ch!==c&&R()<.6)continue;for(let j=0;j<5;j++)g[(p+j)%L]+=a*(j%2?-1:1)*Math.exp(-j/1.6)}}
-    const hs=A.createBufferSource();hs.buffer=gb;hs.loop=true;const hf=A.createBiquadFilter();hf.type='lowpass';hf.frequency.value=2800;
-    const hg=A.createGain();hg.gain.value=.03;hs.connect(hf).connect(hg).connect(out);hs.start();stops.push(hs)}
+  // the run-out groove: one soft, low thump per turn of the record (33⅓ rpm, 1.8 s) over a dull, low surface rumble.
+  // No crackles or pops, and the loop is crossfaded into itself so it never clicks where it repeats.
+  {const sr=A.sampleRate,L=Math.floor(sr*1.8),F=Math.floor(sr*.08),gb=A.createBuffer(2,L,sr);
+    for(let c=0;c<2;c++){const g=gb.getChannelData(c),x=new Float32Array(L+F);let y=0,z=0;
+      for(let i=0;i<L+F;i++){y+=.05*((R()*2-1)-y);x[i]=y*.09}
+      for(let i=0;i<sr*.12;i++){z+=.02*((R()*2-1)-z);x[(i+Math.floor(sr*.4))]+=z*2.4*Math.sin(Math.PI*Math.min(1,i/(sr*.012)))*Math.exp(-i/(sr*.03))*(1-c*.15)}
+      for(let i=0;i<L;i++)g[i]=x[i];for(let i=0;i<F;i++){const w=i/F;g[i]=x[i]*w+x[L+i]*(1-w)}}
+    const hs=A.createBufferSource();hs.buffer=gb;hs.loop=true;const hf=A.createBiquadFilter();hf.type='lowpass';hf.frequency.value=900;
+    const hg=A.createGain();hg.gain.value=0;hg.gain.linearRampToValueAtTime(.03,A.currentTime+2);hs.connect(hf).connect(hg).connect(out);hs.start();stops.push(hs)}
   const nt=(m,t,dur,vol)=>{const o=A.createOscillator();o.setPeriodicWave(tw);o.frequency.value=MT(m);wg.connect(o.detune);const g=A.createGain();
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0003,t+dur);g.gain.linearRampToValueAtTime(0,t+dur+.03);o.connect(g).connect(tcr.input);o.start(t);o.stop(t+dur+.05)};
   // drums: soft and dusty, rolled off on top
@@ -353,9 +362,13 @@ NEW.lantern=function(A,out,ui){const mix=Mix(A,out,{verbSec:6,dark:.9}),stops=[]
     s.connect(fl).connect(g).connect(dr);s.start(t,pick(OFF));s.stop(t+dur+.05)};
   const kick=(t,v)=>{const o=A.createOscillator();o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(42,t+.18);const g=A.createGain();
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.1*v,t+.004);g.gain.exponentialRampToValueAtTime(.001,t+.3);g.gain.linearRampToValueAtTime(0,t+.33);o.connect(g).connect(out);o.start(t);o.stop(t+.35)};
-  const rim=(t,v)=>{hit(t,'bandpass',1750,4,.035,.024*v,.002);const o=A.createOscillator();o.frequency.value=540;const g=A.createGain();
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.009*v,t+.002);g.gain.exponentialRampToValueAtTime(.0003,t+.045);g.gain.linearRampToValueAtTime(0,t+.055);o.connect(g).connect(dr);o.start(t);o.stop(t+.07)};
-  const hat=(t,v)=>hit(t,'highpass',8000,.7,.03,.006*v,.002);
+  // the hat and rim are rendered once into short, clean one-shots with smooth starts (no filter spikes, so no pops)
+  const oneShot=(len,fn)=>{const sr=A.sampleRate,b=A.createBuffer(1,Math.floor(sr*len),sr),d=b.getChannelData(0);fn(d,sr);
+    const fi=Math.floor(sr*.003),fo=Math.floor(sr*.01);for(let i=0;i<d.length;i++){let e=1;if(i<fi)e=i/fi;const r=d.length-i;if(r<fo)e*=r/fo;d[i]*=e}return b};
+  const hatBuf=oneShot(.06,(d,sr)=>{let a=0,b2=0;for(let i=0;i<d.length;i++){const w=R()*2-1;a=.6*a+.4*w;const hp=w-a;b2+=.55*(hp-b2);d[i]=b2*Math.exp(-i/(sr*.012))}});
+  const rimBuf=oneShot(.08,(d,sr)=>{let y=0,ph=0;for(let i=0;i<d.length;i++){y+=.25*((R()*2-1)-y);ph+=2*Math.PI*540/sr;d[i]=(y*.9+Math.sin(ph)*.35)*Math.exp(-i/(sr*.011))}});
+  const rim=(t,v)=>playBuf(A,dr,rimBuf,t,.06*v);
+  const hat=(t,v)=>playBuf(A,dr,hatBuf,t,.03*v);
   // the 8-bit touch: a bass on an old console's triangle channel (a stepped, 16-level triangle), soft and round
   const tw=(()=>{const N=64,P=256,x=[];for(let i=0;i<P;i++){const ph=i/P,tri=ph<.5?ph*4-1:3-ph*4;x.push(Math.round((tri+1)*7.5)/7.5-1)}
     const re=new Float32Array(N),im=new Float32Array(N);for(let h=1;h<N;h++){let c=0,sn=0;for(let i=0;i<P;i++){c+=x[i]*Math.cos(2*Math.PI*h*i/P);sn+=x[i]*Math.sin(2*Math.PI*h*i/P)}re[h]=c/P;im[h]=sn/P}
@@ -434,6 +447,36 @@ NEW.strings=function(A,out,ui){const mix=Mix(A,out,{verbSec:7,dark:.9}),stops=[]
 // loudness trims so each new track sits at the same level as the one it replaces (measured offline)
 const TRIM_DB={calm:-5.5,dawn:13.5,dawnSlow:14.5,boxLullaby:5,boxDuet:7,lantern:4,strings:3};
 for(const k in TRIM_DB){const f=NEW[k],g=Math.pow(10,TRIM_DB[k]/20);NEW[k]=(A,out,ui)=>{const o=A.createGain();o.gain.value=g;o.connect(out);return f(A,o,ui)}}
+
+/* Lattice (new, replaces Dawn): built like the puzzle itself. Five short musical "pieces", each a loop of a different length
+   (9.7, 13.1, 17.9, 21.3 and 25.7 seconds), all in one gentle major pentatonic, so any combination sounds right.
+   Because the lengths never line up, the pieces keep sliding apart and coming back together into new shapes, and the
+   music never repeats exactly. Each piece has its own place in space (left, right, near, far). Every couple of minutes one
+   piece is swapped for a new one, a piece sometimes sits out a turn, and now and then the whole lattice shifts key. */
+NEW.lattice=function(A,out,ui){const mix=Mix(A,out,{verbSec:5,dark:.9}),stops=[];
+  const inst={mar:Sampler(A,'marimba'),ep:Sampler(A,'ep')},PENT=[0,2,4,7,9];let root=51,keyAt=0;
+  const P=d=>root+PENT[mod(d,5)]+12*Math.floor(d/5);
+  const place=(pan,wet)=>{const b=mix.bus(1-wet*.55,wet),g=A.createGain();if(A.createStereoPanner){const p=A.createStereoPanner();p.pan.value=pan;g.connect(p).connect(b)}else g.connect(b);return g};
+  const cell=(lo,hi,n,gap)=>{const ns=[];let d=lo+Math.floor(R()*(hi-lo+1)),at=0;for(let i=0;i<n;i++){ns.push({at,d,v:.8+R()*.2});at+=gap*(.6+R()*.8);d=clamp(d+pick([-2,-1,1,2]),lo,hi)}return ns};
+  const SPEC=[['mar',5,11,3,.7,9.7,-.45,.3,.07],['mar',6,12,2,1.1,13.1,.42,.38,.065],['ep',10,15,1,1,17.9,-.18,.55,.05],['ep',10,15,2,1.4,21.3,.28,.55,.045],['mar',0,4,2,1.8,25.7,0,.25,.08]];
+  const lanes=SPEC.map(([k,lo,hi,n,gap,per,pan,wet,vol],i)=>({k,lo,hi,n,gap,per,vol,bus:place(pan,wet),notes:cell(lo,hi,n,gap),start:A.currentTime+.3+i*3.1,cyc:-1,rest:false}));
+  // a low drone: root and fifth, barely there
+  let drone=null;const setDrone=t=>{const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.007,t+8);g.connect(mix.bus(.6,.6));
+    const os=[root-12,root-5].map(m=>{const o=A.createOscillator();o.frequency.value=MT(m);o.connect(g);o.start(t);return o});
+    if(drone){const d0=drone;d0.g.gain.setValueAtTime(.007,t);d0.g.gain.linearRampToValueAtTime(0,t+8);d0.os.forEach(o=>o.stop(t+8.2))}drone={g,os}};
+  setDrone(A.currentTime);stops.push(()=>drone&&drone.os.forEach(o=>{try{o.stop(A.currentTime+1.6)}catch(e){}}));
+  let nextSwap=A.currentTime+90*EVO.s,nextKey=A.currentTime+240*EVO.s,sect=1;
+  stops.push(Clock(A,t=>{const t2=t+.1;
+    if(t>=nextSwap){const L=pick(lanes);L.notes=cell(L.lo,L.hi,L.n,L.gap);nextSwap=t+(80+R()*60)*EVO.s;sect++}
+    if(t>=nextKey){root=root===51?56:51;setDrone(t);nextKey=t+(200+R()*120)*EVO.s;sect++}
+    for(const L of lanes){if(t2<L.start)continue;const c=Math.floor((t-L.start)/L.per);
+      if(c!==L.cyc){L.cyc=c;L.rest=c>1&&R()<.15}
+      if(L.rest)continue;const base=L.start+c*L.per;
+      for(const x of L.notes){const at=base+x.at;if(at>=t&&at<t2){const s=inst[L.k](P(x.d));playBuf(A,L.bus,s.buf,at,L.vol*x.v,s.rate,0)}}}
+    ui&&ui({sect,key:keyName(root),tex:lanes.filter(L=>!L.rest&&t>=L.start).length+' of 5 pieces playing',energy:lanes.filter(L=>!L.rest&&t>=L.start).length/5});
+    return .1}));
+  return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
+TRIM_DB.lattice=2;{const f=NEW.lattice;NEW.lattice=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.lattice/20);o.connect(out);return f(A,o,ui)}}
 /* ===== current game music (copied from the live game, Oct 12) ===== */
 const CUR=(function(){
 const MTOF=m=>440*Math.pow(2,(m-69)/12);
@@ -538,11 +581,11 @@ return{calm:calmCurrent,gen:(name)=>(A,out)=>genTrack(A,out,name)};
 const TRACKS=[
  {name:'Calm',desc:'More hopeful and open: wide add9 chords that swell slowly, a gentle shimmer, faint wind, and a real grand piano in the style of open-world field music, now two octaves lower and softer. Short fragments (a single note, a pair, a staccato chord, a rolled chord, a quick run), free timing, and lots of silence. The notes are its own, not the game\'s.',
   opts:[['Current',(A,o)=>CUR.calm(A,o)],['New',(A,o,u)=>NEW.calm(A,o,u)]]},
- {name:'Dawn',desc:'The same rolling arpeggio and chords as today, at a steady half speed (Flow) or slower still (Flow · slower), now as a quiet, crunchy 8-bit square: short notes, a little tape wobble, a small room instead of a big hall. Now and then a simple 8-bit pulse voice carries a few melody notes on top.',
-  opts:[['Current',CUR.gen('harp')],['Flow',(A,o,u)=>NEW.dawn(A,o,u)],['Flow · slower',(A,o,u)=>NEW.dawnSlow(A,o,u)]]},
+ {name:'Lattice (new, replaces Dawn)',desc:'Built like the puzzle itself. Five short musical pieces (soft wooden marimba and a warm electric-piano bell), each looping at a different length. The lengths never line up, so the pieces keep sliding apart and fitting back together in new ways, and it never repeats exactly. Each piece has its own place around you (left, right, near, far). One piece is swapped out every couple of minutes, and now and then the whole thing shifts key. All in one gentle major scale, so nothing ever clashes.',
+  opts:[['Lattice',(A,o,u)=>NEW.lattice(A,o,u)]]},
  {name:'Music Box',desc:'Darker and softer: the bright ping of the comb is nearly gone, it plays an octave lower and filtered, and it\'s slower again, with about one note every three seconds. Lullaby is a slow waltz over a low note. Duet adds a second voice a third below on some long notes.',
   opts:[['Current',CUR.gen('musicbox')],['Lullaby',(A,o,u)=>NEW.boxLullaby(A,o,u)],['Duet',(A,o,u)=>NEW.boxDuet(A,o,u)]]},
- {name:'Lantern',desc:'A locked-in, head-nodding groove on a 16th-note grid: a boom-bap kick (1, the "a" of 2, the "and" of 3), a soft rim on 2 and 4, a steady hi-hat, and the 8-bit bass following the kick. The thumb piano is now an octave lower, crunchy and retro, and plays a repeating rhythm (which one changes by section) while only its notes wander. Over the turning run-out groove of a finished record.',
+ {name:'Lantern',desc:'A locked-in, head-nodding groove on a 16th-note grid: a boom-bap kick (1, the "a" of 2, the "and" of 3), a soft rim on 2 and 4, a steady hi-hat, and the 8-bit bass following the kick. The thumb piano is an octave lower, warm and retro, and plays a repeating rhythm while only its notes wander. Underneath, the low turn of a finished record, with no crackles or pops anywhere.',
   opts:[['Current',CUR.gen('kalimba')],['New',(A,o,u)=>NEW.lantern(A,o,u)]]},
  {name:'Strings',desc:'Keeping today\'s version, as you preferred it to the new ensemble.',
   opts:[['Current',CUR.gen('strings')]]},
