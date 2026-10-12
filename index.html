@@ -2490,13 +2490,13 @@ function click(){
     const g2=a.createGain();fadeEnv(g2.gain,s,.002,.0046,s+.07);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)});
 }
 /* switching themes: a short sound in the new theme's style
-   Classic: a soft wooden tock and a warm two-note chime · SmartPull: a bright, bubbly rising chord · Neon: a synth power-up sweep */
+   Classic: a warm two-note chime · SmartPull: a bright, bubbly rising chord · Neon: a synth power-up sweep */
 function themeSound(t){if(!soundOn)return;const a=audio();if(!a)return;const n=a.currentTime+.02;
   if(t==='neon'){tone(a,'square',1760,1760,n,.12,.03,.01);
     [1319,1760,2637].forEach((f,i)=>tone(a,'triangle',f,f,n+.14+i*.05,.22,.03,.004));return}
   if(t==='brand'){[523,659,784,1047].forEach((f,i)=>tone(a,'triangle',f*1.02,f,n+i*.055,.26,.05,.004));return}
-  hiss(a,'bandpass',900,700,3,n,.05,.06,.001);tone(a,'sine',420,380,n,.08,.12,.002);
-  tone(a,'sine',784,784,n+.07,.5,.05,.01);tone(a,'sine',1175,1175,n+.15,.55,.04,.01)}
+  // Classic: just the warm two-note chime (the wooden tock that used to come first was removed, Oct 12)
+  tone(a,'sine',784,784,n,.5,.05,.01);tone(a,'sine',1175,1175,n+.08,.55,.04,.01)}
 // tapping a locked cube: a small metallic clink (Neon: a soft electronic "nope" blip)
 function lockSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   if(theme==='neon'){tone(a,'square',330,300,t,.07,.018,.003);tone(a,'square',247,230,t+.08,.09,.018,.003);return}
