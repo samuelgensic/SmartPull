@@ -348,9 +348,21 @@ NEW.boxLullaby=function(A,out,ui){const mix=Mix(A,out,{verbSec:4.5,dark:.85}),st
   const pl=(bus,m,t,v,pan)=>{const s=tine(m);playBuf(A,bus,s.buf,t,v,s.rate*wob(t),pan)};
   const revC={};const rev=m=>{if(revC[m])return revC[m];const src=tine(m).buf.getChannelData(0),L=Math.floor(A.sampleRate*1.4),b2=A.createBuffer(1,L,A.sampleRate),d=b2.getChannelData(0);
     for(let i=0;i<L;i++)d[L-1-i]=src[i];const fi=Math.floor(A.sampleRate*.25);for(let i=0;i<fi;i++)d[i]*=i/fi;for(let i=L-200;i<L;i++)d[i]*=(L-i)/200;return revC[m]=b2};
-  const padLp=A.createBiquadFilter();padLp.type='lowpass';padLp.frequency.value=650;padLp.Q.value=.4;padLp.connect(mix2.bus(.5,.6));let pads=[];
-  const pad=(t,r,k)=>{pads.forEach(x=>{x.g.gain.setTargetAtTime(0,t,1);x.os.forEach(o=>o.stop(t+6))});pads=[r,r+2,r+4].map(d=>{let m=pitchOf(k,d);while(m>62)m-=12;while(m<48)m+=12;const g=A.createGain();
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.006,t+3);g.connect(padLp);const os=[-8,8].map(dt=>{const o=A.createOscillator();o.type='sawtooth';o.frequency.value=MT(m);o.detune.value=dt;o.connect(g);o.start(t);return o});return{g,os}})};
+  // the pad, built like a real analog polysynth rather than a preset: per voice a saw plus a softer square an octave down,
+  // each voice drifting slightly out of tune on its own, a steep warm filter that swells open on each chord, voices spread
+  // left to right, and a slow, wide stereo chorus (the ensemble shimmer of old analog pads)
+  const padIn=A.createGain();const padOut=mix2.bus(.5,.55);padIn.connect(padOut);
+  [[.6,.013,.0025,-1],[.43,.017,.003,1]].forEach(([rate,base,depth,side])=>{const d=A.createDelay(.05);d.delayTime.value=base;const l=A.createOscillator();l.frequency.value=rate*.5;const la=A.createGain();la.gain.value=depth;l.connect(la).connect(d.delayTime);l.start();stops.push(l);
+    const g=A.createGain();g.gain.value=.55;let n=g;if(A.createStereoPanner){const p=A.createStereoPanner();p.pan.value=.6*side;g.connect(p);n=p}padIn.connect(d).connect(g);n.connect(padOut)});
+  const pf1=A.createBiquadFilter(),pf2=A.createBiquadFilter();[pf1,pf2].forEach(f=>{f.type='lowpass';f.Q.value=.45;f.frequency.value=600});pf1.connect(pf2).connect(padIn);
+  let pads=[];
+  const pad=(t,r,k)=>{pads.forEach(x=>{x.g.gain.setTargetAtTime(0,t,.9);x.os.forEach(o=>o.stop(t+4.5))});
+    [pf1,pf2].forEach(f=>{f.frequency.cancelScheduledValues(t);f.frequency.setValueAtTime(f.frequency.value,t);f.frequency.linearRampToValueAtTime(330,t+.8);f.frequency.linearRampToValueAtTime(820,t+3.5);f.frequency.linearRampToValueAtTime(620,t+7)});
+    pads=[r,r+2,r+4].map((d,vi)=>{let m=pitchOf(k,d);while(m>62)m-=12;while(m<48)m+=12;const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.007,t+3.5);
+      let n=g;if(A.createStereoPanner){const p=A.createStereoPanner();p.pan.value=(vi-1)*.45;g.connect(p);n=p}n.connect(pf1);
+      const drift=A.createOscillator();drift.frequency.value=.05+R()*.12;const da=A.createGain();da.gain.value=4+R()*4;drift.connect(da);drift.start(t);
+      const os=[];[['sawtooth',m,1,-4+R()*3],['sawtooth',m,.8,4+R()*3],['square',m-12,.35,R()*4-2]].forEach(([ty,mm,w,dt])=>{const o=A.createOscillator();o.type=ty;o.frequency.value=MT(mm);o.detune.value=dt;da.connect(o.detune);
+        const og=A.createGain();og.gain.value=w;o.connect(og).connect(g);o.start(t);os.push(o)});os.push(drift);return{g,os}})};
   stops.push(()=>{const t=A.currentTime;pads.forEach(x=>{x.g.gain.setTargetAtTime(0,t,.4);x.os.forEach(o=>o.stop(t+2))})});
   const ondW=(()=>{const re=new Float32Array(5),im=new Float32Array(5);im[1]=1;im[2]=.16;im[3]=.06;return A.createPeriodicWave(re,im)})();let nextOnd=A.currentTime+40;
   const ondes=(m,t,len)=>{const o=A.createOscillator();o.setPeriodicWave(ondW);const vb=A.createOscillator();vb.frequency.value=5.5;const va=A.createGain();va.gain.setValueAtTime(4,t);va.gain.linearRampToValueAtTime(16,t+1.5);vb.connect(va).connect(o.detune);
@@ -618,11 +630,15 @@ NEW.mechanism=function(A,out0,ui){const lim=A.createDynamicsCompressor();lim.thr
   const lead=(ms,t,beat)=>{const o=A.createOscillator();o.setPeriodicWave(ondW);const vb=A.createOscillator();vb.frequency.value=5.6;const va=A.createGain();va.gain.setValueAtTime(6,t);va.gain.linearRampToValueAtTime(20,t+1.2);vb.connect(va).connect(o.detune);
     const g=A.createGain();const end=t+ms.length*beat*2;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.014,t+.35);g.gain.setValueAtTime(.014,end-.3);g.gain.linearRampToValueAtTime(0,end+.6);
     ms.forEach((m,i)=>{const at=t+i*beat*2;if(i===0){o.frequency.setValueAtTime(MT(m-1),t);o.frequency.setTargetAtTime(MT(m),t,.08)}else o.frequency.setTargetAtTime(MT(m),at,.14)});o.connect(g).connect(ondLp);o.start(t);vb.start(t);o.stop(end+.8);vb.stop(end+.8)};
+  // an occasional deep sub: a slow, low swell under the chord's root every so often (felt more than heard)
+  const deepBus=mix.bus(.95,.02);let nextDeep=A.currentTime+20;
+  const deep=(m,t,len,v)=>{const o=A.createOscillator();o.frequency.value=MT(m);const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+1.2);g.gain.setValueAtTime(v,t+len-1.5);g.gain.linearRampToValueAtTime(0,t+len);o.connect(g).connect(deepBus);o.start(t);o.stop(t+len+.1)};
   let n=0,leadUntil=0;
   stops.push(Clock(A,t=>{const k=n%16,bar=Math.floor(n/16),i=I(t),r=PROG[Math.floor(bar/2)%4];
     const gO=G(i,.08),gK=G(i,.25),gB=G(i,.38),gS=G(i,.5),gH=G(i,.6),gP=G(i,.7),sw=k%2?step*.12:0;
     // while it strips back down, the kick stays: clear and in focus, with a couple of soft ghost notes, so it gets its moment
     const xb=phaseX(t),brk=xb>200&&xb<275;
+    if(k===0&&bar%2===0&&t>=nextDeep&&i>.2){let m=pitchOf(ROOT,r)-24;while(m>38)m-=12;deep(m,t,step*32,.11*(.6+.4*i));nextDeep=t+step*16*(4+Math.floor(R()*5))}
     if(k===0){dLp.frequency.setTargetAtTime(450+Math.pow(i,1.6)*7000,t,.8);kLp.frequency.setTargetAtTime(brk?6500:450+Math.pow(i,1.6)*7000,t,1.5);pLp.frequency.setTargetAtTime(380+i*1700,t,1.2);
       if(bar%2===0)pad(t,r,step*32);
       if(bar%8===7&&R()<.6)pulsePat=pick(PULSE);pulseLp.frequency.setTargetAtTime(500+i*2400,t,1);
@@ -956,11 +972,11 @@ const TRACKS=[
   opts:[['Current',(A,o)=>CUR.calm(A,o)],['New',(A,o,u)=>NEW.calm(A,o,u)]]},
  {name:'Lattice (new, replaces Dawn)',desc:'Built like the puzzle itself. Five short pieces, mostly a soft, ambient electric-piano bell with a little wooden marimba, each looping at a different length, so they keep sliding apart and fitting back together and it never repeats exactly. Underneath, a soft bed of slow swells that fade in and out and always overlap, plus a low drone, so it is never silent. One piece is swapped out every couple of minutes, and now and then the whole thing shifts key. One gentle major scale, so nothing ever clashes.',
   opts:[['Lattice',(A,o,u)=>NEW.lattice(A,o,u)]]},
- {name:'Music Box',desc:'The Lullaby version (slow waltz, darker and softer comb, about one note every few seconds) with a Kid A layer: a slight tape wobble on every note, a warm Prophet-style pad underneath, reversed music-box notes that swell into chord changes, faint glittering grains, and now and then one long Ondes Martenot-style note.',
+ {name:'Music Box',desc:'The Lullaby version (slow waltz, darker and softer comb, about one note every few seconds) with a Kid A layer: a slight tape wobble on every note, a warm analog-style pad underneath (each voice drifting slightly on its own, a slowly swelling filter, a wide stereo chorus), reversed music-box notes that swell into chord changes, faint glittering grains, and now and then one long Ondes Martenot-style note.',
   opts:[['Current',CUR.gen('musicbox')],['Music Box',(A,o,u)=>NEW.boxLullaby(A,o,u)]]},
  {name:'Lantern',desc:'Rebuilt, warmer and less mysterious, drawing on Thom Yorke\'s Anima. It opens like "Dawn Chorus": dark, warm keys in three voices split by range (high on the left, middle a little right, low underneath) pulsing in strict eighths, then loosening into an unsteady, rain-like patter as it builds. Then "Traffic": a deep sub you feel more than hear, a broken kick, snares ringing in a big space that every few bars suddenly collapses, and soft zaps and pops. Then "Twist": a detuned pad whose filter slowly swells open, a jerky two-step hi-hat, and near the top processed piano fragments and soft strings. It builds, peaks, strips back and builds again. Jazz trio and Rain are the earlier Lantern versions, kept for comparison.',
   opts:[['Current',CUR.gen('kalimba')],['New',(A,o,u)=>NEW.lanternAnima(A,o,u)],['Jazz trio',(A,o,u)=>NEW.lanternJazz(A,o,u)],['Rain',(A,o,u)=>NEW.lanternRain(A,o,u)]]},
- {name:'Mechanism (new · Yorke-style)',desc:'Unfolds the way Radiohead and Thom Yorke\'s electronic tracks do, with original notes. A warm chord pulses in a stuttering, syncopated pattern (the chord itself is the rhythm). A muffled kick creeps in from another room and comes into focus, then a deep syncopated bass, a small dry snare with ghost notes, a lightly swung hi-hat, and processed, slightly 8-bit digital chord stabs with a dub echo. Near the top, a few high notes on an Ondes Martenot-style voice. When it strips back down, the kick stays: clear and in focus, with a couple of soft ghost notes, so it gets its moment before everything builds again (about five minutes).',
+ {name:'Mechanism (new · Yorke-style)',desc:'Unfolds the way Radiohead and Thom Yorke\'s electronic tracks do, with original notes. A warm chord pulses in a stuttering, syncopated pattern (the chord itself is the rhythm). A muffled kick creeps in from another room and comes into focus, then a deep syncopated bass, a small dry snare with ghost notes, a lightly swung hi-hat, and processed, slightly 8-bit digital chord stabs with a dub echo. Near the top, a few high notes on an Ondes Martenot-style voice. Every so often a deep sub swells in under the chord. When it strips back down, the kick stays: clear and in focus, with a couple of soft ghost notes, so it gets its moment before everything builds again (about five minutes).',
   opts:[['Mechanism',(A,o,u)=>NEW.mechanism(A,o,u)]]},
  {name:'Bloom (new · Yorke-style, was Glasswork)',desc:'No glass. A breathing, harmonium-like drone; a figure of soft, warm bowed tones (darker and lower than before) that swell in with no strike, looping every 10 steps so it slides against the 4/4; dry found percussion (a felted knock on a wooden box, a faint seed shaker); a soft heartbeat that grows into a gentle kick rhythm as it builds; and near the top a slow bowed melody. Calm and warm, in a six-minute arc.',
   opts:[['Bloom',(A,o,u)=>NEW.glasswork(A,o,u)]]},
