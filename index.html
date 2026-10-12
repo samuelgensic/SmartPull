@@ -2891,9 +2891,10 @@ function menuSfx(which,open){
     if(open){tone(a,'sine',440,660,t,.11,.075,.008);tone(a,'sine',660,990,t+.016,.09,.03,.005)}
     else{tone(a,'sine',660,440,t,.11,.075,.094);tone(a,'sine',990,660,t+.02,.09,.03,.07)}
   }else{
-    // a crisp, mechanical click for the settings panel — noise-based, a different texture from the chime above
-    if(open){hiss(a,'highpass',2600,2600,4,t,.035,.11,.002);tone(a,'triangle',700,950,t,.04,.05,.003)}
-    else{hiss(a,'highpass',2600,2600,4,t,.035,.11,.09);tone(a,'triangle',950,700,t,.04,.05,.036)}
+    // Felt switch for the settings panel (chosen Oct 12): two round, low sine notes, rising to open and falling to close.
+    // Soft and quiet (the old bright hiss was too harsh and too loud).
+    const f=open?[330,440]:[440,330];
+    tone(a,'sine',f[0],f[0],t,.09,.03,.008);tone(a,'sine',f[1],f[1],t+.05,.11,.025,.008)
   }
 }
 const stageEl=document.getElementById('stage');
