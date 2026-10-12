@@ -782,12 +782,15 @@ function pivotSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.
   // the pivot turn: the same Twist-knob clicks as a dot turn, a little lower, with a fourth detent as the turn ripples out
   const P=.85,lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1800;lp.connect(sfxBus);
   [[300,360,.045],[450,540,.022]].forEach(([f0,f1,v])=>{const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f0*P,t);o.frequency.exponentialRampToValueAtTime(f1*P,t+.3);
-    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.05);g.gain.setTargetAtTime(0,t+.05,.075);o.connect(g).connect(lp);o.start(t);o.stop(t+.7)});
+    const g=a.createGain();fadeEnv(g.gain,t,.05,v,t+.45);o.connect(g).connect(lp);o.start(t);o.stop(t+.7)});
+  // each detent reads the same fixed slice of noise every time, so no tap ever pops out louder than the rest (Oct 12)
   [0,.065,.13,.195].forEach((d,i)=>{const f=(1600+i*120)*P,s=t+d;
     const n=a.createBufferSource();n.buffer=softBuf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=5;bp.frequency.setValueAtTime(f,s);bp.frequency.exponentialRampToValueAtTime(f*.9,s+.033);
-    const g=a.createGain();g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.021,s+.001);g.gain.setTargetAtTime(0,s+.001,.008);n.connect(bp).connect(g).connect(sfxBus);n.start(s,Math.random()*.8);n.stop(s+.12);
+    const g=a.createGain();fadeEnv(g.gain,s,.003,.019,s+.05);n.connect(bp).connect(g).connect(sfxBus);n.start(s,DETENT_AT[i]);n.stop(s+.12);
     const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f*.28,s);o.frequency.exponentialRampToValueAtTime(f*.25,s+.036);
-    const g2=a.createGain();g2.gain.setValueAtTime(0,s);g2.gain.linearRampToValueAtTime(.0046,s+.002);g2.gain.setTargetAtTime(0,s+.002,.012);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)})}
+    const g2=a.createGain();fadeEnv(g2.gain,s,.002,.0046,s+.07);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)})}
+// fixed starting points in the soft noise for the knob detents (dot turn and Pivot gear), chosen once so every turn sounds alike
+const DETENT_AT=[.31,.52,.74,.93];
 function echoSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   [0,.16,.3].forEach((d,i)=>soft(a,'lowpass',900,450,.5,t+d,.4,.05*Math.pow(.5,i),.06))}
 function glassSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
@@ -2486,7 +2489,7 @@ function click(){
     const g=a.createGain();fadeEnv(g.gain,t,.05,v,t+.4);o.connect(g).connect(lp);o.start(t);o.stop(t+.6)});
   [0,.07,.14].forEach((d,i)=>{const f=1600+i*140,s=t+d;
     const n=a.createBufferSource();n.buffer=softBuf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=5;bp.frequency.setValueAtTime(f,s);bp.frequency.exponentialRampToValueAtTime(f*.9,s+.033);
-    const g=a.createGain();fadeEnv(g.gain,s,.001,.021,s+.05);n.connect(bp).connect(g).connect(sfxBus);n.start(s,Math.random()*.8);n.stop(s+.12);
+    const g=a.createGain();fadeEnv(g.gain,s,.003,.019,s+.05);n.connect(bp).connect(g).connect(sfxBus);n.start(s,DETENT_AT[i]);n.stop(s+.12);
     const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f*.28,s);o.frequency.exponentialRampToValueAtTime(f*.25,s+.036);
     const g2=a.createGain();fadeEnv(g2.gain,s,.002,.0046,s+.07);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)});
 }
