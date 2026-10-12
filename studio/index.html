@@ -125,6 +125,9 @@ const INST={
   bell(A,midi){const sr=A.sampleRate,f=MT(midi),b=A.createBuffer(1,Math.floor(sr*5),sr),d=b.getChannelData(0);
     additive(d,sr,f,[[1,1,2.6],[2.76,.18,1],[5.4,.06,.4],[.5,.12,2]],Math.floor(sr*.03));finish(d,sr,.03,.5);return{buf:b,rate:1}}
 };
+// a bit-crusher: squeezes the signal onto a few volume steps, the grainy sound of old 8-bit hardware
+function Crusher(A,levels,pre){const i=A.createGain();i.gain.value=pre;const sh=A.createWaveShaper(),N=4096,c=new Float32Array(N);
+  for(let k=0;k<N;k++){const x=k/(N-1)*2-1;c[k]=Math.round(x*levels)/levels}sh.curve=c;const o=A.createGain();o.gain.value=1/pre;i.connect(sh).connect(o);return{input:i,output:o}}
 function Sampler(A,kind){const cache={},get=m=>cache[m]||(cache[m]=INST[kind](A,m));
   // render the notes a track will need a little at a time, so no note is built at the moment it plays
   get.warm=list=>{let i=0;const go=()=>{if(i<list.length){get(list[i++]);setTimeout(go,20)}};setTimeout(go,10)};return get}
@@ -221,15 +224,15 @@ NEW.calm=function(A,out,ui){const mix=Mix(A,out,{verbSec:8,dark:.92}),stops=[];
   // a rare very low note, lots of silence, staccato touches next to notes left to ring, and now and then a bright accent
   const P=(m,at,v,dur)=>{const s=gp.get(m);if(!s)return;const src=A.createBufferSource();src.buffer=s.buf;src.playbackRate.value=s.rate;const g=A.createGain();
     g.gain.setValueAtTime(v,at);if(dur){g.gain.setValueAtTime(v,at+dur);g.gain.linearRampToValueAtTime(0,at+dur+.22)}
-    let n=src.connect(g);if(A.createStereoPanner){const pn=A.createStereoPanner();pn.pan.value=clamp((m-72)/40,-.35,.35);n=n.connect(pn)}n.connect(pLp);
+    let n=src.connect(g);if(A.createStereoPanner){const pn=A.createStereoPanner();pn.pan.value=clamp((m-60)/40,-.35,.35);n=n.connect(pn)}n.connect(pLp);
     src.start(Math.max(at,A.currentTime));src.stop(at+(dur?dur+.3:10))};
-  function fieldPiano(t,info){const k=info.key,ct=triad(info.chord),hi=()=>{let d=14+Math.floor(R()*11);if(R()<.6&&!ct.includes(mod(d,7)))d++;return d},
-      M=d=>pitchOf(k,d),acc=R()<.14?1.6:1,base=.62*acc;
+  function fieldPiano(t,info){const k=info.key,ct=triad(info.chord),hi=()=>{let d=Math.floor(R()*11);if(R()<.6&&!ct.includes(mod(d,7)))d++;return d},
+      M=d=>pitchOf(k,d),acc=R()<.14?1.5:1,base=.36*acc;
     const g=wpick(['single','pair','dyad','roll','run','slow','low'],[3,3,2,1.4,.8,1.6,.8]);
     if(g==='single'){const d=hi();if(R()<.35)P(M(d+pick([-3,-2,2])),t,base*.45,.12);P(M(d),t+.07,base,pick([.35,1.2,3]))}
     else if(g==='pair'){const d=hi(),d2=d+pick([-1,-2,1,0,-3]);P(M(d),t,base*.9,.3);P(M(d2),t+.29,base*.8,pick([.3,1.5]))}
     else if(g==='dyad'){const d=hi(),w=pick([2,3]);[d,d-w].forEach(x=>P(M(x),t,base*.7,.28));if(R()<.5)[d-1,d-1-w].forEach(x=>P(M(x),t+.58,base*.6,.28))}
-    else if(g==='roll'){const d=14+Math.floor(R()*6);[0,2,4,7].forEach((x,i)=>P(M(d+x),t+i*.04,base*(.75+i*.06),3))}
+    else if(g==='roll'){const d=Math.floor(R()*6);[0,2,4,7].forEach((x,i)=>P(M(d+x),t+i*.04,base*(.75+i*.06),3))}
     else if(g==='run'){let d=hi()+3,m=M(d);const L=6+Math.floor(R()*3),cn=2+Math.floor(R()*(L-3));
       for(let i=0;i<L;i++){P(m,t+i*.072,base*.6,.14);if(i===cn){m-=1}else{d--;m=M(d)}}P(M(d+1),t+L*.072,base*.7,.6)}
     else if(g==='slow'){const d=hi();P(M(d),t,base*.85,.3);P(M(d+pick([1,-1,2])),t+.29,base*.85,3)}
@@ -258,7 +261,13 @@ NEW.calm=function(A,out,ui){const mix=Mix(A,out,{verbSec:8,dark:.92}),stops=[];
 /* Dawn: today's Dawn (the same soft triangle voice, the same rolling arpeggio, the same D–Bm–G–A home),
    slowed to a steady half speed. It keeps an even pulse; the variety comes from the arpeggio's shape changing
    from chord to chord, progressions that wander, and a quiet melody that floats in now and then. */
-function dawnFlow(step){return function(A,out,ui){const mix=Mix(A,out,{verbSec:6,dark:.88}),stops=[];const bus=mix.bus(.45,.9),top=mix.bus(.5,.6);
+function dawnFlow(step){return function(A,out,ui){const mix=Mix(A,out,{verbSec:1.6,dark:.9}),stops=[];const room=mix.bus(.85,.2),top=mix.bus(.7,.25);
+  // the arpeggio: a soft 50% square, crushed onto a few volume steps, a little tape wobble, rolled off on top
+  const cr=Crusher(A,10,30),aLp=A.createBiquadFilter();aLp.type='lowpass';aLp.frequency.value=2100;aLp.Q.value=.3;cr.output.connect(aLp).connect(room);const bus=cr.input;
+  const wob=A.createOscillator();wob.frequency.value=.45;const wa=A.createGain();wa.gain.value=7;wob.connect(wa);wob.start();stops.push(wob);
+  const arp=(m,t,vol)=>{const o=A.createOscillator();o.type='square';o.frequency.value=MT(m);wa.connect(o.detune);const g=A.createGain();
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.004);g.gain.setTargetAtTime(vol*.35,t+.01,.09);g.gain.setTargetAtTime(0,t+.32,.08);
+    o.connect(g).connect(bus);o.start(t);o.stop(t+.9)};
   // the melody: a soft 8-bit square voice (25% pulse, like an old console's lead channel), gently filtered, simple envelope
   const pw=(()=>{const N=32,re=new Float32Array(N),im=new Float32Array(N);for(let i=1;i<N;i++)im[i]=(2/(i*Math.PI))*Math.sin(i*Math.PI*.25);return A.createPeriodicWave(re,im)})();
   const chipLp=A.createBiquadFilter();chipLp.type='lowpass';chipLp.frequency.value=2300;chipLp.Q.value=.3;chipLp.connect(top);
@@ -274,7 +283,7 @@ function dawnFlow(step){return function(A,out,ui){const mix=Mix(A,out,{verbSec:6
   stops.push(Clock(A,t=>{const k=n%16,bar=Math.floor(n/16),info=form.at(bar),r=info.chord;
     let base=pitchOf(50,r);const sh=base>52?-12:0;const tones=[r,r+4,r+7,r+9,r+11,r+14].map((d,i)=>pitchOf(50,d)+sh+(i>2?12:0));
     if(k===0){pat=PAT[info.tex]||PAT.wave;ui&&ui({sect:info.sect,key:'D',tex:info.tex,energy:info.energy})}
-    if(!(k>=13&&k%2)&&!(k&&R()<.04))nt(bus,tones[pat[k]],t+(R()-.5)*.008,3.2,.035);
+    if(!(k>=13&&k%2)&&!(k&&R()<.04))arp(tones[pat[k]],t,.012);
     // the floating melody: on the pulse, two steps per beat, never hurried
     if(k%2===0&&n/2>=free&&R()<.25+info.energy*.3){const b0=n/2,pp=placePhrase(ph.next(info.energy),b0,8,form,{penta:true});
       pp.notes.forEach(x=>chip(pitchOf(x.key,x.d),t+(x.beat-b0)*2*step,x.dur*2*step*.8,.011*x.v));
@@ -322,7 +331,8 @@ NEW.boxDuet=function(A,out,ui){const soft=A.createBiquadFilter();soft.type='lowp
    the kick on every bar, a soft rim or finger snap on 2 and 4, a whisper of shaker or hi-hat on the eighths,
    all low and dusty, over the turning run-out groove of a finished record. Sections swap the little percussion around. */
 NEW.lantern=function(A,out,ui){const mix=Mix(A,out,{verbSec:6,dark:.9}),stops=[];const bus=mix.bus(.45,.7);
-  const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1700;lp.Q.value=.4;lp.connect(bus);
+  const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1250;lp.Q.value=.4;lp.connect(bus);
+  const tcr=Crusher(A,7,8);tcr.output.connect(lp);
   const wob=A.createOscillator();wob.frequency.value=.35;const wg=A.createGain();wg.gain.value=14;wob.connect(wg);wob.start();stops.push(wob);
   {const sr=A.sampleRate,L=Math.floor(sr*1.8),gb=A.createBuffer(2,L,sr);
     const pops=[...Array(5)].map(()=>[Math.floor(R()*L),.15+R()*.35,R()<.5?0:1]);
@@ -332,8 +342,8 @@ NEW.lantern=function(A,out,ui){const mix=Mix(A,out,{verbSec:6,dark:.9}),stops=[]
       for(const[p,a,ch]of pops){if(ch!==c&&R()<.6)continue;for(let j=0;j<5;j++)g[(p+j)%L]+=a*(j%2?-1:1)*Math.exp(-j/1.6)}}
     const hs=A.createBufferSource();hs.buffer=gb;hs.loop=true;const hf=A.createBiquadFilter();hf.type='lowpass';hf.frequency.value=2800;
     const hg=A.createGain();hg.gain.value=.03;hs.connect(hf).connect(hg).connect(out);hs.start();stops.push(hs)}
-  const nt=(m,t,dur,vol)=>{const o=A.createOscillator();o.type='triangle';o.frequency.value=MT(m);wg.connect(o.detune);const g=A.createGain();
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0003,t+dur);g.gain.linearRampToValueAtTime(0,t+dur+.03);o.connect(g).connect(lp);o.start(t);o.stop(t+dur+.05)};
+  const nt=(m,t,dur,vol)=>{const o=A.createOscillator();o.setPeriodicWave(tw);o.frequency.value=MT(m);wg.connect(o.detune);const g=A.createGain();
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0003,t+dur);g.gain.linearRampToValueAtTime(0,t+dur+.03);o.connect(g).connect(tcr.input);o.start(t);o.stop(t+dur+.05)};
   // drums: soft and dusty, rolled off on top
   const dr=A.createBiquadFilter();dr.type='lowpass';dr.frequency.value=4800;dr.Q.value=.4;dr.connect(mix.bus(.85,.22));
   const nb=A.createBuffer(1,A.sampleRate,A.sampleRate),nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=R()*2-1;
@@ -354,20 +364,20 @@ NEW.lantern=function(A,out,ui){const mix=Mix(A,out,{verbSec:6,dark:.9}),stops=[]
   const chipBass=(m,t,dur,v)=>{const o=A.createOscillator();o.setPeriodicWave(tw);o.frequency.value=MT(m);const g=A.createGain();
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05*v,t+.006);g.gain.setValueAtTime(.05*v,t+dur);g.gain.linearRampToValueAtTime(0,t+dur+.06);o.connect(g).connect(bLp);o.start(t);o.stop(t+dur+.1)};
   const CH={Am:[5,7,9,11],F:[3,5,7,9],C:[0,2,4,7],G:[4,6,8,11],Em:[2,4,6,8],Dm:[1,3,5,7]};
-  const form=Form({keys:[48],progs:[['Am','F','C','G'],['Am','F','C','G'],['Am','Em','F','G'],['F','G','Am','Am'],['C','G','Am','F'],['Dm','Am','F','G'],['Am','F','Am','G']],barsPer:[2,2,4],secBars:[8,12,16],tex:['groove + bass','groove + bass','groove + bass','groove'],keyP:0,eMid:.45});
+  const form=Form({keys:[48],progs:[['Am','F','C','G'],['Am','F','C','G'],['Am','Em','F','G'],['F','G','Am','Am'],['C','G','Am','F'],['Dm','Am','F','G'],['Am','F','Am','G']],barsPer:[2,2,4],secBars:[8,12,16],tex:['tresillo','tresillo','sway','offbeat'],keyP:0,eMid:.45});
   const ph=Phraser({lo:7,hi:14,rh:[[1,2],[2,3]],end:[2,3],minLen:2,maxLen:4,varyP:.5});
-  const step=.36;let n=0,ix=2,fill=null;
-  stops.push(Clock(A,t=>{const k=n%8,bar=Math.floor(n/8),info=form.at(bar),c=CH[info.chord].map(x=>pitchOf(48,x)),sw=k%2?.035:0,hv=()=>.85+R()*.3;
-    // one tight groove, exactly on the grid: kick on 1 and 3, rim on 2 and 4, a quiet hi-hat on every eighth
-    if(k===0||k===4)kick(t,k?.8:1);if(k===2||k===6)rim(t,1);hat(t,k%2?.75:.5);
-    if(info.tex==='groove + bass'&&(k===0||k===4||k===7)){const root=c[0]-24;chipBass(k===7?root+7:root,t,k===7?.16:.3,k===7?.6:1)}
-    if(k===0){if(info.chordStart||R()<.35)nt(c[0]-12,t,2.6,.09);ui&&ui({sect:info.sect,key:info.chord,tex:info.tex,energy:info.energy});
-      if(!fill&&info.energy>.5&&R()<.1){const pp=placePhrase(ph.next(info.energy),0,4,{at:()=>({key:48,chord:CH[info.chord][0]})},{penta:true});fill={notes:pp.notes,start:n}}}
-    // the thumb piano: a tine on some quarter notes, left to ring
-    if(k%2===0){if(fill){const pos=(n-fill.start)/2;fill.notes.forEach(x=>{if(Math.abs(x.beat-pos)<.01)nt(pitchOf(48,x.d)+12,t,2.2,.075*x.v)});
-        if(pos>=fill.notes[fill.notes.length-1].beat+1)fill=null}
-      else if(R()<.32+info.energy*.15){const st=wpick([-2,-1,1,2,3],[1,4,4,1.5,.5]);ix=ix+st;if(ix<0)ix=-ix;if(ix>7)ix=14-ix;
-        const m=c[ix%4]+12*(1+Math.floor(ix/4));nt(m,t,2.2,.065+R()*.015);if(R()<.12)nt(m+12,t,.3,.01)}}
+  // one bar = sixteen 16th notes at about 83 bpm; everything sits exactly on this grid and repeats, so it locks in
+  const step=.18,KICK={0:1,7:.6,10:.85},TH={tresillo:[0,6,12],offbeat:[2,6,10,14],sway:[0,6,10]};let n=0,ix=2;
+  stops.push(Clock(A,t=>{const k=n%16,bar=Math.floor(n/16),info=form.at(bar),c=CH[info.chord].map(x=>pitchOf(48,x)),root=c[0]-24;
+    if(KICK[k])kick(t,KICK[k]);
+    if(k===4||k===12)rim(t,1);
+    if(k%2===0)hat(t,k%4===2?.9:.5);else if(k===15)hat(t,.35);
+    // the 8-bit bass follows the kick: root on 1, a short root on the "a" of 2, the fifth on the "and" of 3, a pickup into the next bar
+    if(k===0)chipBass(root,t,.3,1);else if(k===7)chipBass(root,t,.1,.7);else if(k===10)chipBass(root+7,t,.2,.85);else if(k===14&&bar%2===1)chipBass(root+12,t,.1,.55);
+    if(k===0){if(info.chordStart)nt(c[0]-12,t,2.6,.08);ui&&ui({sect:info.sect,key:info.chord,tex:info.tex,energy:info.energy})}
+    // the thumb piano plays a repeating rhythm (which one changes by section); only the notes wander
+    if(TH[info.tex].includes(k)&&R()<.85){const st=wpick([-2,-1,1,2],[1,4,4,1]);ix=ix+st;if(ix<0)ix=-ix;if(ix>7)ix=14-ix;
+      nt(c[ix%4]+12*Math.floor(ix/4),t,1.6,.06)}
     n++;return step}));
   return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
 
@@ -422,7 +432,7 @@ NEW.strings=function(A,out,ui){const mix=Mix(A,out,{verbSec:7,dark:.9}),stops=[]
   return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
 
 // loudness trims so each new track sits at the same level as the one it replaces (measured offline)
-const TRIM_DB={calm:-5.5,dawn:4,dawnSlow:5,boxLullaby:5,boxDuet:7,lantern:4,strings:3};
+const TRIM_DB={calm:-5.5,dawn:13.5,dawnSlow:14.5,boxLullaby:5,boxDuet:7,lantern:4,strings:3};
 for(const k in TRIM_DB){const f=NEW[k],g=Math.pow(10,TRIM_DB[k]/20);NEW[k]=(A,out,ui)=>{const o=A.createGain();o.gain.value=g;o.connect(out);return f(A,o,ui)}}
 /* ===== current game music (copied from the live game, Oct 12) ===== */
 const CUR=(function(){
@@ -526,13 +536,13 @@ function calmCurrent(a,out){const cfg=MUSICS[0];const t0=a.currentTime;let mus;
 return{calm:calmCurrent,gen:(name)=>(A,out)=>genTrack(A,out,name)};
 })();
 const TRACKS=[
- {name:'Calm',desc:'More hopeful and open: wide add9 chords that swell slowly, a gentle shimmer, faint wind, and a real grand piano up front in the style of open-world field music. Short fragments (a single note, a pair, a staccato chord, a rolled chord, a quick sparkling run) mostly high on the keyboard, a rare very low note, free timing, and lots of silence. The notes are its own, not the game\'s.',
+ {name:'Calm',desc:'More hopeful and open: wide add9 chords that swell slowly, a gentle shimmer, faint wind, and a real grand piano in the style of open-world field music, now two octaves lower and softer. Short fragments (a single note, a pair, a staccato chord, a rolled chord, a quick run), free timing, and lots of silence. The notes are its own, not the game\'s.',
   opts:[['Current',(A,o)=>CUR.calm(A,o)],['New',(A,o,u)=>NEW.calm(A,o,u)]]},
- {name:'Dawn',desc:'Back to today\'s Dawn: the same soft sound and the same rolling arpeggio, at a steady half speed (Flow) or slower still (Flow · slower). Now and then a quiet, simple 8-bit square voice carries a few melody notes on top.',
+ {name:'Dawn',desc:'The same rolling arpeggio and chords as today, at a steady half speed (Flow) or slower still (Flow · slower), now as a quiet, crunchy 8-bit square: short notes, a little tape wobble, a small room instead of a big hall. Now and then a simple 8-bit pulse voice carries a few melody notes on top.',
   opts:[['Current',CUR.gen('harp')],['Flow',(A,o,u)=>NEW.dawn(A,o,u)],['Flow · slower',(A,o,u)=>NEW.dawnSlow(A,o,u)]]},
  {name:'Music Box',desc:'Darker and softer: the bright ping of the comb is nearly gone, it plays an octave lower and filtered, and it\'s slower again, with about one note every three seconds. Lullaby is a slow waltz over a low note. Duet adds a second voice a third below on some long notes.',
   opts:[['Current',CUR.gen('musicbox')],['Lullaby',(A,o,u)=>NEW.boxLullaby(A,o,u)],['Duet',(A,o,u)=>NEW.boxDuet(A,o,u)]]},
- {name:'Lantern',desc:'One tight groove, exactly on the beat: the kick on 1 and 3, a soft rim on 2 and 4, a quiet hi-hat on every eighth, and nothing else competing. The 8-bit touch is a soft, round bass on an old console\'s triangle channel (different from Dawn\'s square voice). The thumb piano stays sparse, over the turning run-out groove of a finished record.',
+ {name:'Lantern',desc:'A locked-in, head-nodding groove on a 16th-note grid: a boom-bap kick (1, the "a" of 2, the "and" of 3), a soft rim on 2 and 4, a steady hi-hat, and the 8-bit bass following the kick. The thumb piano is now an octave lower, crunchy and retro, and plays a repeating rhythm (which one changes by section) while only its notes wander. Over the turning run-out groove of a finished record.',
   opts:[['Current',CUR.gen('kalimba')],['New',(A,o,u)=>NEW.lantern(A,o,u)]]},
  {name:'Strings',desc:'Keeping today\'s version, as you preferred it to the new ensemble.',
   opts:[['Current',CUR.gen('strings')]]},
