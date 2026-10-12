@@ -151,7 +151,8 @@ html.neon .rtk.clr{box-shadow:0 0 5px var(--c)}
 .rchg{position:absolute; top:9px; width:17px; height:17px; margin-left:-8.5px; color:var(--muted)}
 .rchg.clr{color:var(--c)}
 .rchg svg{width:17px; height:17px; margin:0; opacity:1}
-html.scrub #stage{filter:blur(2px); opacity:.55}
+html.scrub #stage canvas{filter:blur(2px); opacity:.45}
+.ruler.on{pointer-events:auto; touch-action:none; cursor:grab}
 #stage{transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .35s,filter .25s}
 /* the chapter menu: a column of round medallions dropping out below the level button, one per chapter,
    each with a 5-segment progress ring; tapping one slides out a tray of small level-number pills beside it */
@@ -163,7 +164,7 @@ html.scrub #stage{filter:blur(2px); opacity:.55}
   opacity:0; transform:translateY(-16px) scale(.5); transition:transform .32s cubic-bezier(.3,1.4,.5,1),opacity .2s}
 .lvcol.show .med{opacity:1; transform:none}
 .med .disc{position:absolute; inset:4px; border-radius:50%; background:var(--chip); display:grid; place-items:center; box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.med .disc svg{width:18px; height:18px}
+.med .disc svg{width:18px; height:18px; margin:0; display:block} /* no leftover margin, so the symbol sits dead center */
 .med .ring{position:absolute; inset:0; width:42px; height:42px; transform:rotate(-90deg)}
 .med .ring circle{fill:none; stroke-width:2.4; stroke-linecap:round; stroke:rgba(0,0,0,.14)}
 html.neon .med .ring circle:not(.on):not(.samp){stroke:rgba(244,236,255,.16)}
@@ -205,7 +206,10 @@ header{row-gap:8px}
 button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 button svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
 #stage{flex:1; min-height:0; position:relative; touch-action:none; cursor:grab; transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .35s; transform-origin:center}
-#stage.dim{opacity:.55; transform:scale(.96)}
+/* menu open: only the puzzle itself steps back - much smaller and dimmer; the stats, wordmark and buttons stay put */
+#stage.dim{opacity:1; transform:none}
+#stage canvas{transition:transform .45s cubic-bezier(.3,1,.4,1),opacity .35s,filter .25s; transform-origin:center}
+#stage.dim canvas{transform:scale(.6); opacity:.22}
 #stage:active{cursor:grabbing}
 canvas{display:block; width:100%; height:100%}
 /* the credit sits under the SmartPull wordmark, top left */
@@ -2979,29 +2983,49 @@ function scrubTo(dx){
   const n=Math.max(0,Math.min(L,Math.round(v)));if(n!==drag.cur)showScrub(n,n>drag.cur?1:-1);
 }
 function commitScrub(n){
+  clearTimeout(scrubHold);scrubHold=0;scrubAt=null;
   rtrack.style.transition='transform .25s cubic-bezier(.3,1.4,.5,1)';setTrack(n);
   setTimeout(()=>{rtrack.style.transition='';closeRuler();if(n!==levelIdx){pageTurn();load(n)}else lvLabel(levelIdx)},230);
 }
-lvBtn.addEventListener('pointerdown',e=>{
-  if(drag)return;try{lvBtn.setPointerCapture(e.pointerId)}catch(_){}
-  const st=Math.min(levelIdx,topLevel());
-  drag={x:e.clientX,y:e.clientY,t:performance.now(),start:st,cur:st,scrub:false,menuWasOpen:!lvPanel.hidden};
-});
-lvBtn.addEventListener('pointermove',e=>{
+// after you lift your thumb the ruler waits a moment, so you can put it back down (on the ruler or the level button)
+// and keep scrubbing from where you left off. It only opens the level once you've let go for a beat.
+const SCRUB_HOLD=1800;
+let scrubHold=0,scrubAt=null; // scrubAt = the level the ruler is resting on between drags
+function holdScrub(n){clearTimeout(scrubHold);scrubAt=n;scrubHold=setTimeout(()=>commitScrub(n),SCRUB_HOLD)}
+function startDrag(e,el){
+  if(drag)return;try{el.setPointerCapture(e.pointerId)}catch(_){}
+  const resume=scrubAt!=null;if(resume){clearTimeout(scrubHold);scrubHold=0}
+  const st=resume?scrubAt:Math.min(levelIdx,topLevel());
+  drag={x:e.clientX,y:e.clientY,t:performance.now(),start:st,cur:st,scrub:resume,resume,menuWasOpen:!lvPanel.hidden};
+}
+function moveDrag(e){
   if(!drag)return;const dx=e.clientX-drag.x;
   if(!drag.scrub){if(Math.abs(dx)>6&&Math.abs(dx)>Math.abs(e.clientY-drag.y)){
       drag.scrub=true;drag.x=e.clientX;drag.t=performance.now();if(!lvPanel.hidden)closeLevels();openRuler()}return}
   scrubTo(dx);
-});
-const endScrub=e=>{
+}
+function endDrag(e,fromRuler){
   if(!drag)return;const d=drag;drag=null;
-  if(!d.scrub){if(e.type==='pointerup')(d.menuWasOpen?closeLevels():openLevels());return}
+  if(e.type==='pointercancel'){if(d.scrub)holdScrub(d.cur);return}
   const dx=e.clientX-d.x,dt=performance.now()-d.t;
-  if(e.type==='pointercancel'){closeRuler();lvLabel(levelIdx);return}
-  if(dt<240&&Math.abs(dx)<70){const n=Math.max(0,Math.min(topLevel(),d.start+(dx<0?1:-1)));drag=d;showScrub(n,n>d.start?1:-1);drag=null;commitScrub(n)}
-  else commitScrub(d.cur);
-};
-lvBtn.addEventListener('pointerup',endScrub);lvBtn.addEventListener('pointercancel',endScrub);
+  if(!d.scrub||(d.resume&&Math.abs(dx)<=6)){
+    // a tap: on the level button it opens the level now (mid-scrub) or toggles the menu; on the ruler it just keeps it up
+    if(d.resume){if(fromRuler)holdScrub(d.cur);else commitScrub(d.cur);return}
+    if(e.type==='pointerup')(d.menuWasOpen?closeLevels():openLevels());return}
+  if(dt<240&&Math.abs(dx)<70&&!d.resume){const n=Math.max(0,Math.min(topLevel(),d.start+(dx<0?1:-1)));drag=d;showScrub(n,n>d.start?1:-1);drag=null;
+    rtrack.style.transition='transform .25s cubic-bezier(.3,1.4,.5,1)';setTrack(n);setTimeout(()=>{rtrack.style.transition=''},260);holdScrub(n);return}
+  // settle the track on the level under the needle, then wait for the thumb to come back
+  rtrack.style.transition='transform .2s cubic-bezier(.3,1.4,.5,1)';setTrack(d.cur);setTimeout(()=>{rtrack.style.transition=''},220);
+  holdScrub(d.cur);
+}
+lvBtn.addEventListener('pointerdown',e=>startDrag(e,lvBtn));
+lvBtn.addEventListener('pointermove',moveDrag);
+lvBtn.addEventListener('pointerup',e=>endDrag(e,false));lvBtn.addEventListener('pointercancel',e=>endDrag(e,false));
+ruler.addEventListener('pointerdown',e=>{if(scrubAt!=null)startDrag(e,ruler)});
+ruler.addEventListener('pointermove',moveDrag);
+ruler.addEventListener('pointerup',e=>endDrag(e,true));ruler.addEventListener('pointercancel',e=>endDrag(e,true));
+// tapping anywhere else while the ruler waits opens the level right away
+document.addEventListener('pointerdown',e=>{if(scrubAt!=null&&!drag&&!e.target.closest('#ruler,#lvl'))commitScrub(scrubAt)},true);
 /* upgrade screen: shows the paid versions you don't have yet */
 const upPanel=document.getElementById('upgrade');
 function openUpgrade(){
