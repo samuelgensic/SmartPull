@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>SmartPull</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@500&family=Manrope:wght@300;400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@500;600;700&family=Manrope:wght@300;400;600;700&display=swap">
 <style>
 /* Layout: one full-screen stage, a slim top bar, a quiet caption at the bottom. */
 :root{
@@ -266,7 +266,8 @@ html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .tipicon{flex:none; width:52px; height:52px; border-radius:14px; background:var(--bg2); color:var(--ink); display:grid; place-items:center}
 .tipicon svg{width:30px; height:30px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
 .tipitem b{display:block; font-family:var(--display); font-weight:500; font-size:14px; letter-spacing:.04em; margin-bottom:4px}
-.tipitem p{margin:0; font-size:14px; line-height:1.45}
+.tipitem p{margin:0; font-family:"Quicksand", var(--body); font-weight:600; font-size:15px; line-height:1.45}
+#tipClose{font-family:"Quicksand", var(--body); font-weight:700; font-size:14px}
 .done-in{display:flex; flex-direction:column; align-items:center; gap:14px}
 .done .taps{display:block; text-align:center; font-family:var(--display); font-weight:500; font-size:13px; letter-spacing:.06em; color:var(--ink); font-variant-numeric:tabular-nums; margin-top:-4px; white-space:pre}
 .done .taps.best{color:var(--accent)}
@@ -494,14 +495,14 @@ const tipBtn=document.getElementById('tipBtn'),tipSheet=document.getElementById(
 function setTip(){const keys=TIP_AT[levelIdx];tipBtn.hidden=!keys;if(!keys)return;
   tipBtn.classList.toggle('new',!keys.every(k=>tipsSeen[k]));tipSheet.hidden=true}
 function openTip(){const keys=TIP_AT[levelIdx];if(!keys)return;
-  document.getElementById('tipTitle').textContent=keys.length>1?'New rules':'New: '+TIPS[keys[0]].t;
+  document.getElementById('tipTitle').textContent=keys.length>1?'Tips':'Tip: '+TIPS[keys[0]].t;
   const body=document.getElementById('tipBody');body.replaceChildren(...keys.map(k=>{const d=document.createElement('div');d.className='tipitem';
     d.innerHTML='<div class="tipicon">'+(TIP_ICON[k]||'')+'</div><div><b></b><p></p></div>';if(keys.length>1)d.querySelector('b').textContent=TIPS[k].t;else d.querySelector('b').remove();d.querySelector('p').textContent=TIPS[k].x;return d}));
   tipSheet.hidden=false;keys.forEach(k=>tipsSeen[k]=1);try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}tipBtn.classList.remove('new');
   tipSound()}
 // the first time you switch to Neon, a short tip explains the Black Light button (once only)
 function blackLightTip(){if(tipsSeen.blacklight)return;tipsSeen.blacklight=1;try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}
-  setTimeout(()=>{document.getElementById('tipTitle').textContent='New: Black Light';const d=document.createElement('div');d.className='tipitem';
+  setTimeout(()=>{document.getElementById('tipTitle').textContent='Tip: Black Light';const d=document.createElement('div');d.className='tipitem';
     d.innerHTML='<div class="tipicon"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></div><div><p></p></div>';
     d.querySelector('p').textContent='The bulb next to the menu button is the Black Light. Tap it to turn it on and off. With it on, the cubes glow; turn it off for a darker, calmer look.';
     document.getElementById('tipBody').replaceChildren(d);tipSheet.hidden=false;tipSound()},450)}
