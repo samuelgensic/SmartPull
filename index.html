@@ -111,7 +111,7 @@ button.lvl[aria-expanded="true"]{background:var(--chip)}
 button.lvl{touch-action:none; overflow:hidden; white-space:nowrap; display:inline-flex; flex-direction:row; align-items:center; justify-content:center}
 .lvtxt{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.1; transition:transform .12s ease-out}
 /* the level's group (Pull, Twist, Link...) in small letters under the number */
-.lvsub{font-family:var(--display); font-size:8.5px; font-weight:400; letter-spacing:.08em; color:#007493; margin-top:1px}
+.lvsub{font-family:var(--display); font-size:8.5px; font-weight:400; letter-spacing:.08em; color:#007C92; margin-top:1px}
 /* the level-type subtitle takes a color from the theme: blue in Standard, orange in SmartPull, pink in Neon */
 html.brandtheme .lvsub{color:#E06A22}
 html.neon .lvsub{color:#FF2E97}
@@ -151,7 +151,7 @@ canvas{display:block; width:100%; height:100%}
 /* the credit sits under the SmartPull wordmark, top left */
 .brandbox{display:flex; flex-direction:column; align-items:flex-start; gap:2px}
 .mark{font-size:20px}
-.tapc{color:#F17B31} /* SmartPull orange */
+.tapc{color:#FF6C10} /* SmartPull orange */
 /* stats: bottom left of the play area, one per line, left-aligned; the clock comes last and quietest */
 .left{position:absolute; left:16px; bottom:14px; z-index:3; pointer-events:none; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; line-height:1.15; font-family:var(--display); font-weight:500; font-variant-numeric:tabular-nums; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
 .left .clock{opacity:.55; font-weight:300}
@@ -193,7 +193,7 @@ button.ttoggle[aria-pressed="true"]{color:var(--ink); box-shadow:0 0 0 2px var(-
 button.tipbtn{position:absolute; top:0; right:0; z-index:4; width:38px; height:38px; background:var(--chip); color:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.12)}
 button.tipbtn svg{width:20px; height:20px; stroke-width:2.2}
 button.tipbtn.new{animation:tippulse 2s ease-in-out infinite}
-@keyframes tippulse{0%,100%{box-shadow:0 0 0 0 rgba(241,123,49,.0),0 2px 8px rgba(0,0,0,.12)}50%{box-shadow:0 0 0 7px rgba(241,123,49,.22),0 2px 8px rgba(0,0,0,.12)}}
+@keyframes tippulse{0%,100%{box-shadow:0 0 0 0 rgba(255,108,16,.0),0 2px 8px rgba(0,0,0,.12)}50%{box-shadow:0 0 0 7px rgba(255,108,16,.22),0 2px 8px rgba(0,0,0,.12)}}
 @media (prefers-reduced-motion: reduce){button.tipbtn.new{animation:none}}
 html.neon button.tipbtn{color:#FF2E97}
 html.neon .controls button,html.neon .levelnav button:not(.lvl),html.neon button.fsbtn,html.neon button.ttoggle,html.neon button.tipbtn{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
@@ -216,11 +216,11 @@ html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .done small{opacity:0; transition:opacity .6s; font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; animation:breathe 2.4s ease-in-out infinite;
   /* shaped like a button (the whole message is tappable, this just makes it obvious) */
   display:inline-block; margin-top:6px; padding:11px 22px; border-radius:999px; background:var(--accent); color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.15); max-width:calc(100vw - 48px); text-align:center}
-html.brandtheme .done small{background:#F17B31}
+html.brandtheme .done small{background:#FF6C10}
 html.neon .done small{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 14px rgba(255,46,151,.45)}
 /* Scorecard button takes the theme's color: accent in Classic and SmartPull, a pink outline in Neon */
 #scoreOpen{background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12)}
-html.brandtheme #scoreOpen{background:#F17B31}
+html.brandtheme #scoreOpen{background:#FF6C10}
 html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 12px rgba(255,46,151,.4)}
 @keyframes breathe{50%{opacity:.4}}
 .done:not(.ready) small{animation:none; opacity:0}
@@ -271,7 +271,7 @@ header .blacklight:focus-visible::after{opacity:1}
       <div class="tools" id="tools" inert>
       <button id="sound" aria-label="Sound" aria-expanded="false" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
       <button id="tune" aria-label="Settings" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="14" r="2.2" style="fill:var(--chip)"/><circle cx="12" cy="8" r="2.2" style="fill:var(--chip)"/><circle cx="19" cy="15" r="2.2" style="fill:var(--chip)"/></svg></button>
-      <button id="paint" aria-label="Modes" aria-expanded="false"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="#C0B50A" stroke="none"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="#007493" stroke="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="#F17B31" stroke="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="#ABABA8" stroke="none"/></svg></button>
+      <button id="paint" aria-label="Modes" aria-expanded="false"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="#B2BB1E" stroke="none"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="#007C92" stroke="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="#FF6C10" stroke="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="#ABABA8" stroke="none"/></svg></button>
       <button id="reset" aria-label="Restart level"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button>
       </div>
       <button id="more" class="more" type="button" aria-expanded="false" aria-controls="tools" aria-label="Show buttons"><svg viewBox="0 0 24 24"><g class="dots"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></g><path class="x" d="M7 7l10 10M17 7L7 17"/></svg></button>
@@ -442,7 +442,7 @@ function pipFaceFor(T,b){const occ=new Set(T.blocks.map(o=>o.c.join(',')));const
   return order.find(f=>!occ.has([b.c[0]+f[0],b.c[1]+f[1],b.c[2]+f[2]].join(',')))||order[0]}
 const pipOnly=(dc,b,n)=>b.pipFace&&dot(n,b.pipFace)===1?dc:dc.split(';').filter(x=>!x.startsWith('pips')).join(';');
 TIPS.glide={t:'Glide',x:'A Chevron (the hollow arrow) means the cube glides: it slides until it bumps into another cube and stops right there. If nothing is in the way, it leaves like any other cube. Use glides to move cubes out of the way.'};TIPS.order={t:'Order',x:'Some cubes have small dents like dice pips on one of their plain sides. They must leave in order: one pip first, then two, then three. Cubes without pips can go any time. In Neon, the pips only show under Black Light.'};TIP_ICON.glide='<svg viewBox="0 0 24 24"><path d="M8.5 4.5Q12 8 15.5 12Q12 16 8.5 19.5" stroke-width="5"/><path d="M8.5 4.5Q12 8 15.5 12Q12 16 8.5 19.5" stroke="var(--bg2)" stroke-width="1.8"/></svg>';TIP_ICON.order='<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.6" fill="currentColor" stroke="none"/></svg>';TIPS.gfuse={t:'Meld',x:'When a glide cube slides up against a cube of the same color, they fuse into one piece, just like regular fuse. Different colors just bump. Tap any arrow on a fused piece and the whole piece slides that way, so every part needs a clear path. A fused piece no longer glides.'};TIP_ICON.gfuse=TIP_ICON.fuse;let curLv=null,silWall=null,silBox=null;
-const NUM_COL='#007493';
+const NUM_COL='#007C92';
 function silInfo(){const all=curLv.allCells,xs=all.map(c=>c[0]),ys=all.map(c=>c[1]);
   return {x0:Math.min(...xs),x1:Math.max(...xs),y0:Math.min(...ys),y1:Math.max(...ys)}}
 function silProj(){const s=new Set();blocks.forEach(b=>{if(b.alive)s.add(b.c[0]+','+b.c[1])});return s}
@@ -453,9 +453,9 @@ function drawSilOn(cv,cell,pad){const I=silInfo(),W=I.x1-I.x0+1,H=I.y1-I.y0+1;cv
   g.fillStyle='rgba(255,255,255,.72)';g.beginPath();g.roundRect?g.roundRect(0,0,cv.width,cv.height,pad):g.rect(0,0,cv.width,cv.height);g.fill();
   const p=silProj(),t=new Set(curLv.target.map(c=>c[0]+','+c[1]));
   for(let x=I.x0;x<=I.x1;x++)for(let y=I.y0;y<=I.y1;y++){const k=x+','+y,X=pad+(x-I.x0)*cell,Y=pad+(I.y1-y)*cell,m=cell*.06;
-    if(t.has(k)){g.fillStyle='rgba(241,123,49,.30)';g.fillRect(X+m,Y+m,cell-2*m,cell-2*m)}
+    if(t.has(k)){g.fillStyle='rgba(255,108,16,.30)';g.fillRect(X+m,Y+m,cell-2*m,cell-2*m)}
     if(p.has(k)){g.fillStyle='rgba(52,54,58,.62)';g.fillRect(X+m*2,Y+m*2,cell-4*m,cell-4*m)}
-    if(t.has(k)){g.strokeStyle='#F17B31';g.lineWidth=Math.max(2,cell*.08);g.strokeRect(X+m,Y+m,cell-2*m,cell-2*m)}}}
+    if(t.has(k)){g.strokeStyle='#FF6C10';g.lineWidth=Math.max(2,cell*.08);g.strokeRect(X+m,Y+m,cell-2*m,cell-2*m)}}}
 function drawSil(){if(!curLv||!curLv.target)return;
   if(silWall){drawSilOn(silWall.userData.cv,64,10);silWall.material.map.needsUpdate=true}
   if(silBox)drawSilOn(silBox.querySelector('canvas'),18,4)}
@@ -587,7 +587,7 @@ var NLEV=LEVEL_MAP.length;
     ['pa2_besttaps','pa2_besttimes','pa2_lvlstats'].forEach(mv)}
   localStorage.setItem('pa4_layout','85')}catch(e){}})();
 const ROTATOR_START=3; // first level with dot blocks (level 4)
-const DOT_COLORS=['#C0B50A','#000000','#ABABA8','#007493','#F17B31'];
+const DOT_COLORS=['#B2BB1E','#000000','#ABABA8','#007C92','#FF6C10'];
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function shapeFor(i){
   if(SHAPE_OVR)return SHAPE_OVR();
@@ -688,7 +688,7 @@ const PLAN=[
   [()=>box(4,3,2),0,1,0,1],[()=>stairs(4,3),0,1,0,1],[()=>box(4,4,2),0,1,0,1],[()=>box(4,3,3),0,1,0,1],[()=>box(4,4,4),0,1,0,1], // 46–50 color fusion (50: the full 4×4×4 cube)
 ];
 // pair frames and lock/key symbols use brand colors only (orange, teal, olive, charcoal); Neon swaps in its neons
-const DECO=['#F17B31','#007493','#C0B50A','#34363A'];
+const DECO=['#FF6C10','#007C92','#B2BB1E','#34363A'];
 // step a cube through the gravity rule: every column closes its gaps down to the floor (y = 0)
 function settle(pos,occ,gone){
   const cols=new Map();
@@ -872,7 +872,7 @@ function playout(lv,rand){
    Every cube has one of three fusion colors. When gravity brings two same-colored cubes into
    contact that weren't touching before, they fuse into one piece. A piece falls as one rigid
    body, and tapping any arrow on it slides the whole piece that way (if every part has a clear path). */
-const FUSE=['#F17B31','#007493','#C0B50A'];
+const FUSE=['#FF6C10','#007C92','#B2BB1E'];
 // neutral cubes (white and gray) never fuse with anything; they're plain blockers to work around.
 // They use color numbers 3 (white) and 4 (gray), past the three fusion colors.
 const NEUTRAL=3,NEUTRAL_COL=['#FFFFFF','#ABABA8'],NEUTRAL_SHARE=.22;
@@ -1101,7 +1101,7 @@ function faceTex(fillC,kind,color,deco){
   const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
 }
 /* Olive is reflective: it throws neon-green highlights and glows while the puzzle turns. */
-const OLIVE='#C0B50A', NEON=0x9CFF1E;
+const OLIVE='#B2BB1E', NEON=0x9CFF1E;
 // retro glow-in-the-dark palette: pink, orange, yellow, green, blue, purple
 const NEONS=['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF'];
 const glowMats=[];
@@ -1175,7 +1175,7 @@ let glow=0;
 // decorations for the new rules. Frames go on every face of a linked cube; the padlock and key
 // symbols go on its plain sides (the faces without an arrow or dot).
 const NEON_NEUTRAL={'#FFFFFF':'#FFFFFF','#ABABA8':'#39FF14'}; // Neon never shows gray: the gray blockers glow neon green there
-const NEON_OF={'#F17B31':'#FF7A1A','#007493':'#1FB8FF','#C0B50A':'#F4FF3A','#34363A':'#B026FF'};
+const NEON_OF={'#FF6C10':'#FF7A1A','#007C92':'#1FB8FF','#B2BB1E':'#F4FF3A','#34363A':'#B026FF'};
 // a pale tint of a fusion color, for cubes that haven't fused yet
 const pale=h=>'#'+hexRGB(h).map(v=>Math.round(v+(255-v)*.7).toString(16).padStart(2,'0')).join('');
 const FUSED_BRAND='#34363A'; // SmartPull: charcoal (the brand black) means "fused"
@@ -1464,7 +1464,7 @@ levelIdx=Math.min(levelIdx,topLevel());
 // color themes: plain off-white, brand kit, or retro neon
 // [id, name, swatch colors, swatch backdrop]
 const THEMES=[['plain','Classic',['#FFFFFF','#000000'],'transparent'],
-  ['brand','SmartPull',['#F5F2EA','#2C3631','#C0B50A','#007493','#F17B31'],'transparent'],
+  ['brand','SmartPull',['#F5F5DC','#2C3631','#B2BB1E','#007C92','#FF6C10'],'transparent'],
   ['neon','Neon',['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF'],'#000000']];
 let theme='plain';
 try{theme=localStorage.getItem('pa2_theme')||(localStorage.getItem('pa2_color')==='1'?'brand':'plain')}catch(e){}
@@ -1510,7 +1510,7 @@ document.addEventListener('pointerdown',e=>{if(!themesPanel.hidden&&!themesPanel
     const name=document.createElement('span');name.textContent=label;
     const sw=document.createElement('span');sw.className='sw';sw.style.background=back;
     cols.forEach(c=>{const s=document.createElement('i');s.style.background=c;
-      if(c==='#FFFFFF'||c==='#F5F2EA')s.style.boxShadow='inset 0 0 0 1px rgba(0,0,0,.18)'; // a hairline so the white chip still shows
+      if(c==='#FFFFFF'||c==='#F5F5DC')s.style.boxShadow='inset 0 0 0 1px rgba(0,0,0,.18)'; // a hairline so the white chip still shows
       sw.appendChild(s)});
     const price=document.createElement('span');price.className='price';price.textContent='🔒 '+(THEME_PRICE[id]||'');
     const right=document.createElement('span');right.className='tright';right.append(price,sw);
@@ -1553,7 +1553,7 @@ function load(i){
     const others=BRAND.filter(c=>c!==b.cubeColor);b.altDot=others[Math.floor(cr()*others.length)];
     b.neonColor=NEONS[Math.floor(cr()*NEONS.length)];
     const nOthers=NEONS.filter(c=>c!==b.neonColor);b.neonDot=nOthers[Math.floor(cr()*nOthers.length)];
-    const vivid=['#C0B50A','#007493','#F17B31'];b.plainDot=vivid.includes(b.dotColor)?b.dotColor:vivid[Math.floor(cr()*vivid.length)];
+    const vivid=['#B2BB1E','#007C92','#FF6C10'];b.plainDot=vivid.includes(b.dotColor)?b.dotColor:vivid[Math.floor(cr()*vivid.length)];
     const m=new THREE.Mesh(geo,materialsFor(b));
     m.position.set(b.c[0]-ctr[0],b.c[1]-ctr[1],b.c[2]-ctr[2]);
     Object.assign(b,{mesh:m,home:m.position.clone(),alive:true,busy:false});m.userData.b=b;
@@ -1591,13 +1591,13 @@ const oopsCount=()=>bumps;
 let cheerColorIdx=0;
 function cheerPalette(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
   if(theme==='neon')return NEONS;
-  if(theme==='brand')return dark?['#F59A5E','#4FB6D2','#D8CF3A','#C9CBC6']:['#F17B31','#007493','#A39A08','#34363A'];
-  return dark?['#4FB6D2','#F59A5E','#D8CF3A','#E9ECE6']:['#007493','#D9661E','#8C8410','#34363A']}
+  if(theme==='brand')return dark?['#F59A5E','#4FB6D2','#D8CF3A','#C9CBC6']:['#FF6C10','#007C92','#A39A08','#34363A'];
+  return dark?['#4FB6D2','#F59A5E','#D8CF3A','#E9ECE6']:['#007C92','#D9661E','#8C8410','#34363A']}
 // the "Moves" total on the level-complete message has its own theme color (different from the "Best" note)
 function movesColor(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
-  return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#4FB6D2':'#007493'):(dark?'#F59A5E':'#D9661E')}
-const BEST_COLOR={plain:'#007493',brand:'#F17B31',neon:'#39FF14'};
-const TAP_COLORS={plain:['var(--ink)'],brand:['#F17B31','#007493','#C0B50A'],
+  return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#4FB6D2':'#007C92'):(dark?'#F59A5E':'#D9661E')}
+const BEST_COLOR={plain:'#007C92',brand:'#FF6C10',neon:'#39FF14'};
+const TAP_COLORS={plain:['var(--ink)'],brand:['#FF6C10','#007C92','#B2BB1E'],
   neon:['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF']};
 /* master tap counter: every tap on every level, kept on this device */
 // running totals across every level, kept on this device (pa2_totaltaps held the old all-in count; it carries on as Pulls)
@@ -1642,8 +1642,8 @@ const plural=(n,w)=>n+' '+w+(n===1?'':'s');
 const stat=(n,w)=>w+'s '+n;
 /* each stat has its own color from the current theme (lighter versions on a dark screen so they stay readable) */
 const STAT_COLORS={
-  plain:{light:{blocks:'var(--ink)',pulls:'#007493',taps:'#8C8410',bumps:'#D9661E'},dark:{blocks:'var(--ink)',pulls:'#4FB6D2',taps:'#D8CF3A',bumps:'#F59A5E'}},
-  brand:{light:{blocks:'#34363A',pulls:'#F17B31',taps:'#007493',bumps:'#8C8410'},dark:{blocks:'#C9CBC6',pulls:'#F59A5E',taps:'#4FB6D2',bumps:'#D8CF3A'}},
+  plain:{light:{blocks:'var(--ink)',pulls:'#007C92',taps:'#8C8410',bumps:'#D9661E'},dark:{blocks:'var(--ink)',pulls:'#4FB6D2',taps:'#D8CF3A',bumps:'#F59A5E'}},
+  brand:{light:{blocks:'#34363A',pulls:'#FF6C10',taps:'#007C92',bumps:'#8C8410'},dark:{blocks:'#C9CBC6',pulls:'#F59A5E',taps:'#4FB6D2',bumps:'#D8CF3A'}},
   neon:{light:{blocks:'#1FB8FF',pulls:'#39FF14',taps:'#F4FF3A',bumps:'#FF2E97'}}};
 function statColors(){const t=STAT_COLORS[theme]||STAT_COLORS.plain;
   let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
@@ -2712,7 +2712,7 @@ const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack 
 function openScorecard(){
   [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   bankPlay(elapsed());if(timeStart!==null)timeStart=performance.now();timeMs=0; // count the time on the current level so far
-  const sc=statColors(),pal={plain:['#007493','#D9661E','#8C8410'],brand:['#F17B31','#007493','#C0B50A'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007493','#D9661E','#8C8410'];
+  const sc=statColors(),pal={plain:['#007C92','#D9661E','#8C8410'],brand:['#FF6C10','#007C92','#B2BB1E'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007C92','#D9661E','#8C8410'];
   const owned=v=>devMode||TIERS[tier].max>=TIERS[v].max;
   const fmtLong=ms=>{const m=Math.floor(ms/60000),h=Math.floor(m/60);return h?h+'h '+(m%60)+'m':m+'m '+Math.floor(ms/1000)%60+'s'};
   const box=document.getElementById('scCards');box.innerHTML='';
