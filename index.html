@@ -436,7 +436,7 @@ function setupTest(lv,ctr){curLv=lv;lv.src=curSrc;curSrc=null;
 }
 // Order: each ordered cube that leaves rings one soft mallet note, one step higher each time;
 // the last one in line adds a gentle note above it, so the run feels finished
-function orderChime(n,last){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+.12;
+function orderChime(n,last){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+.38; // waits until the pull sound is nearly done
   // soft and low: one mellow note an octave lower than before, a slow attack, no bright overtone
   const NOTES=[293.7,329.6,370,440,493.9,587.3],f=NOTES[Math.min(n-1,NOTES.length-1)];
   tone(a,'sine',f,f,t,.9,.032,.03);
