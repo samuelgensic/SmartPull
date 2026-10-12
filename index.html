@@ -1964,18 +1964,16 @@ document.getElementById('tune').onclick=e=>{e.stopPropagation();closeSoundPanel(
   panel.hidden=!panel.hidden;document.getElementById('tune').setAttribute('aria-expanded',String(!panel.hidden))};
 document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!e.target.closest('#tune')){panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}});
 function click(){
-  // a smooth upward glide: two soft tones a fifth apart, with a breath of air under them
+  // the dot turn: Twist knob (soft clicks): three quiet knob detents over a gentle rising glide, with smooth fade-outs
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1800;lp.connect(sfxBus);
-  [[330,392],[495,588]].forEach(([f0,f1],i)=>{
-    const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+.22);
-    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(i?.03:.06,t+.05);g.gain.exponentialRampToValueAtTime(.001,t+.34);
-    o.connect(g).connect(lp);o.start(t);o.stop(t+.36);
-  });
-  const n=a.createBufferSource();n.buffer=noiseBuf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=1.2;
-  bp.frequency.setValueAtTime(700,t);bp.frequency.exponentialRampToValueAtTime(1400,t+.25);
-  const ng=a.createGain();ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(.03,t+.06);ng.gain.exponentialRampToValueAtTime(.001,t+.28);
-  n.connect(bp).connect(ng).connect(sfxBus);n.start(t);n.stop(t+.3);
+  [[300,360,.045],[450,540,.022]].forEach(([f0,f1,v])=>{const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+.24);
+    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.05);g.gain.setTargetAtTime(0,t+.05,.06);o.connect(g).connect(lp);o.start(t);o.stop(t+.6)});
+  [0,.07,.14].forEach((d,i)=>{const f=1600+i*140,s=t+d;
+    const n=a.createBufferSource();n.buffer=softBuf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=5;bp.frequency.setValueAtTime(f,s);bp.frequency.exponentialRampToValueAtTime(f*.9,s+.033);
+    const g=a.createGain();g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.021,s+.001);g.gain.setTargetAtTime(0,s+.001,.008);n.connect(bp).connect(g).connect(sfxBus);n.start(s,Math.random()*.8);n.stop(s+.12);
+    const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f*.28,s);o.frequency.exponentialRampToValueAtTime(f*.25,s+.036);
+    const g2=a.createGain();g2.gain.setValueAtTime(0,s);g2.gain.linearRampToValueAtTime(.0046,s+.002);g2.gain.setTargetAtTime(0,s+.002,.012);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)});
 }
 /* switching themes: a short sound in the new theme's style
    Classic: a soft wooden tock and a warm two-note chime · SmartPull: a bright, bubbly rising chord · Neon: a synth power-up sweep */
