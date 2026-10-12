@@ -3068,4 +3068,9 @@ window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.ho
 <script>/* keep Safari from zooming the whole page: pinch and double-tap belong to the puzzle */
 (function(){const stop=e=>e.preventDefault();['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,stop,{passive:false}));
 document.documentElement.style.touchAction='manipulation'})();</script>
+<script>/* no pull-to-refresh: dragging the puzzle (or anywhere that isn't a scrolling list or a slider) never scrolls, bounces or refreshes the page */
+(function(){document.documentElement.style.overscrollBehavior='none';document.body.style.overscrollBehavior='none';
+const scrolls=el=>{for(;el&&el!==document.body&&el!==document.documentElement;el=el.parentElement){if(el.matches&&el.matches('input,textarea,select'))return true;
+  const st=getComputedStyle(el);if((/(auto|scroll)/.test(st.overflowY)&&el.scrollHeight>el.clientHeight+1)||(/(auto|scroll)/.test(st.overflowX)&&el.scrollWidth>el.clientWidth+1)){el.style.overscrollBehavior='contain';return true}}return false};
+document.addEventListener('touchmove',e=>{if(e.touches.length>1||!scrolls(e.target))e.preventDefault()},{passive:false})})();</script>
 </body></html>
