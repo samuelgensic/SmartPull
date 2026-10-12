@@ -1321,10 +1321,10 @@ var floorSpec=null,floorGlowMats=[];
    Classic    plain gray slab, no outline (the only option)
    SmartPull  white slab, no border (the only option)
    Neon       glowing neon grid (the only option) */
-const FLOOR_OPTS={plain:['A'],brand:['A'],neon:['A','W','B']}; // only Neon has floor choices (Developer Mode): A = its glowing grid, W = flat white, B = black with a white outline
+const FLOOR_OPTS={plain:['A'],brand:['A'],neon:['B']}; // one floor per theme; Neon's is black with a white outline (its glowing grid and flat white floors were retired)
 var floorPick={plain:'A',brand:'A',neon:'A'};
 try{Object.assign(floorPick,JSON.parse(localStorage.getItem('pa2_floor')||'{}'))}catch(e){}
-function floorStyle(){const k=floorPick[theme];return (FLOOR_OPTS[theme]||['A']).includes(k)?k:'A'} // A is the default; W and B are picked in Developer Mode
+function floorStyle(){const k=floorPick[theme],o=FLOOR_OPTS[theme]||['A'];return o.includes(k)?k:o[0]} // A is the default; W and B are picked in Developer Mode
 function floorTex(W,D,draw){
   const px=96,cv=document.createElement('canvas');cv.width=Math.round(W*px);cv.height=Math.round(D*px);
   const g=cv.getContext('2d');draw(g,cv.width,cv.height,px);const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
