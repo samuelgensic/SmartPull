@@ -482,79 +482,78 @@ NEW.lattice=function(A,out,ui){const mix=Mix(A,out,{verbSec:5,dark:.9}),stops=[]
   return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
 TRIM_DB.lattice=2;{const f=NEW.lattice;NEW.lattice=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.lattice/20);o.connect(out);return f(A,o,ui)}}
 
-/* Mechanism (new): in the spirit of how Thom Yorke and Atoms for Peace built grooves. A steady, laid-back half-time pulse
-   (it never wavers) with a hypnotic 12-step bass and warm electric-piano chords. Around it, a palette of stranger electronic
-   sounds that is rebuilt every section: metallic FM pings, resonant bubble drops, glitch grains, stuttering click fills,
-   and a reversed electric-piano swell that pulls into each chord. Their rhythms are Euclidean patterns (k hits spread
-   over n steps, n = 5, 7, 9, 11, 13) with fresh settings each section, so the texture keeps changing while the pulse
-   holds. Wood and conga only as a rare sprinkle. Every hit is a pre-rendered one-shot (no pops). */
+/* Mechanism (new), rebuilt: shaped the way Thom Yorke's electronic tracks unfold (The Eraser, Tomorrow's Modern Boxes, Anima),
+   with original notes. One slow intensity arc (about five minutes: a long build, a peak, a breakdown to almost nothing, a rebuild)
+   decides what plays. Each layer fades in at its own point and fades out again on the way down:
+   warm wobbling pad (always) -> a hypnotic two-bar ostinato -> a muffled kick "from another room" that comes into focus as a filter
+   opens -> syncopated sub bass -> a small dry snare with ghost notes -> a skittering, lightly swung hi-hat (rolls near the peak)
+   -> chopped piano chords with a dub echo -> near the top, a few high, sighing lead notes. The pad ducks with the kick (pumping).
+   Every drum is a pre-rendered one-shot; a peak-only limiter guards the speaker. */
 NEW.mechanism=function(A,out0,ui){const lim=A.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=0;lim.ratio.value=12;lim.attack.value=.003;lim.release.value=.15;lim.connect(out0);const out=lim;
-  const mix=Mix(A,out,{verbSec:2.5,dark:.88}),stops=[],sr=A.sampleRate;
+  const mix=Mix(A,out,{verbSec:2.2,dark:.9}),stops=[],sr=A.sampleRate;
   const shot=(len,fn)=>{const b=A.createBuffer(1,Math.floor(sr*len),sr),d=b.getChannelData(0);fn(d);const fi=Math.floor(sr*.003),fo=Math.floor(sr*.012);let pk=0;
     for(let i=0;i<d.length;i++){let e=1;if(i<fi)e=i/fi;const r=d.length-i;if(r<fo)e*=r/fo;d[i]*=e;pk=Math.max(pk,Math.abs(d[i]))}if(pk)for(let i=0;i<d.length;i++)d[i]/=pk;return b};
-  const KB=shot(.42,d=>{let ph=0;for(let i=0;i<d.length;i++){const t=i/sr;ph+=2*Math.PI*(47+68*Math.exp(-t/.035))/sr;d[i]=Math.sin(ph)*Math.exp(-t/.16)}});
-  const SB=shot(.2,d=>{let y=0;for(let i=0;i<d.length;i++){const t=i/sr;y+=.3*((R()*2-1)-y);d[i]=y*Math.exp(-t/.05)+.35*Math.sin(2*Math.PI*185*t)*Math.exp(-t/.03)}});
-  const CB=shot(.03,d=>{for(let i=0;i<d.length;i++){const t=i/sr;d[i]=Math.sin(2*Math.PI*2350*t)*Math.exp(-t/.0045)}});
-  const TB=shot(.06,d=>{let a=0,b=0;for(let i=0;i<d.length;i++){const t=i/sr,w=R()*2-1;a=.5*a+.5*w;b+=.55*((w-a)-b);d[i]=b*Math.exp(-t/.014)}});
-  const WB=shot(.15,d=>{for(let i=0;i<d.length;i++){const t=i/sr;d[i]=(Math.sin(2*Math.PI*700*t)+.35*Math.sin(2*Math.PI*1860*t)*Math.exp(-t/.01))*Math.exp(-t/.035)}});
-  const GB=shot(.32,d=>{let ph=0;for(let i=0;i<d.length;i++){const t=i/sr;ph+=2*Math.PI*(205+55*Math.exp(-t/.02))/sr;d[i]=Math.sin(ph)*Math.exp(-t/.09)}});
-  // the electronic palette: each maker returns a fresh one-shot with its own random character
-  const MAKERS={
-    fm:()=>{const car=350+R()*700,ratio=pick([1.41,2.76,3.17,1.73]),I=.8+R()*1.2,dec=.04+R()*.07;
-      return shot(.3,d=>{let pc=0,pm=0;for(let i=0;i<d.length;i++){const t=i/sr;pc+=2*Math.PI*car/sr;pm+=2*Math.PI*car*ratio/sr;d[i]=Math.sin(pc+I*Math.exp(-t/(dec*.5))*Math.sin(pm))*Math.exp(-t/dec)}})},
-    bubble:()=>{const f0=900+R()*900,f1=180+R()*200,g=.02+R()*.04;
-      return shot(.22,d=>{let ph=0;for(let i=0;i<d.length;i++){const t=i/sr;ph+=2*Math.PI*(f1+(f0-f1)*Math.exp(-t/g))/sr;d[i]=Math.sin(ph)*Math.exp(-t/.05)}})},
-    grain:()=>{const f=2500+R()*4000;return shot(.02,d=>{for(let i=0;i<d.length;i++){const t=i/sr;d[i]=Math.sin(2*Math.PI*f*t)*Math.exp(-t/.003)}})},
-    thud:()=>{const f=150+R()*70;return shot(.16,d=>{let ph=0;for(let i=0;i<d.length;i++){const t=i/sr;ph+=2*Math.PI*f*(1+.3*Math.exp(-t/.012))/sr;d[i]=Math.sin(ph)*Math.exp(-t/.035)}})},
-    zap:()=>{const f0=2500+R()*2000;return shot(.08,d=>{let ph=0;for(let i=0;i<d.length;i++){const t=i/sr;ph+=2*Math.PI*(150+f0*Math.exp(-t/.008))/sr;d[i]=Math.sin(ph)*Math.exp(-t/.018)}})}};
-  const VOL={fm:.022,bubble:.026,grain:.01,thud:.035,zap:.013};
-  const euclid=(k,n,rot)=>{const p=[];for(let i=0;i<n;i++)p.push(Math.floor(((i+rot)*k)/n)!==Math.floor(((i+rot-1)*k)/n));return p};
-  const newPalette=()=>{const kinds=Object.keys(MAKERS).sort(()=>R()-.5).slice(0,2+Math.floor(R()*2));
-    return kinds.map(kd=>{const n=pick([5,7,9,11,13]),k=1+Math.floor(R()*Math.min(4,n-2));return{kd,buf:MAKERS[kd](),pat:euclid(k,n,Math.floor(R()*n)),n,pan:(R()-.5)*1.2,vol:VOL[kd]*(.8+R()*.4)}})};
-  let palette=newPalette();
-  const drum=mix.bus(.9,.12),perc=mix.bus(.75,.3),elecLp=A.createBiquadFilter();elecLp.type='lowpass';elecLp.frequency.value=5000;elecLp.Q.value=.3;elecLp.connect(mix.bus(.7,.35));const elec=elecLp;
-  const bLp=A.createBiquadFilter();bLp.type='lowpass';bLp.frequency.value=420;bLp.Q.value=.5;bLp.connect(mix.bus(.95,.05));
-  const bass=(m,t,dur,v)=>{[['triangle',.25],['sine',1]].forEach(([ty,w])=>{const o=A.createOscillator();o.type=ty;o.frequency.value=MT(m);const g=A.createGain(),pk=.075*v*w;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+.01);g.gain.setTargetAtTime(pk*.55,t+.02,.12);g.gain.setTargetAtTime(0,t+dur,.035);o.connect(g).connect(bLp);o.start(t);o.stop(t+dur+.3)})};
-  const ep=Sampler(A,'ep'),eLp=A.createBiquadFilter();eLp.type='lowpass';eLp.frequency.value=2400;eLp.connect(mix.bus(.6,.45));
-  // reversed electric-piano swell that rises into a chord
-  const revCache={};const revSwell=ms=>{const key=ms.join(',');if(revCache[key])return revCache[key];const L=Math.floor(sr*1.1),b=A.createBuffer(1,L,sr),d=b.getChannelData(0);
-    ms.forEach(m=>{const src=ep(m).buf.getChannelData(0);for(let i=0;i<L;i++)d[L-1-i]+=src[i]*.25});
-    const fi=Math.floor(sr*.3);let pk=0;for(let i=0;i<L;i++){if(i<fi)d[i]*=i/fi;const r=L-i;if(r<120)d[i]*=r/120;pk=Math.max(pk,Math.abs(d[i]))}if(pk)for(let i=0;i<L;i++)d[i]/=pk;return revCache[key]=b};
-  const pw=(()=>{const N=24,re=new Float32Array(N),im=new Float32Array(N);for(let i=1;i<N;i++)im[i]=(2/(i*Math.PI))*Math.sin(i*Math.PI*.125);return A.createPeriodicWave(re,im)})();
-  const blipLp=A.createBiquadFilter();blipLp.type='lowpass';blipLp.frequency.value=3000;blipLp.connect(mix.bus(.5,.5));
-  const blip=(m,t)=>{const o=A.createOscillator();o.setPeriodicWave(pw);o.frequency.value=MT(m);const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.006,t+.004);g.gain.setTargetAtTime(0,t+.05,.03);o.connect(g).connect(blipLp);o.start(t);o.stop(t+.3)};
-  const form=Form({keys:[53],progs:[[0,5,3,4],[5,3,0,0],[3,4,5,5],[0,2,3,4],[1,4,0,3],[5,1,3,4]],barsPer:[2],secBars:[8],tex:['pulse'],keyP:0});
-  const ARR={pulse:['kick','snap','bass','click','chords','elec'],layers:['kick','snap','bass','click','tick','chords','elec','swell'],full:['kick','snap','bass','click','tick','chords','elec','swell','blips','sprinkle'],breakdown:['bass','chords','elec','swell']};
-  const ORDER=['pulse','layers','full','layers','breakdown','layers','full','pulse'];let oi=0,on=new Set(ARR.pulse),secLeft=0;
-  const roll=()=>{const len=pick([3,5,7]),k=1+Math.floor(R()*2),pos=new Set();while(pos.size<k)pos.add(Math.floor(R()*len));return{len,pos:[...pos]}};
-  let L={click:{len:5,pos:[0,3]},tick:{len:7,pos:[0,2,5]},wood:{len:3,pos:[0]},conga:{len:5,pos:[1]}};
-  const BASSPAT=[[[0,0],[3,0],[7,4]],[[0,0],[6,4],[9,7]],[[0,0],[3,7],[6,4],[10,0]]];let bp=BASSPAT[0];
-  const step=60/88/4;let n=0,secName='pulse';
-  stops.push(Clock(A,t=>{const k=n%16,bar=Math.floor(n/16),info=form.at(bar),r=info.chord,hum=()=>(R()-.5)*.016;
-    if(k===0&&n===0)secLeft=Math.max(4,Math.round(16*EVO.s));
-    if(k===0&&n>0&&--secLeft<=0){oi=(oi+1)%ORDER.length;secName=ORDER[oi];on=new Set(ARR[secName]);secLeft=Math.max(4,Math.round(16*EVO.s));
-      ['click','tick','wood','conga'].forEach(x=>{if(R()<.6)L[x]=roll()});bp=pick(BASSPAT);palette=newPalette()}
-    if(on.has('kick')&&(k===0||k===10))playBuf(A,drum,KB,t,k?.2:.26);
-    if(on.has('snap')&&k===8)playBuf(A,drum,SB,t,.07);
-    const lp=(x,buf,bus,v)=>{const s=L[x];if(on.has(x)&&s.pos.includes(n%s.len))playBuf(A,bus,buf,t,v,1,x==='click'?.25:-.3)};
-    lp('click',CB,drum,.02);lp('tick',TB,drum,.014);
-    // wood and conga: only a rare sprinkle, a little loose like hands
-    if(on.has('sprinkle')){if(L.wood.pos.includes(n%L.wood.len)&&R()<.1)playBuf(A,perc,WB,t+hum(),.04,1,.4);if(L.conga.pos.includes(n%L.conga.len)&&R()<.08)playBuf(A,perc,GB,t+hum(),.05,1,-.15)}
-    // the electronic palette, each voice on its own Euclidean cycle
-    if(on.has('elec'))for(const v of palette){if(v.pat[n%v.n])playBuf(A,elec,v.buf,t,v.vol*(.8+R()*.35),1,v.pan)}
-    // glitch dust and a stuttering click fill now and then
-    if(on.has('elec')&&R()<.035)playBuf(A,elec,palette[0].buf,t+step/2,palette[0].vol*.5,1.5+R(),(R()-.5)*1.4);
-    if(bar%4===3&&k===12&&R()<.4)for(let i=0;i<4;i++)playBuf(A,drum,CB,t+i*step/2,.018*(1-i*.2),1+i*.08,.25);
-    const bpos=n%12;if(on.has('bass'))for(const[p,dd]of bp)if(p===bpos){let m=pitchOf(53,r+dd)-24;while(m>45)m-=12;bass(m,t,step*1.3,.85)}
-    const chordMs=()=>[r,r+2,r+4,r+6].map(d=>{let m=pitchOf(53,d);while(m>72)m-=12;return m});
-    if(on.has('swell')&&k===0&&bar%2===0&&R()<.6){const b=revSwell(chordMs());playBuf(A,eLp,b,t+6*step-1.1,.05,1,.1)}
-    if(on.has('chords')&&k===6&&bar%2===0)chordMs().forEach((m,i)=>{const s=ep(m);playBuf(A,eLp,s.buf,t+i*.018,.035,s.rate,-.2+i*.13)});
-    if(on.has('blips')&&n%7===3&&R()<.3){blip(pitchOf(53,pick(triad(r))+14),t)}
-    if(k===0)ui&&ui({sect:oi+1,key:'F',tex:secName+' · '+palette.map(v=>v.kd).join(', '),energy:on.size/10});
+  const KB=shot(.4,d=>{let ph=0;for(let i=0;i<d.length;i++){const t=i/sr;ph+=2*Math.PI*(46+62*Math.exp(-t/.03))/sr;d[i]=Math.sin(ph)*Math.exp(-t/.15)+.15*Math.sin(2*Math.PI*1400*t)*Math.exp(-t/.002)}});
+  const SN=shot(.14,d=>{let y=0;for(let i=0;i<d.length;i++){const t=i/sr;y+=.45*((R()*2-1)-y);d[i]=y*.8*Math.exp(-t/.03)+.55*Math.sin(2*Math.PI*215*t)*Math.exp(-t/.022)}});
+  const HB=shot(.05,d=>{let a=0,b2=0;for(let i=0;i<d.length;i++){const w=R()*2-1;a=.6*a+.4*w;b2+=.55*((w-a)-b2);d[i]=b2*Math.exp(-i/(sr*.01))}});
+  // the arc: [seconds, intensity], eased between points, looping; "hear changes sooner" shortens it
+  const ARC=[[0,.12],[150,1],[195,.92],[218,.22],[258,.3],[300,.12]];
+  const t0=A.currentTime;const I=time=>{const P=300*EVO.s,x=((time-t0)%P+P)%P/EVO.s;let i=0;while(i<ARC.length-2&&x>ARC[i+1][0])i++;
+    const[a0,v0]=ARC[i],[a1,v1]=ARC[i+1],u=clamp((x-a0)/(a1-a0),0,1),e=.5-.5*Math.cos(Math.PI*u);return clamp(v0+(v1-v0)*e+.03*Math.sin(time*.05),0,1)};
+  const G=(i,th)=>clamp((i-th)/.12,0,1);
+  // buses: drums sit behind a lowpass that opens with the build (muffled -> present); the pad ducks with the kick
+  const dLp=A.createBiquadFilter();dLp.type='lowpass';dLp.Q.value=.5;dLp.frequency.value=500;dLp.connect(mix.bus(.92,.1));
+  const pLp=A.createBiquadFilter();pLp.type='lowpass';pLp.Q.value=.7;pLp.frequency.value=500;const duck=A.createGain();pLp.connect(duck).connect(mix.bus(.5,.6));
+  const echo=A.createDelay(2),fb=A.createGain(),eLp=A.createBiquadFilter(),eOut=A.createGain();const step=60/90/4;
+  echo.delayTime.value=step*3;fb.gain.value=.32;eLp.type='lowpass';eLp.frequency.value=1800;echo.connect(eLp).connect(fb).connect(echo);eLp.connect(eOut);eOut.gain.value=.5;eOut.connect(mix.bus(.8,.3));
+  const ostBus=mix.bus(.75,.25);const sendO=A.createGain();sendO.gain.value=.35;sendO.connect(echo);
+  const bLp=A.createBiquadFilter();bLp.type='lowpass';bLp.frequency.value=380;bLp.Q.value=.5;bLp.connect(mix.bus(.95,.03));
+  // harmony: A♭ major, a little wistful: A♭maj7 - Fm9 - D♭maj7 - E♭6, two bars each
+  const ROOT=56,PROG=[0,5,3,4],PEN=[0,2,4,7,9];const pent=(oct,i)=>ROOT+12*oct+PEN[mod(i,5)]+12*Math.floor(i/5);
+  // pad: three gently detuned voices per note, slow attack, wobble
+  let padNotes=[];const pad=(t,r,len)=>{padNotes.forEach(x=>{x.g.gain.setTargetAtTime(0,t,.9);x.os.forEach(o=>o.stop(t+5))});
+    const ds=[r,r+2,r+4,r+6];padNotes=ds.map((d,i)=>{let m=pitchOf(ROOT,d);while(m>67)m-=12;while(m<50)m+=12;const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.012,t+2.5);g.connect(pLp);
+      const os=[-9,0,8].map(dt=>{const o=A.createOscillator();o.type='sawtooth';o.frequency.value=MT(m);o.detune.value=dt;const w=A.createOscillator();w.frequency.value=.15+R()*.2;const wa=A.createGain();wa.gain.value=4;w.connect(wa).connect(o.detune);o.connect(g);o.start(t);w.start(t);w.stop(t+len+6);return o});return{g,os}})};
+  stops.push(()=>{const t=A.currentTime;padNotes.forEach(x=>{x.g.gain.setTargetAtTime(0,t,.4);x.os.forEach(o=>o.stop(t+2))})});
+  // the ostinato: a two-bar figure of eighths in the pentatonic, soft bubbling pluck; it changes one note now and then
+  const FIG=[0,2,null,4,1,null,3,2, 0,2,null,4,5,null,3,null].map(x=>x===null?null:x+5);
+  const pluck=(m,t,v,c)=>{const o=A.createOscillator();o.type='sawtooth';o.frequency.value=MT(m);const f=A.createBiquadFilter();f.type='lowpass';f.Q.value=3;
+    f.frequency.setValueAtTime(c*2.2,t);f.frequency.exponentialRampToValueAtTime(Math.max(200,c*.35),t+.22);const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.004);g.gain.setTargetAtTime(0,t+.05,.07);
+    o.connect(f).connect(g);g.connect(ostBus);g.connect(sendO);o.start(t);o.stop(t+.6)};
+  const bass=(m,t,dur,v)=>{[['sine',1],['triangle',.2]].forEach(([ty,w])=>{const o=A.createOscillator();o.type=ty;o.frequency.value=MT(m);const g=A.createGain(),pk=.085*v*w;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+.012);g.gain.setTargetAtTime(pk*.6,t+.03,.1);g.gain.setTargetAtTime(0,t+dur,.03);o.connect(g).connect(bLp);o.start(t);o.stop(t+dur+.25)})};
+  const gp=GrandPiano(A),chopLp=A.createBiquadFilter();chopLp.type='lowpass';chopLp.frequency.value=2800;chopLp.connect(mix.bus(.7,.25));const sendP=A.createGain();sendP.gain.value=.4;chopLp.connect(sendP).connect(echo);
+  const chop=(m,t,v)=>{const s=gp.get(m);if(!s)return;const src=A.createBufferSource();src.buffer=s.buf;src.playbackRate.value=s.rate;const g=A.createGain();g.gain.setValueAtTime(v,t);g.gain.setValueAtTime(v,t+.26);g.gain.linearRampToValueAtTime(0,t+.34);src.connect(g).connect(chopLp);src.start(t);src.stop(t+.4)};
+  const leadOut=A.createGain();leadOut.gain.value=1;leadOut.connect(mix.bus(.5,.6));leadOut.connect(echo);
+  const lead=(ms,t,beat)=>{const o=A.createOscillator();o.type='triangle';const vb=A.createOscillator();vb.frequency.value=5;const va=A.createGain();va.gain.setValueAtTime(0,t);va.gain.linearRampToValueAtTime(14,t+.8);vb.connect(va).connect(o.detune);
+    const g=A.createGain();const end=t+ms.length*beat*2;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.014,t+.35);g.gain.setValueAtTime(.014,end-.3);g.gain.linearRampToValueAtTime(0,end+.6);
+    ms.forEach((m,i)=>{const at=t+i*beat*2;if(i===0)o.frequency.setValueAtTime(MT(m),t);else o.frequency.setTargetAtTime(MT(m),at,.06)});o.connect(g).connect(leadOut);o.start(t);vb.start(t);o.stop(end+.8);vb.stop(end+.8)};
+  let n=0,leadUntil=0;
+  stops.push(Clock(A,t=>{const k=n%16,bar=Math.floor(n/16),i=I(t),r=PROG[Math.floor(bar/2)%4];
+    const gO=G(i,.08),gK=G(i,.25),gB=G(i,.38),gS=G(i,.5),gH=G(i,.6),gP=G(i,.7),sw=k%2?step*.12:0;
+    if(k===0){dLp.frequency.setTargetAtTime(450+Math.pow(i,1.6)*7000,t,.8);pLp.frequency.setTargetAtTime(380+i*1700,t,1.2);
+      if(bar%2===0)pad(t,r,step*32);
+      if(bar%8===7&&R()<.5){const j=Math.floor(R()*16);if(FIG[j]!==null)FIG[j]=5+Math.floor(R()*6)}
+      ui&&ui({sect:Math.floor((t-t0)/(300*EVO.s))+1,key:'A♭',tex:[gO&&'ostinato',gK&&'kick',gB&&'bass',gS&&'snare',gH&&'hats',gP&&'piano'].filter(Boolean).join(' · ')||'pad',energy:i})}
+    // ostinato on the eighths
+    if(gO>.02&&k%2===0){const d=FIG[(bar%2)*8+k/2];if(d!==null)pluck(pent(0,d),t,.022*gO,400+i*2600)}
+    // kick: 1, the "a" of 2, the "and" of 3 (and a pickup near the top); the pad ducks with it
+    if(gK>.02){const kv=k===0?1:k===7?.6:k===10?.85:(k===14&&i>.85&&R()<.4)?.5:0;
+      if(kv){playBuf(A,dLp,KB,t,.24*kv*gK);duck.gain.setValueAtTime(1,t);duck.gain.linearRampToValueAtTime(1-.4*gK,t+.012);duck.gain.setTargetAtTime(1,t+.03,.13)}}
+    // sub bass, syncopated, short notes on the chord
+    if(gB>.02){const pos=n%32,BP={0:0,7:0,10:0,16:0,23:4,26:0};if(pos in BP){let m=pitchOf(ROOT,r+BP[pos])-24;while(m>46)m-=12;bass(m,t,step*1.6,gB)}}
+    // snare on 2 and 4 with ghost notes
+    if(gS>.02){if(k===4||k===12)playBuf(A,dLp,SN,t,.07*gS,1,.05);else if((k===15&&R()<.3)||(k===9&&R()<.2))playBuf(A,dLp,SN,t+sw,.02*gS,1.05,.05)}
+    // skittering hats, lightly swung; quick rolls near the peak
+    if(gH>.02){const acc=[1,.35,.6,.4][k%4];playBuf(A,dLp,HB,t+sw,.028*acc*gH*(.85+R()*.3),1,.3);
+      if((k===7||k===15)&&R()<(i-.78)*2)for(let j=1;j<3;j++)playBuf(A,dLp,HB,t+sw+j*step/3,.012*gH,1.05,.3)}
+    // chopped piano chords on the offbeats, with the dub echo
+    if(gP>.02&&(k===3||k===11)&&R()<.7){[r+2,r+4,r+6].forEach((d,j)=>{let m=pitchOf(ROOT,d);while(m>74)m-=12;while(m<60)m+=12;chop(m,t+j*.006,.18*gP)})}
+    // near the top: a few high, sighing notes
+    if(i>.86&&k===0&&bar%4===0&&t>leadUntil&&R()<.6){const st=5+Math.floor(R()*4),ms=[pent(1,st),pent(1,st-1),pent(1,st-2)].slice(0,2+Math.floor(R()*2));lead(ms,t,step*4);leadUntil=t+step*16*4}
     n++;return step}));
   return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
-TRIM_DB.mechanism=-5;{const f=NEW.mechanism;NEW.mechanism=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.mechanism/20);o.connect(out);return f(A,o,ui)}}
+TRIM_DB.mechanism=-3.5;{const f=NEW.mechanism;NEW.mechanism=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.mechanism/20);o.connect(out);return f(A,o,ui)}}
 /* ===== current game music (copied from the live game, Oct 12) ===== */
 const CUR=(function(){
 const MTOF=m=>440*Math.pow(2,(m-69)/12);
@@ -665,7 +664,7 @@ const TRACKS=[
   opts:[['Current',CUR.gen('musicbox')],['Lullaby',(A,o,u)=>NEW.boxLullaby(A,o,u)],['Duet',(A,o,u)=>NEW.boxDuet(A,o,u)]]},
  {name:'Lantern',desc:'A locked-in, head-nodding groove on a 16th-note grid: a boom-bap kick (1, the "a" of 2, the "and" of 3), a soft rim on 2 and 4, a steady hi-hat, and the 8-bit bass following the kick. The thumb piano is an octave lower, warm and retro, and plays a repeating rhythm while only its notes wander. Underneath, the low turn of a finished record, with no crackles or pops anywhere.',
   opts:[['Current',CUR.gen('kalimba')],['New',(A,o,u)=>NEW.lantern(A,o,u)]]},
- {name:'Mechanism (new)',desc:'In the spirit of how Thom Yorke and Atoms for Peace built their grooves: a steady, laid-back half-time beat with a hypnotic 12-step bass and warm electric-piano chords. Around it, a palette of stranger electronic sounds that changes every section: metallic FM pings, resonant bubble drops, tiny glitch grains, stuttering click fills, and a reversed electric-piano swell that pulls into each chord change. Their rhythms are Euclidean patterns (a few hits spread evenly over 5, 7, 9, 11 or 13 steps) with fresh settings each section. Wood and conga only as a rare sprinkle. Clean and limited, so nothing crackles or overloads the speaker. Original, not based on any of their songs.',
+ {name:'Mechanism (new)',desc:'Rebuilt to unfold the way Thom Yorke\'s electronic tracks do, with original notes. It starts with just a warm, wobbling chord and a small hypnotic figure that repeats. Over a couple of minutes a muffled kick creeps in as if from another room and comes into focus, then a deep syncopated bass, a small dry snare with ghost notes, a lightly swung skittering hi-hat, and chopped piano chords with a dub echo. Near the top a few high, sighing notes. The chord breathes with the kick. Then it strips back down to almost nothing and builds again, in about a five-minute arc. (Hear changes sooner makes the arc shorter.)',
   opts:[['Mechanism',(A,o,u)=>NEW.mechanism(A,o,u)]]},
  {name:'Strings',desc:'Keeping today\'s version, as you preferred it to the new ensemble.',
   opts:[['Current',CUR.gen('strings')]]},
