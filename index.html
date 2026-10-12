@@ -1776,8 +1776,9 @@ function heavyBody(a,f0,f1,t,dur,peak,att){const o=a.createOscillator();o.type='
 // size = cubes in the piece (0 = a single cube). 2-3 fused cubes: Heavy. 4 or more: Heaviest.
 function woosh(size){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   if(!size||size<2){PULLS[pullIdx].play(a,t);return}
-  if(size<4){heavyAir(a,620,240,.6,t,.8,.09,.14);heavyBody(a,82,54,t+.03,.7,.08,.12);heavyBody(a,164,108,t+.03,.6,.03,.1);return}
-  heavyAir(a,500,180,.6,t,1,.1,.18);heavyAir(a,260,160,.5,t+.04,.9,.05,.2);heavyBody(a,70,46,t+.03,.9,.1,.15);heavyBody(a,140,92,t+.03,.75,.04,.13)}
+  // Velvet hush, Plush layers: bigger fused pieces get a second soft layer just behind the first, like a bigger cushion settling
+  if(size<4){heavyAir(a,400,220,.5,t,.55,.055,.09);heavyAir(a,300,190,.5,t+.05,.55,.04,.1);heavyBody(a,100,70,t,.55,.03,.08);return}
+  heavyAir(a,330,180,.5,t,.75,.065,.12);heavyAir(a,240,150,.5,t+.07,.75,.05,.14);heavyBody(a,82,56,t,.75,.04,.1)}
 // bump = cube right next to another (Pillow); collide = it travelled to hit one farther away (Droplet). Pillow when the cube in the way is right next to it, Droplet when it had to travel to hit one
 const bumpSound=name=>BUMPS.find(b=>b.name===name);
 // Latch: two tiny clicks and a soft low ping, like a magnet catch. Smooth fade-outs, so no click at the end.
