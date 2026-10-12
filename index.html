@@ -104,25 +104,49 @@ button.lv.more{background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted)
 .upsmall{margin:0; font-size:12px; line-height:1.5; color:var(--muted)}
 button.upclose{align-self:center}
 /* the level name doubles as a button that opens the level picker */
-button.lvl{width:auto; height:38px; padding:0 10px; background:transparent; box-shadow:none; color:var(--ink); font-family:var(--display); font-weight:700; font-size:12px}
-button.lvl::after{content:""; display:inline-block; width:5px; height:5px; margin-left:7px; border-right:1.6px solid currentColor; border-bottom:1.6px solid currentColor; transform:translateY(-2px) rotate(45deg); opacity:.55}
-button.lvl[aria-expanded="true"]{background:var(--chip)}
-.panel.levels{width:min(320px,calc(100% - 32px))}
-/* chapter list: a collapsible medallion row per chapter, opening into a grid of level numbers */
-.chlist{display:flex; flex-direction:column; gap:6px; max-height:min(420px,calc(100vh - 160px)); overflow-y:auto}
-.chrow{border-radius:12px}
-.chrow>summary{list-style:none; display:flex; align-items:center; gap:10px; height:44px; padding-inline:10px; cursor:pointer; border-radius:12px;
-  font-family:var(--display); font-weight:500; font-size:14px}
-.chrow>summary::-webkit-details-marker{display:none}
-.chrow>summary::marker{content:''}
-.chrow>summary .wic{margin-right:0; opacity:.7}
-.chrow>summary .chname{flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.15}
-.chrow>summary .chname small{font-family:var(--display); font-size:10px; font-weight:400; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
-.chrow>summary em{font-style:normal; font-size:13px; color:var(--muted)}
-.chrow[open]>summary,.chrow.cur>summary{background:var(--bg2)}
-.chrow.locked>summary .wic{opacity:.4}
-.chrow .lvgrid{padding:10px 10px 4px}
-button.lv.locked{opacity:.35; pointer-events:none}
+button.lvl{width:auto; height:38px; padding:0 10px 0 0; background:transparent; box-shadow:none; color:var(--ink); font-family:var(--display); font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:9px}
+/* the level button's own medallion: the current chapter's icon, flipping to an X while the menu is open */
+.lvDisc{position:relative; width:30px; height:30px; flex:none; border-radius:50%; background:var(--chip); display:grid; place-items:center; transition:transform .2s}
+.lvDisc svg{width:16px; height:16px; opacity:.85}
+.lvX{display:none; width:15px; height:15px}
+button.lvl[aria-expanded="true"] .lvGlyph{display:none}
+button.lvl[aria-expanded="true"] .lvX{display:block}
+button.lvl:active .lvDisc{transform:scale(.92)}
+.panel.levels{width:min(300px,calc(100% - 32px)); background:transparent; box-shadow:none; padding:0; top:60px}
+/* the chapter menu: a column of round medallions dropping out below the level button, one per chapter,
+   each with a 5-segment progress ring; tapping one slides out a tray of small level-number pills beside it */
+.lvcol{display:flex; flex-direction:column; gap:7px; max-height:min(460px,calc(100vh - 150px)); overflow-y:auto; overflow-x:visible; padding:4px 4px 16px 2px; scrollbar-width:none}
+.lvcol::-webkit-scrollbar{display:none}
+.chrow{display:flex; align-items:center; gap:0}
+.med{--c:var(--accent); position:relative; width:42px; height:42px; flex:none; border:0; padding:0; background:none; box-shadow:none; display:block; cursor:pointer; color:var(--ink);
+  opacity:0; transform:translateY(-16px) scale(.5); transition:transform .32s cubic-bezier(.3,1.4,.5,1),opacity .2s}
+.lvcol.show .med{opacity:1; transform:none}
+.med .disc{position:absolute; inset:4px; border-radius:50%; background:var(--chip); display:grid; place-items:center; box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.med .disc svg{width:18px; height:18px}
+.med .ring{position:absolute; inset:0; width:42px; height:42px; transform:rotate(-90deg)}
+.med .ring circle{fill:none; stroke-width:2.4; stroke-linecap:round; stroke:rgba(0,0,0,.14)}
+html.neon .med .ring circle:not(.on):not(.samp){stroke:rgba(244,236,255,.16)}
+html.neon .med .ring circle.on{filter:drop-shadow(0 0 3px var(--c))}
+.med .ring circle.on{stroke:var(--c)}
+.med .ring circle.samp{stroke:var(--c); stroke-opacity:.5}
+.med.cur .disc{box-shadow:0 0 0 2px var(--c)}
+.med.locked{filter:saturate(.3); opacity:.8}
+.med .lockBadge{position:absolute; right:-1px; bottom:-1px; width:16px; height:16px; border-radius:50%; background:var(--chip); color:var(--muted); display:grid; place-items:center; box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.med .lockBadge svg{width:9px; height:9px}
+/* the tray that slides out from a tapped medallion, with small round level pills */
+.tray{display:flex; align-items:center; gap:6px; background:var(--chip); border-radius:21px; padding:0 8px; height:42px; margin-left:4px;
+  max-width:0; opacity:0; overflow:hidden; white-space:nowrap; transition:max-width .35s cubic-bezier(.3,1,.4,1),opacity .18s}
+.chrow.show .tray{max-width:260px; opacity:1; padding:0 8px 0 12px}
+.tray .trnm{font-family:var(--display); font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; margin-right:3px; color:var(--muted)}
+button.trlv{box-shadow:none; width:28px; height:28px; border-radius:50%; border:1.5px solid rgba(0,0,0,.14); background:none; color:var(--muted); font-family:var(--display); font-size:10px; cursor:pointer; padding:0; font-variant-numeric:tabular-nums; flex:none}
+html.neon button.trlv{border-color:rgba(244,236,255,.18)}
+button.trlv.clr{background:var(--c,var(--accent)); border-color:var(--c,var(--accent)); color:#fff}
+html.neon button.trlv.clr{background:transparent; color:var(--c); box-shadow:0 0 8px var(--c)}
+button.trlv.now{border:2px solid var(--ink); color:var(--ink)}
+button.trlv:disabled{opacity:.35; cursor:default}
+button.trlv.samp{border-style:dashed}
+button.unlockPill{width:auto; display:inline-flex; align-items:center; gap:5px; border:0; box-shadow:none; border-radius:14px; height:28px; padding:0 10px; background:none; color:var(--muted); font:700 10.5px var(--body); cursor:pointer; flex:none}
+button.unlockPill svg{width:10px; height:10px}
 button.lvl{touch-action:none; overflow:hidden; white-space:nowrap; display:inline-flex; flex-direction:row; align-items:center; justify-content:center}
 .lvtxt{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.1; transition:transform .12s ease-out}
 /* the level's group (Pull, Twist, Link...) in small letters under the number */
@@ -280,7 +304,7 @@ header .blacklight:focus-visible::after{opacity:1}
     </div>
     <div class="levelnav">
       <button id="prev" aria-label="Previous level"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe up or down, or tap for the wheel"><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
+      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe sideways to change it, or tap for the chapter menu"><span class="lvDisc"><span class="lvGlyph" id="lvGlyph"></span><svg class="lvX" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
       <button id="next" aria-label="Next level"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
     <div class="topspace"><div class="blbox"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button></div></div>
@@ -340,7 +364,7 @@ header .blacklight:focus-visible::after{opacity:1}
     </div>
   </div>
   <div class="panel levels" id="levels" hidden>
-    <div class="chlist" id="chlist"></div>
+    <div class="lvcol" id="lvcol"></div>
   </div>
   <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
 </div>
@@ -403,7 +427,8 @@ const ICONS={
 };
 const chapterIcon=name=>`<svg class="wic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.Soon}</svg>`;
 function lvLabel(i){const b=document.getElementById('lvl');if(!b)return;
-  b.querySelector('.lvnum').textContent='Level '+(i+1);b.querySelector('.lvsub').textContent=groupOf(i)}
+  b.querySelector('.lvnum').textContent='Level '+(i+1);b.querySelector('.lvsub').textContent=groupOf(i);
+  const g=document.getElementById('lvGlyph');if(g)g.innerHTML=ICONS[groupOf(i)]?chapterIcon(groupOf(i)):''}
 /* ---------- tips: the first time a new rule shows up, a small tip button appears on that level ----------
    It shows no text until tapped; tapping opens a short explanation. It keeps a soft pulse until you've opened it once. */
 const TIP_ICON={
@@ -1478,6 +1503,7 @@ const maxLevel=()=>TIERS[tier].max;
 // Developer Mode (Settings): a temporary switch that opens all 50 levels for testing,
 // whatever version is selected. Your real progress isn't changed by it.
 const DEV_ALWAYS_ON=true; // for now, Developer Mode starts on every time the game opens (set to false to go back to the saved choice)
+let previewMode=false,previewKey=null,previewReturn=0; // daily/sampler preview state (see the level menu)
 let devMode=DEV_ALWAYS_ON;if(!DEV_ALWAYS_ON){try{devMode=localStorage.getItem('pa2_dev')==='1'}catch(e){}}
 const topLevel=()=>devMode?NLEV-1:Math.min(best,maxLevel()-1);       // furthest level you can open right now
 const capCleared=()=>best>=maxLevel();                 // every level in this version is cleared
@@ -1552,7 +1578,7 @@ const HINTS={0:'Tap an arrow to slide its block out. Drag to turn the puzzle.',
   33:'Some padlock blocks hide a key. Unlock one and its key appears, ready to open the next lock.'};
 
 function load(i){
-  undoStack.length=0;
+  undoStack.length=0;previewMode=false;previewKey=null;
   levelIdx=Math.max(0,i);clearing=false;waiting=false;taps=0;pulls=0;bumps=0;resetTimer();
   try{localStorage.setItem('pa2_lvl',levelIdx)}catch(e){}
   if(silWall){body.remove(silWall);silWall=null}{const st=document.getElementById('stuck');st.textContent='No moves left. Tap ↺ to try again.'}
@@ -2634,12 +2660,14 @@ function win(){
   tm.replaceChildren(bestBit('Time '+fmtTime(ms),pt===undefined?'':tBest?'  ·  New best time!':'  ·  Best: '+fmtTime(pt)));
   tm.classList.remove('best');
   chime(.4); // lands as the message fades in
-  clearing=true;if(levelIdx+1>best)best=levelIdx+1; // clearing a level unlocks the next one
-  try{localStorage.setItem('pa3_unlocked',best)}catch(e){}
+  clearing=true;
+  // a daily or sampler preview only marks itself as played; it never moves your real progress
+  if(previewMode){if(previewKey&&!sampled.has(previewKey)){sampled.add(previewKey);saveSampled()}}
+  else if(levelIdx+1>best){best=levelIdx+1;try{localStorage.setItem('pa3_unlocked',best)}catch(e){}} // clearing a level unlocks the next one
   refreshNav();
   // what tapping does next: the next level, the upgrade screen, or (after level 50) the level picker
-  const atEnd=levelIdx+1>=(devMode?NLEV:maxLevel());
-  document.querySelector('#done small').textContent=!atEnd?'Tap to continue':tier==='full'?'All 85 levels cleared! Tap to pick any level':'Tap to unlock more levels';
+  const atEnd=!previewMode&&levelIdx+1>=(devMode?NLEV:maxLevel());
+  document.querySelector('#done small').textContent=previewMode?'Tap to go back':!atEnd?'Tap to continue':tier==='full'?'All 85 levels cleared! Tap to pick any level':'Tap to unlock more levels';
   // the message stays until the player taps or clicks anywhere
   // the message and stats appear first; the continue button joins after a pause so there's time to read them
   setTimeout(()=>{if(clearing)document.getElementById('done').classList.add('show')},450);
@@ -2648,6 +2676,7 @@ function win(){
 let waiting=false,readyTimer=0;
 function advance(){
   if(!waiting)return;waiting=false;pageTurn();
+  if(previewMode){const back=previewReturn,wasSamp=previewKey!==dailyKey;load(back);if(wasSamp&&!devMode&&tier!=='full')openUpgrade();return} // after a preview, back to where you were
   if(levelIdx+1>=(devMode?NLEV:maxLevel())){load(levelIdx);if(tier==='full')openLevels();else openUpgrade();return} // end of this version
   load(levelIdx+1);
 }
@@ -2811,49 +2840,60 @@ function menuSfx(which,open){
 }
 const stageEl=document.getElementById('stage');
 function closeLevels(){lvPanel.hidden=true;lvBtn.setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim');menuSfx('level',false)}
-// the level picker: one collapsible medallion row per chapter; tap a chapter to open it, tap a level number to jump there
+// the level menu: a column of chapter medallions drops out below the level button (same as the prototype).
+// Each medallion has a 5-segment ring that fills as its levels are cleared; tap one to slide out its level pills.
+// The sun at the top is today's daily level (any chapter); every locked chapter offers its first level as a free sampler.
+// Daily and sampler plays are "previews": clearing one never moves your real progress, it only marks that preview as done.
+const LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>';
+const SUN_ICON='<svg class="wic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17a6 6 0 0 1 12 0"/><path d="M12 4v3M5.5 9.5l1.6 1.6M18.5 9.5l-1.6 1.6"/><path d="M2 17h20"/></svg>';
+const MENU_PAL={brand:['#FF6C10','#007C92','#B2BB1E','#ABABA8'],neon:NEONS};
+const chColor=k=>{const p=MENU_PAL[theme];return p?p[k%p.length]:'var(--accent)'};
+let sampled=new Set();try{sampled=new Set((localStorage.getItem('pa3_sampled')||'').split(',').filter(Boolean))}catch(e){}
+const saveSampled=()=>{try{localStorage.setItem('pa3_sampled',[...sampled].join(','))}catch(e){}};
+const dayN=Math.floor(Date.now()/864e5-new Date().getTimezoneOffset()/1440);
+const DAILY=(dayN*37)%NLEV,dailyKey='d'+dayN;
+let openRow=null;
+const chLocked=s=>!devMode&&s>=maxLevel();
+function playPreview(i,key){const back=previewMode?previewReturn:levelIdx;closeLevels();pageTurn();load(i);previewMode=true;previewKey=key;previewReturn=back}
+function ringSvg(s,locked,c){const C=2*Math.PI*19,sg=C/5;let o='';
+  for(let k=0;k<5;k++){const i=s+k,cls=(!locked&&i<best)||sampled.has(String(i))?' class="on"':(locked&&k===0?' class="samp"':'');
+    o+=`<circle${cls} cx="21" cy="21" r="19" stroke-dasharray="${sg-4} ${C-sg+4}" stroke-dashoffset="${-k*sg-2}"/>`}
+  return `<svg class="ring" viewBox="0 0 42 42" style="--c:${c}">${o}</svg>`}
 function openLevels(){
   panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');
   themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false');
   if(stageEl)stageEl.classList.add('dim');menuSfx('level',true);
-  const list=document.getElementById('chlist');list.innerHTML='';
-  const top=topLevel(),cap=maxLevel();
-  let start=0;
-  GROUPS.forEach(([end,name])=>{
-    const s=start,e=end-1;start=end;
-    const curHere=levelIdx>=s&&levelIdx<=e,locked=s>top,cleared=e<best;
-    const det=document.createElement('details');det.className='chrow'+(curHere?' cur':'')+(locked?' locked':'');
-    const sum=document.createElement('summary');
-    sum.innerHTML=chapterIcon(name)+'<span class="chname">'+name+'<small>Levels '+(s+1)+'–'+(e+1)+'</small></span><em>'+(locked?'🔒':cleared?'✓':'')+'</em>';
-    det.appendChild(sum);
-    if(locked){
-      sum.addEventListener('click',ev=>{if(s>=cap&&!devMode){ev.preventDefault();closeLevels();openUpgrade()}else ev.preventDefault()});
-    }else{
-      const grid=document.createElement('div');grid.className='lvgrid';
-      for(let i=s;i<=e;i++){
-        const b=document.createElement('button');b.type='button';b.textContent=i+1;
-        b.className='lv'+(i===levelIdx?'':i>top?' locked':i>=best?' open':'');
-        if(i===levelIdx)b.setAttribute('aria-current','true');
-        if(i<=top)b.onclick=()=>{tick();closeLevels();if(i!==levelIdx){pageTurn();load(i)}};
-        grid.appendChild(b);
-      }
-      det.appendChild(grid);
-      if(curHere)det.open=true;
-    }
-    list.appendChild(det);
+  const col=document.getElementById('lvcol');col.classList.remove('show');
+  const top=topLevel();let h='',start=0,delay=0;
+  const dg=groupOf(DAILY);
+  h+=`<div class="chrow" data-r="d"><button class="med" type="button" style="--c:var(--accent);transition-delay:0ms" aria-label="Today's daily level"><span class="disc">${SUN_ICON}</span></button>`+
+     `<div class="tray"><span class="trnm">Today</span><span class="trnm" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-weight:600">${dg} ${DAILY+1}</span><button class="trlv${sampled.has(dailyKey)?' clr':''}${previewKey===dailyKey?' now':''}" type="button" data-play="d" style="width:auto;padding:0 10px;border-radius:14px">${sampled.has(dailyKey)?'Again':'Play'}</button></div></div>`;
+  GROUPS.forEach(([end,name],k)=>{
+    const s=start;start=end;delay+=24;
+    const locked=chLocked(s),c=chColor(k),cur=Math.floor(levelIdx/5)===k;
+    let tray;
+    if(locked){tray=`<button class="trlv samp${sampled.has(String(s))?' clr':''}${previewKey===String(s)?' now':''}" type="button" data-samp="${s}" aria-label="Free sampler, level ${s+1}">${s+1}</button><button class="unlockPill" type="button" data-unlock="1">${LOCK_SVG}4 more</button>`}
+    else{tray='';for(let i=s;i<end;i++)tray+=`<button class="trlv${i<best?' clr':''}${i===levelIdx&&!previewMode?' now':''}" type="button" data-lv="${i}"${i>top?' disabled':''}>${i+1}</button>`}
+    h+=`<div class="chrow" data-r="${k}"><button class="med${cur?' cur':''}${locked?' locked':''}" type="button" style="--c:${c};transition-delay:${delay}ms" aria-label="${name}, levels ${s+1} to ${end}">${ringSvg(s,locked,c)}<span class="disc">${chapterIcon(name)}</span>${locked?`<span class="lockBadge">${LOCK_SVG}</span>`:''}</button>`+
+       `<div class="tray" style="--c:${c}"><span class="trnm">${name}</span>${tray}</div></div>`;
   });
-  // chapters 18–20 (levels 86–100) aren't designed yet — shown as a locked teaser, not playable
-  ['Chapter 18','Chapter 19','Chapter 20'].forEach(name=>{
-    const det=document.createElement('details');det.className='chrow locked';
-    const sum=document.createElement('summary');
-    sum.innerHTML=chapterIcon('Soon')+'<span class="chname">'+name+'<small>Coming soon</small></span><em>🔒</em>';
-    sum.addEventListener('click',ev=>ev.preventDefault());
-    det.appendChild(sum);list.appendChild(det);
-  });
+  // chapters 18–20 (levels 86–100) aren't designed yet — shown as locked placeholders, not playable
+  for(let n=18;n<=20;n++){delay+=24;h+=`<div class="chrow soon"><button class="med locked" type="button" disabled style="transition-delay:${delay}ms" aria-label="Chapter ${n}, coming soon"><span class="disc">${chapterIcon('Soon')}</span><span class="lockBadge">${LOCK_SVG}</span></button></div>`}
+  col.innerHTML=h;
+  openRow=String(Math.floor(levelIdx/5));if(previewKey===dailyKey)openRow='d';
+  col.querySelectorAll('.chrow').forEach(r=>r.classList.toggle('show',r.dataset.r===openRow));
   lvPanel.hidden=false;lvBtn.setAttribute('aria-expanded','true');
-  const curRow=list.querySelector('.chrow.cur');
-  if(curRow)requestAnimationFrame(()=>curRow.scrollIntoView({block:'nearest'}));
+  requestAnimationFrame(()=>{col.classList.add('show');const r=col.querySelector(`.chrow[data-r="${openRow}"]`);if(r)col.scrollTop=Math.max(0,r.offsetTop-col.clientHeight/2+21)});
 }
+document.getElementById('lvcol').addEventListener('click',e=>{
+  const col=e.currentTarget,t=e.target.closest('button');if(!t||t.disabled)return;
+  if(t.dataset.unlock){closeLevels();openUpgrade();return}
+  if(t.dataset.play){tick();playPreview(DAILY,dailyKey);return}
+  if(t.dataset.samp!=null){tick();playPreview(+t.dataset.samp,t.dataset.samp);return}
+  if(t.dataset.lv!=null){const i=+t.dataset.lv;tick();closeLevels();if(i!==levelIdx||previewMode){pageTurn();load(i)}return}
+  if(t.classList.contains('med')){const r=t.closest('.chrow').dataset.r;openRow=openRow===r?null:r;tick();
+    col.querySelectorAll('.chrow').forEach(x=>x.classList.toggle('show',x.dataset.r===openRow))}
+});
 document.addEventListener('pointerdown',e=>{if(!lvPanel.hidden&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
 // swipe dial on the level name: about every 26px of drag moves one level; letting go opens that level.
 // A tap without dragging opens the wheel instead.
