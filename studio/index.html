@@ -537,22 +537,28 @@ NEW.lattice=function(A,out,ui){const mix=Mix(A,out,{verbSec:5,dark:.9}),stops=[]
   const SPEC=[['mar',5,11,3,.7,9.7,-.45,.3,.045],['ep',6,12,2,1.1,13.1,.42,.7,.06],['ep',10,15,1,1,17.9,-.18,.75,.065],['ep',10,15,2,1.4,21.3,.28,.75,.06],['mar',0,4,2,1.8,25.7,0,.25,.06]];
   const lanes=SPEC.map(([k,lo,hi,n,gap,per,pan,wet,vol],i)=>({k,lo,hi,n,gap,per,vol,bus:place(pan,wet),notes:cell(lo,hi,n,gap),start:A.currentTime+.3+i*3.1,cyc:-1,rest:false}));
   // a low drone: root and fifth, barely there
-  let drone=null;const setDrone=t=>{const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.007,t+8);g.connect(mix.bus(.6,.6));
+  let drone=null;const setDrone=t=>{const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.011,t+8);g.connect(mix.bus(.6,.6));
     const os=[root-12,root-5].map(m=>{const o=A.createOscillator();o.frequency.value=MT(m);o.connect(g);o.start(t);return o});
-    if(drone){const d0=drone;d0.g.gain.setValueAtTime(.007,t);d0.g.gain.linearRampToValueAtTime(0,t+8);d0.os.forEach(o=>o.stop(t+8.2))}drone={g,os}};
+    if(drone){const d0=drone;d0.g.gain.setValueAtTime(.011,t);d0.g.gain.linearRampToValueAtTime(0,t+8);d0.os.forEach(o=>o.stop(t+8.2))}drone={g,os}};
   setDrone(A.currentTime);stops.push(()=>drone&&drone.os.forEach(o=>{try{o.stop(A.currentTime+1.6)}catch(e){}}));
+  // a soft bed that never stops: slow swells (5 s in, a long hold, 5 s out) on pentatonic notes, a new one every ~5 s, always overlapping
+  const bedLp=A.createBiquadFilter();bedLp.type='lowpass';bedLp.frequency.value=1500;bedLp.Q.value=.3;bedLp.connect(mix.bus(.35,.85));
+  const swell=(t,m,len)=>{const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.0075,t+5);g.gain.setValueAtTime(.0075,t+len-5);g.gain.linearRampToValueAtTime(0,t+len);g.connect(bedLp);
+    [[0,'sine'],[5,'triangle'],[-5,'triangle']].forEach(([dt,ty])=>{const o=A.createOscillator();o.type=ty;o.frequency.value=MT(m);o.detune.value=dt;const og=A.createGain();og.gain.value=ty==='sine'?1:.35;o.connect(og).connect(g);o.start(t);o.stop(t+len+.1)})};
+  let nextSwell=A.currentTime;
   let nextSwap=A.currentTime+90*EVO.s,nextKey=A.currentTime+240*EVO.s,sect=1;
   stops.push(Clock(A,t=>{const t2=t+.1;
+    if(t>=nextSwell){swell(t,P(pick([5,6,7,8,9,10])),16+R()*6);nextSwell=t+4.5+R()*1.5}
     if(t>=nextSwap){const L=pick(lanes);L.notes=cell(L.lo,L.hi,L.n,L.gap);nextSwap=t+(80+R()*60)*EVO.s;sect++}
     if(t>=nextKey){root=root===51?56:51;setDrone(t);nextKey=t+(200+R()*120)*EVO.s;sect++}
     for(const L of lanes){if(t2<L.start)continue;const c=Math.floor((t-L.start)/L.per);
-      if(c!==L.cyc){L.cyc=c;L.rest=c>1&&R()<.15}
+      if(c!==L.cyc){L.cyc=c;L.rest=false}
       if(L.rest)continue;const base=L.start+c*L.per;
       for(const x of L.notes){const at=base+x.at;if(at>=t&&at<t2){const s=inst[L.k](P(x.d));playBuf(A,L.bus,s.buf,at,L.vol*x.v,s.rate,0)}}}
     ui&&ui({sect,key:keyName(root),tex:lanes.filter(L=>!L.rest&&t>=L.start).length+' of 5 pieces playing',energy:lanes.filter(L=>!L.rest&&t>=L.start).length/5});
     return .1}));
   return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
-TRIM_DB.lattice=4;{const f=NEW.lattice;NEW.lattice=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.lattice/20);o.connect(out);return f(A,o,ui)}}
+TRIM_DB.lattice=0.5;{const f=NEW.lattice;NEW.lattice=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.lattice/20);o.connect(out);return f(A,o,ui)}}
 
 /* Mechanism (new), rebuilt: shaped the way Thom Yorke's electronic tracks unfold (The Eraser, Tomorrow's Modern Boxes, Anima),
    with original notes. One slow intensity arc (about five minutes: a long build, a peak, a breakdown to almost nothing, a rebuild)
@@ -948,7 +954,7 @@ return{calm:calmCurrent,gen:(name)=>(A,out)=>genTrack(A,out,name)};
 const TRACKS=[
  {name:'Open World (was Calm)',desc:'More hopeful and open: wide add9 chords that swell slowly, a gentle shimmer, faint wind, and a real grand piano in the style of open-world field music. Short fragments with free timing and lots of silence, and a left hand that now often answers the right: a low root, a root with its fifth, octave or tenth, or a mid-range chord tone, a moment after a high or mid phrase. The notes are its own, not the game\'s.',
   opts:[['Current',(A,o)=>CUR.calm(A,o)],['New',(A,o,u)=>NEW.calm(A,o,u)]]},
- {name:'Lattice (new, replaces Dawn)',desc:'Built like the puzzle itself. Five short pieces, now mostly a soft, ambient electric-piano bell with a little wooden marimba underneath, each looping at a different length. The lengths never line up, so the pieces keep sliding apart and fitting back together in new ways, and it never repeats exactly. Each piece has its own place around you. One piece is swapped out every couple of minutes, and now and then the whole thing shifts key. One gentle major scale, so nothing ever clashes.',
+ {name:'Lattice (new, replaces Dawn)',desc:'Built like the puzzle itself. Five short pieces, mostly a soft, ambient electric-piano bell with a little wooden marimba, each looping at a different length, so they keep sliding apart and fitting back together and it never repeats exactly. Underneath, a soft bed of slow swells that fade in and out and always overlap, plus a low drone, so it is never silent. One piece is swapped out every couple of minutes, and now and then the whole thing shifts key. One gentle major scale, so nothing ever clashes.',
   opts:[['Lattice',(A,o,u)=>NEW.lattice(A,o,u)]]},
  {name:'Music Box',desc:'The Lullaby version (slow waltz, darker and softer comb, about one note every few seconds) with a Kid A layer: a slight tape wobble on every note, a warm Prophet-style pad underneath, reversed music-box notes that swell into chord changes, faint glittering grains, and now and then one long Ondes Martenot-style note.',
   opts:[['Current',CUR.gen('musicbox')],['Music Box',(A,o,u)=>NEW.boxLullaby(A,o,u)]]},
