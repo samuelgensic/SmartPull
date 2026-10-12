@@ -1716,19 +1716,26 @@ function audio(){
 // iOS only lets sound start inside a tap, so every tap makes sure audio is awake (this is cheap once it's running)
 ['touchend','pointerup','click'].forEach(ev=>document.addEventListener(ev,()=>{if(soundOn||musicOn)audio()},{passive:true,capture:true}));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&actx&&actx.state!=='running')actx.resume().catch(()=>{})});
+// every sound effect fades all the way to silence before it stops: a smooth decay, then a short glide to exactly 0%.
+// Returns the time it's safe to stop the sound (after the volume has reached zero).
+const SFX_TAIL=.02;
+function fadeEnv(p,t,att,peak,end){p.setValueAtTime(0,t);p.linearRampToValueAtTime(peak,t+att);
+  if(peak>.0005)p.exponentialRampToValueAtTime(.0005,Math.max(end,t+att+.005));p.linearRampToValueAtTime(0,Math.max(end,t+att+.005)+SFX_TAIL);return Math.max(end,t+att+.005)+SFX_TAIL+.01}
 // building blocks: a gliding tone, and a filtered burst of noise
 function tone(a,type,f0,f1,t,dur,vol,att=.005){
   const o=a.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+dur*.6);
-  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.001,t+dur);
-  o.connect(g).connect(sfxBus);o.start(t);o.stop(t+dur+.02);
+  const g=a.createGain();const end=fadeEnv(g.gain,t,att,vol,t+dur);
+  o.connect(g).connect(sfxBus);o.start(t);o.stop(end);
 }
 function hiss(a,type,f0,f1,q,t,dur,vol,att=.003){
   const n=a.createBufferSource();n.buffer=noiseBuf;const f=a.createBiquadFilter();f.type=type;f.Q.value=q;
   f.frequency.setValueAtTime(f0,t);if(f1!==f0)f.frequency.exponentialRampToValueAtTime(f1,t+dur*.8);
-  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.001,t+dur);
-  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.02);
+  const g=a.createGain();const end=fadeEnv(g.gain,t,att,vol,t+dur);
+  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(end);
 }
 const BUMPS=[
+  // Clay: a dull, earthy thud (the bump sound, chosen Oct 11)
+  {name:'Clay',   play:(a,t)=>{hiss(a,'lowpass',450,450,.8,t,.08,.2,.004);tone(a,'sine',110,90,t,.1,.18,.004)}},
   {name:'Pillow', play:(a,t)=>{tone(a,'sine',120,58,t,.32,.6,.02);hiss(a,'lowpass',500,300,.7,t,.18,.18,.015)}},
   {name:'Clink',  play:(a,t)=>{tone(a,'sine',1760,1760,t,.22,.07);tone(a,'sine',2640,2640,t,.12,.03);tone(a,'sine',140,80,t,.14,.3)}},
   // a soft felt mallet on a wooden bar
@@ -1743,8 +1750,8 @@ const BUMPS=[
 function drift(a,t,lo,hi,end,dur,vol){
   const n=a.createBufferSource();n.buffer=noiseBuf;const f=a.createBiquadFilter();f.type='bandpass';f.Q.value=.8;
   f.frequency.setValueAtTime(lo,t);f.frequency.exponentialRampToValueAtTime(hi,t+dur*.45);f.frequency.exponentialRampToValueAtTime(end,t+dur);
-  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+dur*.3);g.gain.exponentialRampToValueAtTime(.001,t+dur);
-  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.02);
+  const g=a.createGain();const stopAt=fadeEnv(g.gain,t,dur*.3,vol,t+dur);
+  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(stopAt);
 }
 const WOOSHES=[
   {name:'Air',   play:(a,t)=>hiss(a,'bandpass',350,2400,.9,t,.5,.11,.09)},
@@ -1761,8 +1768,8 @@ const WOOSHES=[
 function soft(a,type,f0,f1,q,t,dur,vol,att){
   const n=a.createBufferSource();n.buffer=softBuf;const f=a.createBiquadFilter();f.type=type;f.Q.value=q;
   f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur*.95);
-  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol*1.6,t+att);g.gain.exponentialRampToValueAtTime(.001,t+dur);
-  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.05);
+  const g=a.createGain();const end=fadeEnv(g.gain,t,att,vol*1.6,t+dur);
+  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(end);
 }
 // the choices for the sound a cube makes when you pull it out (Air is the original)
 const PULLS=[
@@ -1782,7 +1789,7 @@ let bumpIdx=0,wooshIdx=0;
 try{bumpIdx=Math.min(BUMPS.length-1,+localStorage.getItem('pa3_bump')||0);wooshIdx=Math.min(WOOSHES.length-1,+localStorage.getItem('pa3_woosh')||0)}catch(e){}
 // the pull sound follows the choice in the Sound panel
 // smooth fade-outs (setTargetAtTime to zero) so the heavy pulls never end in a click
-function envSmooth(g,t,att,dur,peak){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+att);g.gain.setTargetAtTime(0,t+att,(dur-att)/6)}
+function envSmooth(g,t,att,dur,peak){fadeEnv(g.gain,t,att,peak,t+dur)} // (callers stop .25 s after, well past the fade)
 function heavyAir(a,f0,f1,q,t,dur,vol,att){const n=a.createBufferSource();n.buffer=softBuf;const f=a.createBiquadFilter();f.type='lowpass';f.Q.value=q;
   f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur*.95);const g=a.createGain();envSmooth(g,t,att,dur,vol*1.6);
   n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.25)}
@@ -1798,13 +1805,13 @@ function woosh(size){if(!soundOn)return;const a=audio();if(!a)return;const t=a.c
 const bumpSound=name=>BUMPS.find(b=>b.name===name);
 // Latch: two tiny clicks and a soft low ping, like a magnet catch. Smooth fade-outs, so no click at the end.
 function latchTick(a,f,q,t,dur,vol){const n=a.createBufferSource();n.buffer=noiseBuf;const fl=a.createBiquadFilter();fl.type='bandpass';fl.frequency.value=f;fl.Q.value=q;
-  const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.002);g.gain.setTargetAtTime(0,t+.002,dur/5);n.connect(fl).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.08)}
+  const g=a.createGain();fadeEnv(g.gain,t,.002,vol,t+dur);n.connect(fl).connect(g).connect(sfxBus);n.start(t);n.stop(t+dur+.08)}
 function latchPing(a,f,t,dur,vol){const o=a.createOscillator();o.type='sine';o.frequency.value=f;const g=a.createGain();
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.003);g.gain.setTargetAtTime(0,t+.003,dur/5);o.connect(g).connect(sfxBus);o.start(t);o.stop(t+dur+.1)}
+  fadeEnv(g.gain,t,.003,vol,t+dur);o.connect(g).connect(sfxBus);o.start(t);o.stop(t+dur+.1)}
 function latch(a,t){latchTick(a,2600,4,t,.025,.05);latchTick(a,1700,4,t+.04,.03,.04);latchPing(a,230,t+.04,.07,.045)}
-// bump (cube right next to another) = Pillow; collide (a cube travels, then hits one farther away) = Droplet
+// bump (cube right next to another) = Clay; collide (a cube travels, then hits one farther away) = Droplet
 function thump(delay,far){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+delay;
-  if(!far){bumpSound('Pillow').play(a,t);return}
+  if(!far){bumpSound('Clay').play(a,t);return}
   bumpSound('Droplet').play(a,t)} // (no Latch click after it)
 
 /* sound picker */
@@ -1983,12 +1990,12 @@ function click(){
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1800;lp.connect(sfxBus);
   [[300,360,.045],[450,540,.022]].forEach(([f0,f1,v])=>{const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+.24);
-    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.05);g.gain.setTargetAtTime(0,t+.05,.06);o.connect(g).connect(lp);o.start(t);o.stop(t+.6)});
+    const g=a.createGain();fadeEnv(g.gain,t,.05,v,t+.4);o.connect(g).connect(lp);o.start(t);o.stop(t+.6)});
   [0,.07,.14].forEach((d,i)=>{const f=1600+i*140,s=t+d;
     const n=a.createBufferSource();n.buffer=softBuf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=5;bp.frequency.setValueAtTime(f,s);bp.frequency.exponentialRampToValueAtTime(f*.9,s+.033);
-    const g=a.createGain();g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.021,s+.001);g.gain.setTargetAtTime(0,s+.001,.008);n.connect(bp).connect(g).connect(sfxBus);n.start(s,Math.random()*.8);n.stop(s+.12);
+    const g=a.createGain();fadeEnv(g.gain,s,.001,.021,s+.05);n.connect(bp).connect(g).connect(sfxBus);n.start(s,Math.random()*.8);n.stop(s+.12);
     const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f*.28,s);o.frequency.exponentialRampToValueAtTime(f*.25,s+.036);
-    const g2=a.createGain();g2.gain.setValueAtTime(0,s);g2.gain.linearRampToValueAtTime(.0046,s+.002);g2.gain.setTargetAtTime(0,s+.002,.012);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)});
+    const g2=a.createGain();fadeEnv(g2.gain,s,.002,.0046,s+.07);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)});
 }
 /* switching themes: a short sound in the new theme's style
    Classic: a soft wooden tock and a warm two-note chime · SmartPull: a bright, bubbly rising chord · Neon: a synth power-up sweep */
@@ -2020,8 +2027,8 @@ function fuseSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.c
   if(theme==='neon'){
     const o=a.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(440,t);o.frequency.exponentialRampToValueAtTime(1320,t+.16);
     const f=a.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(900,t);f.frequency.exponentialRampToValueAtTime(3000,t+.16);
-    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.03,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.3);
-    o.connect(f).connect(g).connect(sfxBus);o.start(t);o.stop(t+.32);tone(a,'sine',1760,1760,t+.12,.35,.02,.01);return}
+    const g=a.createGain();const end=fadeEnv(g.gain,t,.01,.03,t+.3);
+    o.connect(f).connect(g).connect(sfxBus);o.start(t);o.stop(end);tone(a,'sine',1760,1760,t+.12,.35,.02,.01);return}
   tone(a,'triangle',420,380,t,.08,.12,.002);hiss(a,'bandpass',2600,2600,3,t,.03,.06,.001); // the clack
   tone(a,'sine',1046,1046,t+.05,.5,.03,.01);tone(a,'sine',1568,1568,t+.09,.45,.018,.01);   // a soft shimmer
 }
@@ -2032,8 +2039,8 @@ function chime(delay){
     const t=t0+i*.09;
     [[f,'sine',.09],[f*2,'sine',.025]].forEach(([fr,type,vol])=>{
       const o=a.createOscillator();o.type=type;o.frequency.value=fr;
-      const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.7);
-      o.connect(g).connect(sfxBus);o.start(t);o.stop(t+.72);
+      const g=a.createGain();const end=fadeEnv(g.gain,t,.01,vol,t+.7);
+      o.connect(g).connect(sfxBus);o.start(t);o.stop(end);
     });
   });
 }
@@ -2670,7 +2677,7 @@ el.addEventListener('wheel',e=>{e.preventDefault();camDist=Math.min(80,Math.max(
 const sfxSlider=document.getElementById('sfxVol'),musSlider=document.getElementById('musicVol');
 sfxSlider.value=sfxVol;musSlider.value=musicVol;
 sfxSlider.addEventListener('input',()=>{audio();setVol('sfx',+sfxSlider.value)});
-sfxSlider.addEventListener('change',()=>{const a=audio();if(a&&sfxVol>0)bumpSound('Pillow').play(a,a.currentTime+.02)});
+sfxSlider.addEventListener('change',()=>{const a=audio();if(a&&sfxVol>0)bumpSound('Clay').play(a,a.currentTime+.02)});
 musSlider.addEventListener('input',()=>{audio();setVol('music',+musSlider.value)});
 // level timer show/hide (hidden by default, so nobody feels rushed)
 // the credit under the wordmark: 11px, shrinking only if it would ever without running past the end of SMART·PULL
@@ -2889,8 +2896,8 @@ const RESETS=[
     const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(420,t+.5);
     const trem=a.createGain();trem.gain.value=.7;const l=a.createOscillator();l.frequency.setValueAtTime(8,t);l.frequency.linearRampToValueAtTime(18,t+.5);
     const la=a.createGain();la.gain.value=.3;l.connect(la).connect(trem.gain);
-    const g=a.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.22,t+.08);g.gain.exponentialRampToValueAtTime(.001,t+.55);
-    o.connect(trem).connect(g).connect(sfxBus);[o,l].forEach(x=>{x.start(t);x.stop(t+.57)})}},
+    const g=a.createGain();const end=fadeEnv(g.gain,t,.08,.22,t+.55);
+    o.connect(trem).connect(g).connect(sfxBus);[o,l].forEach(x=>{x.start(t);x.stop(end)})}},
   // a reverse whoosh: air that swells in and pulls back, like time running backwards
   {name:'Swish back',play:(a,t)=>{
     const n=a.createBufferSource();n.buffer=noiseBuf;const f=a.createBiquadFilter();f.type='bandpass';f.Q.value=.9;
