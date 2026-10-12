@@ -1091,8 +1091,8 @@ function neonTex(kind,color,halo,deco,fill,edgeC){
   // (on fusion levels an unfused cube's edges take its neon color, so you can see its group from any side)
   // cube outlines only show with Blacklight on; with it off the cubes vanish into the dark and only the symbols glow
   if(fill||!halo||(deco&&deco.includes('outline|'))){}
-  else if(edgeC){g.lineWidth=3.5;g.strokeStyle=edgeC;g.shadowColor=edgeC;g.shadowBlur=14;edge();g.shadowBlur=0;edge()}
-  else{g.lineWidth=3;g.strokeStyle='rgba(255,255,255,.85)';g.shadowColor='rgba(255,255,255,.9)';g.shadowBlur=16;edge();g.shadowBlur=5;edge();g.shadowBlur=0}
+  else if(edgeC){g.lineWidth=5;g.strokeStyle=edgeC;g.shadowColor=edgeC;g.shadowBlur=14;edge();g.shadowBlur=0;edge()}
+  else{g.lineWidth=4.5;g.strokeStyle='rgba(255,255,255,.85)';g.shadowColor='rgba(255,255,255,.9)';g.shadowBlur=16;edge();g.shadowBlur=5;edge();g.shadowBlur=0}
   drawDeco(g,s,deco,'#000000',halo);
   if(kind==='blank')return new THREE.CanvasTexture(cv);
   g.translate(s/2,s/2);
