@@ -76,6 +76,12 @@ input.vol{width:100%; min-width:200px; accent-color:var(--accent); height:24px; 
 .tright{display:flex; align-items:center; gap:8px}
 .price{display:none; font-family:var(--display); font-weight:500; font-size:11px; color:var(--muted)}
 button.topt.locked .price{display:inline}
+.price .try{font-family:var(--body); font-weight:700; font-size:11px; color:var(--accent); margin-right:4px}
+/* while trying a locked mode: a small pill at the top center */
+.tryPill{position:absolute; top:118px; left:50%; transform:translateX(-50%); z-index:5; background:var(--chip); color:var(--ink); font:700 11px var(--body); letter-spacing:.04em;
+  padding:7px 13px; border-radius:16px; display:flex; align-items:center; gap:7px; box-shadow:0 2px 10px rgba(0,0,0,.08); white-space:nowrap; pointer-events:none; transition:opacity .2s}
+.tryPill i{width:7px; height:7px; border-radius:50%; background:var(--accent)}
+html.scrub .tryPill,html:has(#levels:not([hidden])) .tryPill{opacity:0}
 button.topt.locked .sw{opacity:.4}
 button.topt.locked > span:first-child{color:var(--muted)}
 button.lv.more{background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted); font-size:14px}
@@ -104,18 +110,49 @@ button.lv.more{background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted)
 .upsmall{margin:0; font-size:12px; line-height:1.5; color:var(--muted)}
 button.upclose{align-self:center}
 /* the level name doubles as a button that opens the level picker */
-button.lvl{width:auto; height:38px; padding:0 10px 0 0; background:transparent; box-shadow:none; color:var(--ink); font-family:var(--display); font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:9px}
-/* the level button's own medallion: the current chapter's icon, flipping to an X while the menu is open */
-.lvDisc{position:relative; width:30px; height:30px; flex:none; border-radius:50%; background:var(--chip); display:grid; place-items:center; transition:transform .2s}
-.lvDisc svg{width:16px; height:16px; opacity:.85}
-.lvX{display:none; width:15px; height:15px}
+/* the level button, as in the prototype: a round medallion with the current chapter's symbol (an X while the menu is open),
+   then the level number large and the chapter name small beneath it. Tap for the menu; drag sideways to scrub. */
+button.lvl{width:auto; height:46px; padding:0 18px 0 0; background:transparent; box-shadow:none; color:var(--ink); display:inline-flex; align-items:center; gap:12px; border-radius:23px}
+.lvDisc{position:relative; width:46px; height:46px; flex:none; border-radius:50%; background:var(--chip); color:var(--ink); display:grid; place-items:center;
+  box-shadow:0 1px 0 rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.06); transition:transform .2s}
+html.neon .lvDisc{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
+.lvDisc svg{width:22px; height:22px; margin:0; opacity:1}
+.lvGlyph{display:grid; place-items:center}
+.lvX{display:none}
 button.lvl[aria-expanded="true"] .lvGlyph{display:none}
 button.lvl[aria-expanded="true"] .lvX{display:block}
-button.lvl:active .lvDisc{transform:scale(.92)}
-.panel.levels{width:min(300px,calc(100% - 32px)); background:transparent; box-shadow:none; padding:0; top:60px}
+button.lvl:active .lvDisc{transform:scale(.94)}
+button.lvl .lvtxt{align-items:flex-start; gap:3px; transition:opacity .25s,transform .25s}
+button.lvl .lvnum{font-family:var(--display); font-weight:400; font-size:20px; letter-spacing:.04em; line-height:1}
+button.lvl .lvsub{font-family:var(--body); font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:0}
+button.lvl[aria-expanded="true"] .lvtxt{opacity:0; transform:translateX(-6px)}
+.panel.levels{width:min(300px,calc(100% - 32px)); background:transparent; box-shadow:none; padding:0; top:72px; left:18px}
+/* scrub ruler: drag sideways on the level button and a ruler slides out under it; the needle reads the level.
+   One tick per level, a taller tick and the chapter symbol at each chapter start; cleared ticks fill with the chapter color. */
+.ruler{position:absolute; top:66px; left:12px; width:min(320px,calc(100% - 24px)); height:62px; z-index:6; border-radius:20px; background:var(--chip);
+  box-shadow:0 10px 28px rgba(0,0,0,.14); opacity:0; transform:translateY(-10px) scaleY(.5); transform-origin:top left; pointer-events:none; overflow:hidden;
+  transition:opacity .18s,transform .32s cubic-bezier(.3,1.5,.5,1)}
+html.neon .ruler{box-shadow:0 0 0 1px rgba(244,236,255,.16),0 10px 28px rgba(0,0,0,.5)}
+.ruler.on{opacity:1; transform:none}
+.rfade{position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg,var(--chip),transparent 24%,transparent 76%,var(--chip))}
+.rneedle{position:absolute; left:50%; top:9px; bottom:9px; width:2px; margin-left:-1px; border-radius:2px; background:var(--accent)}
+html.neon .rneedle{box-shadow:0 0 8px var(--accent)}
+.rtrack{position:absolute; left:0; top:0; bottom:0; will-change:transform}
+.rtk{position:absolute; bottom:14px; width:2px; margin-left:-1px; height:9px; border-radius:1px; background:rgba(0,0,0,.14)}
+html.neon .rtk{background:rgba(244,236,255,.18)}
+.rtk.ch{height:15px}
+.rtk.clr{background:var(--c)}
+html.neon .rtk.clr{box-shadow:0 0 5px var(--c)}
+.rtk.lock,.rchg.lock{opacity:.35}
+.rchg{position:absolute; top:9px; width:17px; height:17px; margin-left:-8.5px; color:var(--muted)}
+.rchg.clr{color:var(--c)}
+.rchg svg{width:17px; height:17px; margin:0; opacity:1}
+html.scrub #stage{filter:blur(2px); opacity:.55}
+#stage{transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .35s,filter .25s}
 /* the chapter menu: a column of round medallions dropping out below the level button, one per chapter,
    each with a 5-segment progress ring; tapping one slides out a tray of small level-number pills beside it */
-.lvcol{display:flex; flex-direction:column; gap:7px; max-height:min(460px,calc(100vh - 150px)); overflow-y:auto; overflow-x:visible; padding:4px 4px 16px 2px; scrollbar-width:none}
+.lvcol{display:flex; flex-direction:column; gap:7px; max-height:min(460px,calc(100vh - 170px)); overflow-y:auto; overflow-x:visible; padding:4px 4px 30px 2px; scrollbar-width:none;
+  -webkit-mask:linear-gradient(180deg,transparent 0,#000 14px,#000 calc(100% - 40px),transparent); mask:linear-gradient(180deg,transparent 0,#000 14px,#000 calc(100% - 40px),transparent)}
 .lvcol::-webkit-scrollbar{display:none}
 .chrow{display:flex; align-items:center; gap:0}
 .med{--c:var(--accent); position:relative; width:42px; height:42px; flex:none; border:0; padding:0; background:none; box-shadow:none; display:block; cursor:pointer; color:var(--ink);
@@ -147,14 +184,8 @@ button.trlv:disabled{opacity:.35; cursor:default}
 button.trlv.samp{border-style:dashed}
 button.unlockPill{width:auto; display:inline-flex; align-items:center; gap:5px; border:0; box-shadow:none; border-radius:14px; height:28px; padding:0 10px; background:none; color:var(--muted); font:700 10.5px var(--body); cursor:pointer; flex:none}
 button.unlockPill svg{width:10px; height:10px}
-button.lvl{touch-action:none; overflow:hidden; white-space:nowrap; display:inline-flex; flex-direction:row; align-items:center; justify-content:center}
+button.lvl{touch-action:none; overflow:visible; white-space:nowrap; justify-content:flex-start}
 .lvtxt{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.1; transition:transform .12s ease-out}
-/* the level's group (Pull, Twist, Link...) in small letters under the number */
-.lvsub{font-family:var(--display); font-size:8.5px; font-weight:400; letter-spacing:.08em; color:#007C92; margin-top:1px}
-/* the level-type subtitle takes a color from the theme: blue in Standard, orange in SmartPull, pink in Neon */
-html.brandtheme .lvsub{color:#EB5D07}
-html.neon .lvsub{color:#FF2E97}
-@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) .lvsub{color:#54BED0} html.brandtheme .lvsub{color:#FD9357}}
 .wic{width:16px; height:16px; flex:none; margin-right:8px; opacity:.7}
 .lvgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:6px}
 button.lv{width:100%; height:40px; border-radius:10px; background:var(--bg2); box-shadow:none; font-family:var(--display); font-weight:500; font-size:13px; font-variant-numeric:tabular-nums}
@@ -199,7 +230,7 @@ button.ttoggle svg{width:18px; height:18px}
 button.ttoggle[aria-pressed="true"]{color:var(--ink); box-shadow:0 0 0 2px var(--accent)}
 @media (max-width:430px){.left{font-size:11px; letter-spacing:.08em}}
 /* small phones: tighter top bar so all the buttons fit beside the wider title font */
-@media (max-width:400px){header{gap:8px} button.fsbtn,.blbox .blacklight{width:34px; height:34px} button.ttoggle{width:34px; height:34px} .controls{--step:44px} .tools{gap:8px} .controls,.levelnav{gap:4px} .controls button,.levelnav button:not(.lvl){width:34px; height:34px} button.lvl{padding:0 4px; min-width:0} .lvl{font-size:11px; letter-spacing:.02em}}
+@media (max-width:400px){header{gap:8px} button.fsbtn,.blbox .blacklight{width:34px; height:34px} button.ttoggle{width:34px; height:34px} .controls{--step:44px} .tools{gap:8px} .controls,.levelnav{gap:4px} .controls button,.levelnav button:not(.lvl){width:34px; height:34px}}
 .credit{font-family:"Quicksand", system-ui, sans-serif; font-weight:500; font-size:11px; white-space:nowrap; letter-spacing:0; color:var(--muted); opacity:.85} /* small, thin and tight under the wordmark */
 .hint{font-size:14px; color:var(--muted); transition:opacity .4s; max-width:36ch}
 .done{position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; opacity:0; transition:opacity .5s}
@@ -303,12 +334,12 @@ header .blacklight:focus-visible::after{opacity:1}
       <button id="more" class="more" type="button" aria-expanded="false" aria-controls="tools" aria-label="Show buttons"><svg viewBox="0 0 24 24"><g class="dots"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></g><path class="x" d="M7 7l10 10M17 7L7 17"/></svg></button>
     </div>
     <div class="levelnav">
-      <button id="prev" aria-label="Previous level"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe sideways to change it, or tap for the chapter menu"><span class="lvDisc"><span class="lvGlyph" id="lvGlyph"></span><svg class="lvX" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
-      <button id="next" aria-label="Next level"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Levels: tap for the chapter menu, or drag sideways to scrub through levels"><span class="lvDisc"><span class="lvGlyph" id="lvGlyph"></span><svg class="lvX" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="lvtxt"><span class="lvnum">1</span><span class="lvsub">Pull</span></span></button>
     </div>
     <div class="topspace"><div class="blbox"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button></div></div>
   </header>
+  <div class="tryPill" id="tryPill" hidden><i></i><span></span></div>
+  <div class="ruler" id="ruler" aria-hidden="true"><div class="rtrack" id="rtrack"></div><div class="rfade"></div><div class="rneedle"></div></div>
   <button class="fsbtn" id="fsBtn" type="button" hidden aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   <div class="panel" id="themes" hidden>
     <div class="prow"><div class="plab">Modes</div><div class="topts" id="optTheme"></div></div>
@@ -427,7 +458,7 @@ const ICONS={
 };
 const chapterIcon=name=>`<svg class="wic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.Soon}</svg>`;
 function lvLabel(i){const b=document.getElementById('lvl');if(!b)return;
-  b.querySelector('.lvnum').textContent='Level '+(i+1);b.querySelector('.lvsub').textContent=groupOf(i);
+  b.querySelector('.lvnum').textContent=i+1;b.querySelector('.lvsub').textContent=groupOf(i);
   const g=document.getElementById('lvGlyph');if(g)g.innerHTML=ICONS[groupOf(i)]?chapterIcon(groupOf(i)):''}
 /* ---------- tips: the first time a new rule shows up, a small tip button appears on that level ----------
    It shows no text until tapped; tapping opens a short explanation. It keeps a soft pulse until you've opened it once. */
@@ -1519,11 +1550,11 @@ let theme='plain';
 try{theme=localStorage.getItem('pa2_theme')||(localStorage.getItem('pa2_color')==='1'?'brand':'plain')}catch(e){}
 let colorMode=theme==='brand';
 const paintBtn=document.getElementById('paint');
-function setTheme(t){
-  if(!themeOK(t)){openUpgrade();return} // locked theme: show what unlocks it
+function setTheme(t,trial){
+  if(!trial&&!themeOK(t)){openUpgrade();return} // locked theme: show what unlocks it
   theme=t;colorMode=t==='brand';
   document.documentElement.classList.toggle('neon',t==='neon');document.documentElement.classList.toggle('brandtheme',t==='brand');
-  try{localStorage.setItem('pa2_theme',t)}catch(e){}
+  if(!trial)try{localStorage.setItem('pa2_theme',t)}catch(e){} // a one-level trial is never saved
   document.querySelectorAll('#optTheme .topt').forEach((btn,i)=>btn.setAttribute('aria-pressed',THEMES[i][0]===t?'true':'false'));
   for(const b of blocks)b.mesh.material=materialsFor(b);
   if(typeof buildFloor==='function')buildFloor();
@@ -1561,11 +1592,27 @@ document.addEventListener('pointerdown',e=>{if(!themesPanel.hidden&&!themesPanel
     cols.forEach(c=>{const s=document.createElement('i');s.style.background=c;
       if(c==='#FFFFFF'||c==='#F5F5DC')s.style.boxShadow='inset 0 0 0 1px rgba(0,0,0,.18)'; // a hairline so the white chip still shows
       sw.appendChild(s)});
-    const price=document.createElement('span');price.className='price';price.textContent='🔒 '+(THEME_PRICE[id]||'');
+    const price=document.createElement('span');price.className='price';price.innerHTML='<b class="try">Try 1 level</b> 🔒 '+(THEME_PRICE[id]||'');
     const right=document.createElement('span');right.className='tright';right.append(price,sw);
-    btn.append(name,right);btn.onclick=()=>{const was=theme;setTheme(id);if(theme!==was){themeSound(theme);if(theme==='neon')blackLightTip()}};box.appendChild(btn)})})();
+    btn.append(name,right);btn.onclick=()=>{const was=theme;
+      if(!themeOK(id)){if(theme!==id)startTry(id);themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
+      else{if(trying){trying=null;showTryPill()}setTheme(id)}
+      if(theme!==was){themeSound(theme);if(theme==='neon')blackLightTip()}};box.appendChild(btn)})})();
 // locked themes show their price and a lock; unlocked ones just show their colors
-function refreshThemeLocks(){THEMES.forEach(([id],i)=>{const b=document.getElementById('optTheme-'+i);if(b)b.classList.toggle('locked',!themeOK(id))})}
+function refreshThemeLocks(){THEMES.forEach(([id],i)=>{const b=document.getElementById('optTheme-'+i);if(!b)return;b.classList.toggle('locked',!themeOK(id));
+  const t=b.querySelector('.try');if(t)t.textContent=trying&&trying.theme===id?'Trying':'Try 1 level'})}
+// try a locked mode for one level: the game switches to it now and back to your own mode when you move to another level
+let trying=null;
+function showTryPill(msg){const p=document.getElementById('tryPill');if(!p)return;
+  clearTimeout(p._t);
+  if(msg){p.querySelector('span').textContent=msg;p.hidden=false;p._t=setTimeout(()=>{if(!trying)p.hidden=true;else showTryPill()},1800);return}
+  if(trying){p.querySelector('span').textContent='Trying '+THEMES.find(x=>x[0]===trying.theme)[1]+' · this level';p.hidden=false}else p.hidden=true}
+function startTry(id){
+  const prev=trying?trying.prev:theme;trying={theme:id,prev,level:levelIdx};
+  setTheme(id,true);refreshThemeLocks();showTryPill();
+}
+function endTry(){if(!trying)return;const back=trying.prev;trying=null;setTheme(back);refreshThemeLocks();
+  showTryPill('Back to '+THEMES.find(x=>x[0]===back)[1])}
 refreshThemeLocks();
 setTheme(themeOK(theme)?theme:'plain');
 const TESTING=false; // true = every level open plus a "go to level" box; false = clear a level to unlock the next
@@ -1579,6 +1626,7 @@ const HINTS={0:'Tap an arrow to slide its block out. Drag to turn the puzzle.',
 
 function load(i){
   undoStack.length=0;previewMode=false;previewKey=null;
+  if(typeof trying!=='undefined'&&trying&&Math.max(0,i)!==trying.level)endTry(); // a one-level mode trial ends when you move on
   levelIdx=Math.max(0,i);clearing=false;waiting=false;taps=0;pulls=0;bumps=0;resetTimer();
   try{localStorage.setItem('pa2_lvl',levelIdx)}catch(e){}
   if(silWall){body.remove(silWall);silWall=null}{const st=document.getElementById('stuck');st.textContent='No moves left. Tap ↺ to try again.'}
@@ -1622,7 +1670,6 @@ function load(i){
       pivot.scale.setScalar(sc)},end:()=>pivot.scale.setScalar(1)});
   }else{pivot.scale.setScalar(.85);tweens.push({t:0,dur:.45,step:k=>pivot.scale.setScalar(.85+.15*ease(k))})}
   lvLabel(levelIdx);setTip();
-  document.getElementById('prev').disabled=levelIdx===0;
   refreshNav();
   document.getElementById('done').classList.remove('show','ready');clearTimeout(readyTimer);
   updateLeft();resize();
@@ -2683,7 +2730,7 @@ function advance(){
 // next arrow: on to an unlocked level, or, at the end of the free or $0.99 levels, the upgrade screen
 const nextAllowed=()=>TESTING||levelIdx<topLevel();
 const nextUpsell=()=>!devMode&&tier!=='full'&&capCleared()&&levelIdx===maxLevel()-1;
-function refreshNav(){document.getElementById('next').disabled=!(nextAllowed()||nextUpsell())}
+function refreshNav(){} // (the ‹ › level buttons were removed; levels change from the menu or the scrub ruler)
 document.addEventListener('pointerup',e=>{if(waiting&&!e.target.closest('button'))advance()});
 document.addEventListener('keydown',e=>{if(waiting&&(e.key==='Enter'||e.key===' ')){e.preventDefault();advance()}});
 
@@ -2895,26 +2942,62 @@ document.getElementById('lvcol').addEventListener('click',e=>{
     col.querySelectorAll('.chrow').forEach(x=>x.classList.toggle('show',x.dataset.r===openRow))}
 });
 document.addEventListener('pointerdown',e=>{if(!lvPanel.hidden&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
-// swipe dial on the level name: about every 26px of drag moves one level; letting go opens that level.
-// A tap without dragging opens the wheel instead.
-let dial=null;
-lvBtn.addEventListener('pointerdown',e=>{dial={y:e.clientY,start:levelIdx,cur:levelIdx,moved:false};lvBtn.setPointerCapture(e.pointerId)});
-lvBtn.addEventListener('pointermove',e=>{
-  if(!dial)return;const dy=dial.y-e.clientY;if(Math.abs(dy)>6)dial.moved=true;if(!dial.moved)return;
-  const n=Math.max(0,Math.min(topLevel(),dial.start+Math.round(dy/26)));
-  // the label slides a little with your finger, then snaps to each new number
-  const off=Math.max(-10,Math.min(10,-(dy-(n-dial.start)*26)*.4));
-  lvBtn.firstChild.style.transform='translateY('+off+'px)';
-  if(n!==dial.cur){dial.cur=n;lvLabel(n);tick()}
+// scrub ruler on the level button: drag sideways and a ruler slides out; every 11px is one level.
+// Dragging left moves forward. The number, chapter name and symbol roll along, with a soft click per level
+// and a firmer one at each new chapter. It stops at your furthest open level with a little rubber band.
+// Let go to open that level; a quick short flick moves just one level. A tap without dragging opens the menu.
+const STEP=11,ruler=document.getElementById('ruler'),rtrack=document.getElementById('rtrack');
+let drag=null;
+function scrubClick(firm){
+  try{navigator.vibrate&&navigator.vibrate(firm?8:4)}catch(e){}
+  if(!soundOn)return;const a=audio();if(!a)return;
+  tone(a,'sine',firm?1250:1900,firm?700:1000,a.currentTime,.04,firm?.06:.035,.003);
+}
+function openRuler(){
+  let h='';
+  for(let i=0;i<NLEV;i++){const k=Math.floor(i/5),c=chColor(k),st=i<best?' clr':(chLocked(i)?' lock':''),ch=i%5===0;
+    h+=`<i class="rtk${ch?' ch':''}${st}" style="left:${i*STEP}px;--c:${c}"></i>`;
+    if(ch)h+=`<span class="rchg${k*5<best?' clr':''}${chLocked(i)?' lock':''}" style="left:${i*STEP}px;--c:${c}">${chapterIcon(GROUPS[k][1])}</span>`}
+  rtrack.innerHTML=h;setTrack(drag.cur);ruler.classList.add('on');document.documentElement.classList.add('scrub');
+}
+function closeRuler(){ruler.classList.remove('on');document.documentElement.classList.remove('scrub')}
+function setTrack(v){rtrack.style.transform=`translateX(${ruler.clientWidth/2-v*STEP}px)`}
+function showScrub(n,dir){
+  if(n===drag.cur)return;const newCh=Math.floor(n/5)!==Math.floor(drag.cur/5);drag.cur=n;lvLabel(n);
+  const num=lvBtn.querySelector('.lvnum');
+  try{num.animate([{transform:`translateY(${dir*45}%)`,opacity:.2},{transform:'none',opacity:1}],{duration:150,easing:'ease-out'})}catch(e){}
+  if(newCh){try{lvBtn.querySelector('.lvDisc').animate([{transform:'scale(.82)'},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.3,1.6,.5,1)'})}catch(e){}}
+  scrubClick(newCh);
+}
+function scrubTo(dx){
+  const L=topLevel(),v=drag.start-dx/STEP;
+  setTrack(v>L?L+(v-L)*.22:v<0?v*.22:v);
+  const n=Math.max(0,Math.min(L,Math.round(v)));if(n!==drag.cur)showScrub(n,n>drag.cur?1:-1);
+}
+function commitScrub(n){
+  rtrack.style.transition='transform .25s cubic-bezier(.3,1.4,.5,1)';setTrack(n);
+  setTimeout(()=>{rtrack.style.transition='';closeRuler();if(n!==levelIdx){pageTurn();load(n)}else lvLabel(levelIdx)},230);
+}
+lvBtn.addEventListener('pointerdown',e=>{
+  if(drag)return;try{lvBtn.setPointerCapture(e.pointerId)}catch(_){}
+  const st=Math.min(levelIdx,topLevel());
+  drag={x:e.clientX,y:e.clientY,t:performance.now(),start:st,cur:st,scrub:false,menuWasOpen:!lvPanel.hidden};
 });
-const endDial=()=>{
-  if(!dial)return;const d=dial;dial=null;lvBtn.firstChild.style.transform='';
-  if(!d.moved){lvPanel.hidden?openLevels():closeLevels();return}
-  if(d.cur!==levelIdx){pageTurn();load(d.cur)}else lvLabel(levelIdx);
+lvBtn.addEventListener('pointermove',e=>{
+  if(!drag)return;const dx=e.clientX-drag.x;
+  if(!drag.scrub){if(Math.abs(dx)>6&&Math.abs(dx)>Math.abs(e.clientY-drag.y)){
+      drag.scrub=true;drag.x=e.clientX;drag.t=performance.now();if(!lvPanel.hidden)closeLevels();openRuler()}return}
+  scrubTo(dx);
+});
+const endScrub=e=>{
+  if(!drag)return;const d=drag;drag=null;
+  if(!d.scrub){if(e.type==='pointerup')(d.menuWasOpen?closeLevels():openLevels());return}
+  const dx=e.clientX-d.x,dt=performance.now()-d.t;
+  if(e.type==='pointercancel'){closeRuler();lvLabel(levelIdx);return}
+  if(dt<240&&Math.abs(dx)<70){const n=Math.max(0,Math.min(topLevel(),d.start+(dx<0?1:-1)));drag=d;showScrub(n,n>d.start?1:-1);drag=null;commitScrub(n)}
+  else commitScrub(d.cur);
 };
-lvBtn.addEventListener('pointerup',endDial);lvBtn.addEventListener('pointercancel',endDial);
-document.getElementById('prev').onclick=()=>{if(levelIdx>0){pageTurn();load(levelIdx-1)}};
-document.getElementById('next').onclick=()=>{if(nextAllowed()){pageTurn();load(levelIdx+1)}else if(nextUpsell())openUpgrade()};
+lvBtn.addEventListener('pointerup',endScrub);lvBtn.addEventListener('pointercancel',endScrub);
 /* upgrade screen: shows the paid versions you don't have yet */
 const upPanel=document.getElementById('upgrade');
 function openUpgrade(){
@@ -2931,6 +3014,7 @@ upPanel.addEventListener('pointerdown',e=>{if(e.target===upPanel)closeUpgrade()}
 function setTier(t){
   tier=t;try{localStorage.setItem('pa2_tier',t)}catch(e){}
   document.querySelectorAll('#optTier .opt').forEach((b,i)=>b.setAttribute('aria-pressed',['free','plus','full'][i]===t?'true':'false'));
+  if(trying){trying=null;showTryPill()}
   refreshThemeLocks();if(!themeOK(theme))setTheme('plain');
   if(levelIdx>topLevel())load(topLevel());else refreshNav();
 }
