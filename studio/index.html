@@ -438,10 +438,10 @@ function lanternMake(opt){return function(A,out,ui){const jz=opt.jazz,up=opt.upr
     for(let c=0;c<2;c++){const x=new Float32Array(L+F);let y=0;for(let i=0;i<L+F;i++){y+=.3*((R()*2-1)-y);x[i]=y*.35}
       for(let j=0;j<L/sr*55;j++){const p=Math.floor(R()*(L+F-sr*.02)),f=2000+R()*3500,a=.04+R()*.08;for(let i=0;i<sr*.012;i++){const tt=i/sr;x[p+i]+=a*Math.sin(2*Math.PI*f*tt)*Math.sin(Math.PI*Math.min(1,tt/.002))*Math.exp(-tt/.003)}}
       const g=rb.getChannelData(c);for(let i=0;i<L;i++)g[i]=x[i];for(let i=0;i<F;i++){const w=i/F;g[i]=x[i]*w+x[L+i]*(1-w)}}
-    const rs=A.createBufferSource();rs.buffer=rb;rs.loop=true;const rf=A.createBiquadFilter();rf.type='lowpass';rf.frequency.value=3200;const rg=A.createGain();rg.gain.setValueAtTime(0,A.currentTime);rg.gain.linearRampToValueAtTime(.07,A.currentTime+5);
+    const rs=A.createBufferSource();rs.buffer=rb;rs.loop=true;const rf=A.createBiquadFilter();rf.type='lowpass';rf.frequency.value=700;rf.Q.value=.3;const rg=A.createGain();rg.gain.setValueAtTime(0,A.currentTime);rg.gain.linearRampToValueAtTime(.03,A.currentTime+6);
     rs.connect(rf).connect(rg).connect(out);rs.start();stops.push(rs);
     const TH=oneShot(6,(d,sr)=>{let y=0,z=0;for(let i=0;i<d.length;i++){const tt=i/sr;y+=.004*((R()*2-1)-y);z+=.02*(y-z);d[i]=z*Math.pow(Math.sin(Math.PI*Math.min(1,tt/6)),1.5)*(1+.5*Math.sin(tt*3))}let pk=0;for(const v of d)pk=Math.max(pk,Math.abs(v));if(pk)for(let i=0;i<d.length;i++)d[i]/=pk});
-    const thBus=mix.bus(.8,.4);let nextTh=A.currentTime+25+R()*30;stops.push(Clock(A,t=>{if(t>=nextTh){playBuf(A,thBus,TH,t,.05,1,(R()-.5)*.6);nextTh=t+45+R()*60}return .5}))}
+    const thBus=mix.bus(.8,.4);let nextTh=A.currentTime+25+R()*30;stops.push(Clock(A,t=>{if(t>=nextTh){playBuf(A,thBus,TH,t,.03,1,(R()-.5)*.6);nextTh=t+45+R()*60}return .5}))}
   const ph=Phraser({lo:7,hi:14,rh:[[1,2],[2,3]],end:[2,3],minLen:2,maxLen:4,varyP:.5});
   // one bar = sixteen 16th notes at about 83 bpm; everything sits exactly on this grid and repeats, so it locks in
   const step=.18,KICK={0:1,7:.6,10:.85},TH={tresillo:[0,6,12],offbeat:[2,6,10,14],sway:[0,6,10]};let n=0,ix=2;
@@ -946,7 +946,7 @@ function calmCurrent(a,out){const cfg=MUSICS[0];const t0=a.currentTime;let mus;
 return{calm:calmCurrent,gen:(name)=>(A,out)=>genTrack(A,out,name)};
 })();
 const TRACKS=[
- {name:'Field (was Calm)',desc:'More hopeful and open: wide add9 chords that swell slowly, a gentle shimmer, faint wind, and a real grand piano in the style of open-world field music. Short fragments with free timing and lots of silence, and a left hand that now often answers the right: a low root, a root with its fifth, octave or tenth, or a mid-range chord tone, a moment after a high or mid phrase. The notes are its own, not the game\'s.',
+ {name:'Open World (was Calm)',desc:'More hopeful and open: wide add9 chords that swell slowly, a gentle shimmer, faint wind, and a real grand piano in the style of open-world field music. Short fragments with free timing and lots of silence, and a left hand that now often answers the right: a low root, a root with its fifth, octave or tenth, or a mid-range chord tone, a moment after a high or mid phrase. The notes are its own, not the game\'s.',
   opts:[['Current',(A,o)=>CUR.calm(A,o)],['New',(A,o,u)=>NEW.calm(A,o,u)]]},
  {name:'Lattice (new, replaces Dawn)',desc:'Built like the puzzle itself. Five short pieces, now mostly a soft, ambient electric-piano bell with a little wooden marimba underneath, each looping at a different length. The lengths never line up, so the pieces keep sliding apart and fitting back together in new ways, and it never repeats exactly. Each piece has its own place around you. One piece is swapped out every couple of minutes, and now and then the whole thing shifts key. One gentle major scale, so nothing ever clashes.',
   opts:[['Lattice',(A,o,u)=>NEW.lattice(A,o,u)]]},
