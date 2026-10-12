@@ -2555,7 +2555,7 @@ function win(){
   const sc=statColors(),parts=[['Pulls',pulls,'pulls']];if(taps||blocks.some(b=>b.dotFace))parts.push(['Taps',taps,'taps']);parts.push(['Bumps',oopsCount(),'bumps']);
   // two lines with a little breathing room between them: the counts, then the total moves and best
   const l1=document.createElement('div');parts.forEach(([w,n,k],i)=>{if(i)l1.append('  ·  ');const lb=document.createElement('span');lb.textContent=w;lb.style.color=sc[k];l1.append(lb,' '+n)});
-  const l2=document.createElement('div');l2.className='movesline';const mv=document.createElement('span');mv.textContent=stat(moves,'Move');mv.style.color=movesColor();
+  const l2=document.createElement('div');l2.className='movesline';const mv=document.createElement('span');{const ml=document.createElement('span');ml.textContent='Moves';ml.style.color=movesColor();mv.append(ml,' '+moves)} // the word in color, the number plain like the counts above
   l2.append(bestBit(mv,prev===undefined?'':isBest?'  ·  New best!':'  ·  Best: '+prev));
   tl.replaceChildren(l1,l2);
   tl.classList.remove('best');
