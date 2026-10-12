@@ -852,11 +852,16 @@ function crackMesh(side,seed){let r=seed>>>0||7;const rnd=()=>{r=(r*1664525+1013
     const [x,y,a]=edgePt(),bend=(rnd()-.5)*.08,r=walk(x,y,a,{w0:.022,wEnd:.018,steps:5+Math.floor(rnd()*4),turn:.14,bend,L0:.05,L1:.03});
     if(!r[3]){if(rnd()<.65){walk(r[0],r[1],r[2]-.35,{w0:.02,wEnd:.014,steps:30,turn:.16,bend,L0:.05,L1:.03});walk(r[0],r[1],r[2]+.35,{w0:.02,wEnd:.014,steps:30,turn:.16,bend:-bend,L0:.05,L1:.03})}
       else walk(r[0],r[1],r[2],{w0:.02,wEnd:.014,steps:30,turn:.16,bend,L0:.05,L1:.03})}}
-  else if(style===3){ // 4 edge stress crack: runs in from an edge and forks again and again into a fan
-    const [x,y,a]=edgePt();branch(x,y,a+(rnd()-.5)*.4,.028,3,.7)}
-  else if(style===4){ // 5 long split: one crack edge to edge, with a few short splinters
-    const a=rnd()*Math.PI*2,sx=(rnd()-.5)*.3,sy=(rnd()-.5)*.3;
-    walk(sx,sy,a,{w0:.03,wEnd:.016,steps:24,turn:.4,L0:.05,L1:.05,fork:.18});walk(sx,sy,a+Math.PI,{w0:.03,wEnd:.016,steps:24,turn:.4,L0:.05,L1:.05,fork:.18})}
+  else if(style===3){ // 4 half-moon: a windshield-style chip, a curved crescent crack around the hit with short spokes inside, and a crack running off it to the edge
+    const cx=(rnd()-.5)*.3,cy=(rnd()-.5)*.3,R=.16+rnd()*.07,a0=rnd()*Math.PI*2,span=Math.PI*(.85+rnd()*.35),M=10,arc=[];
+    for(let i=0;i<=M;i++){const a=a0+span*i/M,r=R*(1+(rnd()-.5)*.12);arc.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r])}
+    for(let i=1;i<arc.length;i++)segs.push([arc[i-1],arc[i],.024]);
+    const K=4+Math.floor(rnd()*3);for(let i=0;i<K;i++){const a=a0+span*(i+.5)/K+(rnd()-.5)*.2,r=R*(.6+rnd()*.35);segs.push([[cx,cy],[cx+Math.cos(a)*r,cy+Math.sin(a)*r],.016])}
+    const e=rnd()<.5?arc[0]:arc[M],ea=Math.atan2(e[1]-cy,e[0]-cx)+(rnd()-.5)*.6;
+    walk(e[0],e[1],ea,{w0:.022,wEnd:.012,steps:20,turn:.35,L0:.05,L1:.05})}
+  else if(style===4){ // 5 sweeping arcs: two or three long, smoothly curving cracks that sweep across the face from edge to edge
+    const n=2+Math.floor(rnd()*2),bend=(rnd()<.5?1:-1)*(.07+rnd()*.06);
+    for(let i=0;i<n;i++){const [x,y,a]=edgePt();walk(x,y,a+(rnd()-.5)*.7,{w0:.024,wEnd:.014,steps:40,turn:.08,bend:bend*(.7+rnd()*.6),L0:.045,L1:.03,fork:.06})}}
   else if(style===5){ // 6 corner hit: cracks fan into the face from near one corner
     const qx=rnd()<.5?-1:1,qy=rnd()<.5?-1:1,cx=qx*(H-.06-rnd()*.08),cy=qy*(H-.06-rnd()*.08),inward=Math.atan2(-qy,-qx),N=3+Math.floor(rnd()*3);
     for(let i=0;i<N;i++)walk(cx,cy,inward+(i/(N-1||1)-.5)*1.5+(rnd()-.5)*.25,{w0:.03,wEnd:.012,steps:6+Math.floor(rnd()*10),turn:.45,L0:.06,L1:.07,fork:.2})}
@@ -877,11 +882,11 @@ function crackMesh(side,seed){let r=seed>>>0||7;const rnd=()=>{r=(r*1664525+1013
   else if(style===8){ // 9 forked tree: one crack from inside the face that splits into a branching tree, like frost or lightning
     const cx=(rnd()-.5)*.3,cy=(rnd()-.5)*.3,a=rnd()*Math.PI*2;
     branch(cx,cy,a,.026,4,.8);walk(cx,cy,a+Math.PI+(rnd()-.5)*.4,{w0:.024,wEnd:.012,steps:3+Math.floor(rnd()*3),turn:.4,L0:.05,L1:.05})}
-  else{ // 10 crazing: a patch of fine, short hairline cracks, with one longer crack leading out of it
-    const cx=(rnd()-.5)*.36,cy=(rnd()-.5)*.36,R=.13+rnd()*.07;
-    for(let i=0;i<22;i++){const ang=rnd()*Math.PI*2,d=Math.sqrt(rnd())*R;
-      walk(cx+Math.cos(ang)*d,cy+Math.sin(ang)*d,rnd()*Math.PI*2,{w0:.011,wEnd:.009,steps:2+Math.floor(rnd()*2),turn:1.2,L0:.025,L1:.03})}
-    walk(cx,cy,rnd()*Math.PI*2,{w0:.022,wEnd:.012,steps:18,turn:.4,L0:.05,L1:.05})}
+  else{ // 10 double hit: two small star bursts joined by a crack, with one long crack running from the second to the edge
+    const p1=[(rnd()-.5)*.5,(rnd()-.5)*.5],ang=rnd()*Math.PI*2,d=.3+rnd()*.12;let p2=clampP(p1[0]+Math.cos(ang)*d,p1[1]+Math.sin(ang)*d);
+    for(const p of [p1,p2]){const N=5+Math.floor(rnd()*3);for(let i=0;i<N;i++)walk(p[0],p[1],i/N*Math.PI*2+rnd()*.5,{w0:.022,wEnd:.012,steps:2+Math.floor(rnd()*2),turn:.35,L0:.045,L1:.045})}
+    {let x=p1[0],y=p1[1];const k=5;for(let i=1;i<=k;i++){const t=i/k,nx=p1[0]+(p2[0]-p1[0])*t+(i<k?(rnd()-.5)*.04:0),ny=p1[1]+(p2[1]-p1[1])*t+(i<k?(rnd()-.5)*.04:0);segs.push([[x,y],[nx,ny],.022]);x=nx;y=ny}}
+    walk(p2[0],p2[1],ang+(rnd()-.5)*.8,{w0:.024,wEnd:.012,steps:24,turn:.35,L0:.05,L1:.05})}
   // every crack reaches the edge of the face at least once: if none did, one more line runs straight out to the edge
   if(!reached){let best=null,bd=-1;segs.forEach(sg=>{const p=sg[1],d=Math.hypot(p[0],p[1]);if(d>bd){bd=d;best=sg}});
     const p=best?best[1]:[0,0],q=best?best[0]:[0,0];walk(p[0],p[1],Math.atan2(p[1]-q[1],p[0]-q[0])||rnd()*6.28,{w0:.02,wEnd:.012,steps:60,turn:0,L0:.05,L1:.04})}
