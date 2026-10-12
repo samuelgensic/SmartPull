@@ -449,7 +449,7 @@ const groupOf=i=>(GROUPS.find(g=>i+1<=g[0])||GROUPS[GROUPS.length-1])[1];
 // one glyph per chapter, matching the final medallion designs from the level-menu preview
 const ICONS={
   Pull:'<path d="M7.8 4 Q12.5 8.5 16.8 12 Q12.5 15.5 7.8 20" stroke-width="4.2"/>',
-  Twist:'<path d="M19.60 12.00a7.6 7.6 0 1 1 -2.51 -5.65"/><path d="M16.90 2.76L17.09 6.35L13.49 6.54"/>',
+  Twist:'<path d="M18.71 15.13A7.4 7.4 0 1 1 14.53 5.05"/><path d="M12.53 1.58L14.53 5.05L10.77 6.41"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/>',
   Stack:'<rect x="6.5" y="3" width="11" height="5" rx="1.2"/><rect x="6.5" y="9.5" width="11" height="5" rx="1.2"/><rect x="6.5" y="16" width="11" height="5" rx="1.2"/>',
   Build:'<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16"/>',
   Link:'<rect x="2.5" y="6.5" width="19" height="11" rx="3"/><path d="M12 6.5v11"/>',
@@ -478,7 +478,7 @@ function lvLabel(i){const b=document.getElementById('lvl');if(!b)return;
    It shows no text until tapped; tapping opens a short explanation. It keeps a soft pulse until you've opened it once. */
 const TIP_ICON={
   pull:'<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
-  dot:'<svg viewBox="0 0 24 24"><path d="M19.60 12.00a7.6 7.6 0 1 1 -2.51 -5.65"/><path d="M16.90 2.76L17.09 6.35L13.49 6.54"/></svg>',
+  dot:'<svg viewBox="0 0 24 24"><path d="M18.71 15.13A7.4 7.4 0 1 1 14.53 5.05"/><path d="M12.53 1.58L14.53 5.05L10.77 6.41"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/></svg>',
   link:'<svg viewBox="0 0 24 24"><rect x="2.5" y="7.5" width="9" height="9" rx="2"/><rect x="12.5" y="7.5" width="9" height="9" rx="2"/></svg>',
   pairdot:'<svg viewBox="0 0 24 24"><rect x="2.5" y="7.5" width="9" height="9" rx="2"/><rect x="12.5" y="7.5" width="9" height="9" rx="2"/><circle cx="17" cy="12" r="2" fill="currentColor" stroke="none"/></svg>',
   drop:'<svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="8" rx="2"/><path d="M12 13v5M9.5 15.5L12 18l2.5-2.5M3 21h18"/></svg>',
