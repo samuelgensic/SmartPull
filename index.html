@@ -867,13 +867,23 @@ function shardMats(th){th=th||theme;if(SHARD.mats[th])return SHARD.mats[th];cons
 function shardMesh(){for(const me of SHARD.meshes)if(!me.parent&&!me.userData.taken){me.userData.taken=true;return me}
   const me=new THREE.Mesh(),ed=new THREE.LineSegments();me.add(ed);me.renderOrder=5;ed.renderOrder=6;me.userData.taken=true;SHARD.meshes.push(me);return me}
 function sparkMat(neon,sc){return new THREE.PointsMaterial({size:.07*sc,vertexColors:true,transparent:true,depthWrite:false,blending:neon?THREE.AdditiveBlending:THREE.NormalBlending})}
-// get everything glass needs ready before the first break: the shard shapes, and the materials compiled for every mode
-function warmShards(){recordGlassSounds();if(SHARD.warm)return;SHARD.warm=true;const pool=shardPool(),g=new THREE.Group();
-  ['plain','brand','neon'].forEach(th=>{const [m,e]=shardMats(th),me=new THREE.Mesh(pool[0].geo,m);me.add(new THREE.LineSegments(pool[0].edges,e));g.add(me)});
-  [false,true].forEach(nn=>{const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(3),3));pg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(3),3));g.add(new THREE.Points(pg,sparkMat(nn,1)))});
-  while(SHARD.meshes.length<84){const me=new THREE.Mesh(),ed=new THREE.LineSegments();me.add(ed);me.renderOrder=5;ed.renderOrder=6;SHARD.meshes.push(me)}
-  g.scale.setScalar(1e-4);g.position.set(0,0,-1e3);scene.add(g);try{renderer.compile(scene,camera)}catch(e){}
-  requestAnimationFrame(()=>requestAnimationFrame(()=>scene.remove(g)))} // drawn once off to the side, so its buffers are on the graphics card too
+/* Get everything glass needs ready before it's used. On iPhone, Safari finishes setting up each new look (shards, their edges,
+   the sparkle, crack lines, cracked glass) on the graphics chip the first time it is actually drawn, which can freeze the game
+   for about a second. So each one is really drawn once, out of sight behind the camera, as soon as a glass level opens
+   (and again after a mode change). They must not be skipped as off screen, or nothing gets prepared. */
+const _wv=new THREE.Vector3();
+function warmShards(){recordGlassSounds();const th=theme;
+  if(!SHARD.meshes.length)while(SHARD.meshes.length<84){const me=new THREE.Mesh(),ed=new THREE.LineSegments();me.add(ed);me.renderOrder=5;ed.renderOrder=6;SHARD.meshes.push(me)}
+  if(SHARD.warm===th)return;SHARD.warm=th;const pool=shardPool(),g=new THREE.Group(),neon=th==='neon',[m,e]=shardMats(th);
+  const me=new THREE.Mesh(pool[0].geo,m);me.add(new THREE.LineSegments(pool[0].edges,e));g.add(me);
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(3),3));pg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(3),3));
+  g.add(new THREE.Points(pg,sparkMat(neon,1)));
+  g.add(new THREE.Mesh(pool[0].geo,new THREE.MeshBasicMaterial({color:crackColor(),transparent:true,opacity:.95,side:THREE.DoubleSide,depthWrite:false}))); // crack lines
+  g.add(new THREE.Mesh(pool[0].geo,crackedMat(neon)),new THREE.Mesh(pool[0].geo,glassMat(neon)),new THREE.LineSegments(pool[0].edges,edgeMat(neon))); // cracked and whole glass
+  g.traverse(o=>{o.frustumCulled=false;if(o.isMesh||o.isLine||o.isPoints)o.renderOrder=5});
+  camera.getWorldDirection(_wv);g.position.copy(camera.position).addScaledVector(_wv,-3); // behind the camera: drawn, but never seen
+  scene.add(g);try{renderer.compile(scene,camera)}catch(err){}
+  requestAnimationFrame(()=>requestAnimationFrame(()=>scene.remove(g)))}
 function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.getWorldPosition(p);body.remove(o.mesh);shatterSound();warmShards();
   const sc=pivot.scale.x,V=THREE.Vector3,pool=shardPool(),[m,e]=shardMats();
   for(let i=0;i<42;i++){const sh=pool[i%pool.length],k=(.09+Math.random()*.12)*sc/.85; // a shape from the pool, sized like before
@@ -977,6 +987,13 @@ function shardSim(tw){let dt=tw.t-tw.last;tw.last=tw.t;if(dt<=0)return;
     arr.needsUpdate=true;S.mat.opacity=Math.max(0,1-S.age/S.life);
     if(S.age>=S.life){scene.remove(S.pts);S.pts.geometry.dispose();S.mat.dispose();shardsLive=shardsLive.filter(x=>x!==S.pts);S.gone=true}}
   SHARD.sparks=SHARD.sparks.filter(S=>!S.gone)}
+
+// a hidden frame meter for testing on a phone: open the game with #perf at the end of the link
+if(/perf/.test(location.hash)){const d=document.createElement('div');d.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 4px);left:50%;transform:translateX(-50%);z-index:99;font:11px ui-monospace,monospace;background:rgba(0,0,0,.65);color:#fff;padding:3px 8px;border-radius:8px;pointer-events:none;white-space:nowrap';
+  document.body.appendChild(d);let l=performance.now(),t0=l,fr=0,worst=0;const hitches=[];
+  (function w(n){const g=n-l;l=n;fr++;if(g>worst)worst=g;if(g>45)hitches.push(Math.round(g));
+    if(n-t0>=1000){d.textContent=fr+' fps · worst '+Math.round(worst)+' ms'+(hitches.length?' · hitches '+hitches.slice(-5).join(', '):'');fr=0;worst=0;t0=n}
+    requestAnimationFrame(w)})(l)}
 function shatterSound(){if(!soundOn)return;const a=audio();if(!a)return;
   if(GLASS_SND.shatter.length){playBuf(GLASS_SND.shatter[Math.floor(Math.random()*GLASS_SND.shatter.length)]);return} // the recorded break (see recordGlassSounds)
   recordGlassSounds();shatterSoundTo(a,a.currentTime)}
@@ -2001,6 +2018,7 @@ function setTheme(t,trial){
   const bl=document.getElementById('blBtn');if(bl)bl.hidden=t!=='neon'; // the on-screen Blacklight switch only shows in Neon
   if(glowReady)applyGlow(); // (skipped during startup, before the Blacklight setting has loaded)
   if(typeof updateLeft==='function'&&blocks.length)updateLeft(); // re-color the tap count for the new theme
+  if(blocks.some(b=>b.glass)&&typeof warmShards==='function')setTimeout(warmShards,60); // get glass ready in the new mode's look
 }
 // the paint button opens the Themes panel
 const themesPanel=document.getElementById('themes');
