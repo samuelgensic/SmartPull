@@ -45,13 +45,17 @@ button.on .ic{border:0;width:9px;height:9px;background:currentColor;border-radiu
   <button class="stop" id="stopAll" type="button">Stop</button>
 </div>
 <div id="cards"></div>
-<p class="foot">Headphones or a good speaker help. On iPhone, the ring/silent switch doesn't mute this page. Piano: Salamander Grand Piano by Alexander Holm (CC BY 3.0).</p>
+<p class="foot">Headphones or a good speaker help. For AirPlay or a HomePod, connect it first, then open or reload this page, then press play. On iPhone, the ring/silent switch doesn't mute this page. Piano: Salamander Grand Piano by Alexander Holm (CC BY 3.0).</p>
 </main>
 <script>
 /* ================= SmartPull music engine (new) =================
    Shared pieces: a lookahead clock, a warm hall, sampled instruments rendered once per note
    (plucked harp, music-box tine, felt piano), a song "form" that plans bars ahead (key, chord,
    texture, energy), and a phrase maker that writes melodies from motifs it remembers and varies. */
+// every one-shot sound (oscillator or sample) disconnects itself the moment it ends, so finished notes never pile up
+// (Safari/WebKit is slow to clean these up on its own; a growing pile overloads the audio thread and crackles over AirPlay)
+(function(){const P=typeof AudioScheduledSourceNode!=='undefined'&&AudioScheduledSourceNode.prototype;if(!P||P.__autoFree)return;const st=P.start;
+  P.start=function(...a){const self=this;try{self.addEventListener('ended',()=>{try{self.disconnect()}catch(e){}},{once:true})}catch(e){}return st.apply(this,a)};P.__autoFree=1})();
 const MT=m=>440*Math.pow(2,(m-69)/12);
 const R=Math.random,pick=a=>a[Math.floor(R()*a.length)];
 function wpick(items,w){let s=0;for(const x of w)s+=x;let r=R()*s;for(let i=0;i<items.length;i++){r-=w[i];if(r<=0)return items[i]}return items[items.length-1]}
@@ -75,16 +79,18 @@ function Clock(A,step){let next=A.currentTime+.08,alive=true;
   const id=setInterval(()=>{if(alive)pump(A.currentTime+.4)},50);pump(A.currentTime+.4);
   return()=>{alive=false;clearInterval(id)}}
 
-function Mix(A,out,{verbSec=6,dark=.9}={}){
+function Mix(A,out,{verbSec=6,dark=.9}={}){verbSec=Math.min(verbSec,3.5); // shorter reverbs cost far less to run (helps AirPlay)
   const verb=A.createConvolver();verb.buffer=hall(A,verbSec,dark);verb.connect(out);
   const bus=(dry,wet,pre)=>{const g=A.createGain();let src=g;if(pre){g.connect(pre[0]);src=pre[pre.length-1]}
     const dg=A.createGain();dg.gain.value=dry;src.connect(dg).connect(out);const wg=A.createGain();wg.gain.value=wet;src.connect(wg).connect(verb);return g};
   return{verb,bus}}
 
 function playBuf(A,dest,buf,t,vol,rate=1,pan=0){const s=A.createBufferSource();s.buffer=buf;s.playbackRate.value=rate;
-  const g=A.createGain();g.gain.value=vol;let n=s.connect(g);
-  if(pan&&A.createStereoPanner){const p=A.createStereoPanner();p.pan.value=pan;n=n.connect(p)}
-  n.connect(dest);s.start(Math.max(t,A.currentTime));s.onended=()=>{try{g.disconnect()}catch(e){}}}
+  const g=A.createGain();g.gain.value=vol;let n=s.connect(g),p=null;
+  if(pan&&A.createStereoPanner){p=A.createStereoPanner();p.pan.value=pan;n=n.connect(p)}
+  n.connect(dest);s.start(Math.max(t,A.currentTime));
+  // when the sound ends, release every node it used (left connected, finished panners pile up and overload the audio thread)
+  s.onended=()=>{try{s.disconnect();g.disconnect();if(p)p.disconnect()}catch(e){}}}
 
 function finish(d,sr,fadeIn=.0015,fadeOut=.25){let pk=0;for(let i=0;i<d.length;i++)pk=Math.max(pk,Math.abs(d[i]));const g=pk?1/pk:1;
   const fi=Math.floor(sr*fadeIn),fo=Math.floor(sr*fadeOut);
@@ -415,7 +421,7 @@ function lanternMake(opt){return function(A,out,ui){const jz=opt.jazz,up=opt.upr
     const rs=A.createBufferSource();rs.buffer=rb;rs.loop=true;const rf=A.createBiquadFilter();rf.type='lowpass';rf.frequency.value=3200;const rg=A.createGain();rg.gain.setValueAtTime(0,A.currentTime);rg.gain.linearRampToValueAtTime(.07,A.currentTime+5);
     rs.connect(rf).connect(rg).connect(out);rs.start();stops.push(rs);
     const TH=oneShot(6,(d,sr)=>{let y=0,z=0;for(let i=0;i<d.length;i++){const tt=i/sr;y+=.004*((R()*2-1)-y);z+=.02*(y-z);d[i]=z*Math.pow(Math.sin(Math.PI*Math.min(1,tt/6)),1.5)*(1+.5*Math.sin(tt*3))}let pk=0;for(const v of d)pk=Math.max(pk,Math.abs(v));if(pk)for(let i=0;i<d.length;i++)d[i]/=pk});
-    let nextTh=A.currentTime+25+R()*30;stops.push(Clock(A,t=>{if(t>=nextTh){playBuf(A,mix.bus(.8,.4),TH,t,.05,1,(R()-.5)*.6);nextTh=t+45+R()*60}return .5}))}
+    const thBus=mix.bus(.8,.4);let nextTh=A.currentTime+25+R()*30;stops.push(Clock(A,t=>{if(t>=nextTh){playBuf(A,thBus,TH,t,.05,1,(R()-.5)*.6);nextTh=t+45+R()*60}return .5}))}
   const ph=Phraser({lo:7,hi:14,rh:[[1,2],[2,3]],end:[2,3],minLen:2,maxLen:4,varyP:.5});
   // one bar = sixteen 16th notes at about 83 bpm; everything sits exactly on this grid and repeats, so it locks in
   const step=.18,KICK={0:1,7:.6,10:.85},TH={tresillo:[0,6,12],offbeat:[2,6,10,14],sway:[0,6,10]};let n=0,ix=2;
@@ -526,7 +532,7 @@ NEW.lattice=function(A,out,ui){const mix=Mix(A,out,{verbSec:5,dark:.9}),stops=[]
     ui&&ui({sect,key:keyName(root),tex:lanes.filter(L=>!L.rest&&t>=L.start).length+' of 5 pieces playing',energy:lanes.filter(L=>!L.rest&&t>=L.start).length/5});
     return .1}));
   return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
-TRIM_DB.lattice=2;{const f=NEW.lattice;NEW.lattice=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.lattice/20);o.connect(out);return f(A,o,ui)}}
+TRIM_DB.lattice=4;{const f=NEW.lattice;NEW.lattice=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.lattice/20);o.connect(out);return f(A,o,ui)}}
 
 /* Mechanism (new), rebuilt: shaped the way Thom Yorke's electronic tracks unfold (The Eraser, Tomorrow's Modern Boxes, Anima),
    with original notes. One slow intensity arc (about five minutes: a long build, a peak, a breakdown to almost nothing, a rebuild)
@@ -638,7 +644,7 @@ NEW.glasswork=function(A,out,ui){const K=yorkeKit(A,out,{verbSec:5,dark:.9}),{mi
   const PAPER=shot(.09,d=>{let y=0;for(let i=0;i<d.length;i++){const t=i/sr;y+=.25*((R()*2-1)-y);d[i]=y*Math.sin(Math.PI*Math.min(1,t/.09))}});
   const BREATH=shot(.35,d=>{let y=0,z=0;for(let i=0;i<d.length;i++){const t=i/sr;y+=.08*((R()*2-1)-y);z+=.3*(y-z);d[i]=(y-z)*Math.sin(Math.PI*t/.35)}});
   const HEART=shot(.3,d=>{let ph=0;for(let i=0;i<d.length;i++){const t=i/sr;ph+=2*Math.PI*(52+20*Math.exp(-t/.04))/sr;d[i]=Math.sin(ph)*Math.exp(-t/.09)}});
-  const perc=K.mix.bus(.9,.03),glassBus=K.mix.bus(.6,.45),ech=K.echo(step*6,.38,2200,.5);const gSend=A.createGain();gSend.gain.value=.4;gSend.connect(ech);
+  const heartBus=K.mix.bus(.95,.05),perc=K.mix.bus(.9,.03),glassBus=K.mix.bus(.6,.45),ech=K.echo(step*6,.38,2200,.5);const gSend=A.createGain();gSend.gain.value=.4;gSend.connect(ech);
   // drone: two soft triangles and a low sine per note, breathing slowly, through a filter that opens with the arc
   const dLp=A.createBiquadFilter();dLp.type='lowpass';dLp.frequency.value=900;dLp.Q.value=.4;dLp.connect(K.mix.bus(.5,.65));
   const breathe=A.createOscillator();breathe.frequency.value=.07;const bg=A.createGain();bg.gain.value=.25;const dg=A.createGain();dg.gain.value=.75;breathe.connect(bg).connect(dg.gain);dg.connect(dLp);breathe.start();stops.push(breathe);
@@ -655,7 +661,7 @@ NEW.glasswork=function(A,out,ui){const K=yorkeKit(A,out,{verbSec:5,dark:.9}),{mi
     if(gF>.02)for(const[p,d]of FIG)if(n%10===p&&R()<.8){const s=glass(pent(d+5));playBuf(A,glassBus,s.buf,t,.045*gF,s.rate,-.3+p*.07)}
     // dry found percussion: a felted knock on a wooden box, and a faint seed shaker near the top
     if(gP>.02){if(tokP[n%tokP.length])playBuf(A,perc,WOOD,t,.035*gP*(.8+R()*.3),1+(R()-.5)*.03,.25);if(i>.7&&k%2===1)playBuf(A,perc,SEED,t,.006*gP*(k%4===3?1:.6),1,-.3)}
-    if(gH>.02&&(k===0||k===3))playBuf(A,K.mix.bus(.95,.05),HEART,t,(k?.12:.18)*gH);
+    if(gH>.02&&(k===0||k===3))playBuf(A,heartBus,HEART,t,(k?.12:.18)*gH);
     if(gM>.02&&k===0&&bar%4===2&&t>lastMel&&R()<.7){const st=8+Math.floor(R()*4);[st,st-1,st+1].slice(0,2+Math.floor(R()*2)).forEach((d,j)=>{const s=glass(pent(d+5));const at=t+j*step*8;playBuf(A,glassBus,s.buf,at,.05*gM,s.rate,.2)});lastMel=t+step*48}
     n++;return step}));
   return stopAll(stops)};
@@ -725,7 +731,7 @@ NEW.signal=function(A,out,ui){const K=yorkeKit(A,out,{verbSec:2.6,dark:.9}),{sr,
   const fLp=A.createBiquadFilter();fLp.type='lowpass';fLp.frequency.value=700;fLp.connect(K.mix.bus(.95,.04));
   const fret=(m,t,dur,v)=>{[['sine',1],['triangle',.35]].forEach(([ty,w])=>{const o=A.createOscillator();o.type=ty;o.frequency.setValueAtTime(MT(m-1),t);o.frequency.exponentialRampToValueAtTime(MT(m),t+.07);const g=A.createGain();
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.08*v*w,t+.02);g.gain.setTargetAtTime(.04*v*w,t+.05,.15);g.gain.setTargetAtTime(0,t+dur,.05);o.connect(g).connect(fLp);o.start(t);o.stop(t+dur+.4)})};
-  const bellB=Sampler(A,'bell');
+  const bellB=Sampler(A,'bell'),bellBus=K.mix.bus(.5,.6);
   const AP=[0,1,2,0,1,2,3];let n=0,lastBell=0;
   stops.push(Clock(A,t=>{const k=n%16,bar=Math.floor(n/16),i=I(t),r=PROG[Math.floor(bar/2)%4],gA=G(i,.08),gL=G(i,.15),gT=G(i,.22),gQ=G(i,.3),gF=G(i,.35),gH=G(i,.5),gS=G(i,.62),gB=G(i,.86);
     const tones=[r,r+2,r+4,r+6].map(d=>{let m=pitchOf(KEY,d);while(m>66)m-=12;while(m<55)m+=12;return m}).sort((a,b)=>a-b);
@@ -743,7 +749,7 @@ NEW.signal=function(A,out,ui){const K=yorkeKit(A,out,{verbSec:2.6,dark:.9}),{sr,
     if(gF>.02){const pos=n%32,BP={0:0,6:0,10:4,16:0,22:2,26:4};if(pos in BP){let m=pitchOf(KEY,r+BP[pos])-24;while(m>47)m-=12;while(m<36)m+=12;fret(m,t,step*2.5,gF)}}
     if(gH>.02&&(k===0||k===8))playBuf(A,perc,THMP,t,.13*gH);
     if(gS>.02&&(k===4||k===12))playBuf(A,perc,SNAP,t,.045*gS,1,k===4?-.2:.2);
-    if(gB>.02&&k===0&&bar%4===2&&t>lastBell&&R()<.7){[0,4,2].slice(0,2+Math.floor(R()*2)).forEach((d,j)=>{let m=pitchOf(KEY,r+d)+24;while(m>88)m-=12;const s=bellB(m);playBuf(A,K.mix.bus(.5,.6),s.buf,t+j*step*6,.05*gB,s.rate,.2);playBuf(A,ech,s.buf,t+j*step*6,.03*gB,s.rate,0)});lastBell=t+step*64}
+    if(gB>.02&&k===0&&bar%4===2&&t>lastBell&&R()<.7){[0,4,2].slice(0,2+Math.floor(R()*2)).forEach((d,j)=>{let m=pitchOf(KEY,r+d)+24;while(m>88)m-=12;const s=bellB(m);playBuf(A,bellBus,s.buf,t+j*step*6,.05*gB,s.rate,.2);playBuf(A,ech,s.buf,t+j*step*6,.03*gB,s.rate,0)});lastBell=t+step*64}
     n++;return step}));
   return stopAll(stops)};
 for(const k of['glasswork','undertow','signal']){TRIM_DB[k]={glasswork:-1,undertow:-5.5,signal:-6.5}[k];const f=NEW[k];NEW[k]=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB[k]/20);o.connect(out);return f(A,o,ui)}}
@@ -880,7 +886,9 @@ function silentClip(){const n=2000,buf=new ArrayBuffer(44+n),v=new DataView(buf)
 function unlockPlayback(){if(navigator.audioSession||keepAlive)return;
   try{keepAlive=new Audio(silentClip());keepAlive.loop=true;keepAlive.setAttribute('playsinline','');keepAlive.play().catch(()=>{keepAlive=null})}catch(e){keepAlive=null}}
 function ctx(){unlockPlayback();
-  if(!A){A=new (window.AudioContext||window.webkitAudioContext)();
+  if(!A){const AC=window.AudioContext||window.webkitAudioContext;
+    // music, not game taps: ask for the larger "playback" buffer, which keeps AirPlay / HomePod streams from crackling
+    try{A=new AC({latencyHint:'playback'})}catch(e){A=new AC()}
     A.onstatechange=()=>{if(A.state!=='running'&&!document.hidden)A.resume().catch(()=>{})};
     master=A.createGain();master.gain.value=Math.pow(+vol.value/70,2);master.connect(A.destination);
     try{const b=A.createBuffer(1,1,A.sampleRate),s=A.createBufferSource();s.buffer=b;s.connect(A.destination);s.start(0)}catch(e){}
