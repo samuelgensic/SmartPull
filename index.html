@@ -840,7 +840,7 @@ function shatterPath(unit){const out=[];
 /* Glass shatters with Burst (picked Oct 12 in the Glass Shatter Lab): it snaps apart and throws thin shards outward with a small sparkle.
    Shards are little solid pieces: they bounce off the cubes and settle on them. Gravity always pulls toward the bottom of the screen,
    so turning the puzzle tips resting shards off. Contact points cover each shard's faces and edges, so no cube edge pokes through one. */
-const SHARD={list:[],sparks:[],sim:null,sig:0,lastTink:0,pool:null,mats:{},acc:0,warm:false};
+const SHARD={list:[],sparks:[],sim:null,sig:0,lastTink:0,pool:null,mats:{},acc:0,warm:false,meshes:[]};
 // "down" is the puzzle's floor direction in its starting view, so shards rest on the cubes there and slide off once you turn the puzzle away from it
 const SH_G=new THREE.Vector3(0,-1,0).applyQuaternion(new THREE.Quaternion().setFromEuler(new THREE.Euler(.5,-.65,0))),SH_UP=SH_G.clone().negate();
 /* Smoothness: 16 shard shapes are made once, ahead of time, and reused at any size, so breaking glass only places pieces
@@ -863,23 +863,27 @@ function shardMats(th){th=th||theme;if(SHARD.mats[th])return SHARD.mats[th];cons
     :new THREE.MeshPhongMaterial({color:0xBFE3EE,specular:0xffffff,shininess:90,transparent:true,opacity:.66,depthWrite:false,side:THREE.DoubleSide});
   const e=new THREE.LineBasicMaterial({color:neon?ICE:th==='brand'?0x4F8F9E:0x6FA3B3,transparent:true,opacity:neon?.9:.75,depthWrite:false,blending:neon?THREE.AdditiveBlending:THREE.NormalBlending});
   return SHARD.mats[th]=[m,e]}
+// shard pieces are made once and reused: a piece is free again as soon as it's off the scene
+function shardMesh(){for(const me of SHARD.meshes)if(!me.parent&&!me.userData.taken){me.userData.taken=true;return me}
+  const me=new THREE.Mesh(),ed=new THREE.LineSegments();me.add(ed);me.renderOrder=5;ed.renderOrder=6;me.userData.taken=true;SHARD.meshes.push(me);return me}
 function sparkMat(neon,sc){return new THREE.PointsMaterial({size:.07*sc,vertexColors:true,transparent:true,depthWrite:false,blending:neon?THREE.AdditiveBlending:THREE.NormalBlending})}
 // get everything glass needs ready before the first break: the shard shapes, and the materials compiled for every mode
-function warmShards(){if(SHARD.warm)return;SHARD.warm=true;const pool=shardPool(),g=new THREE.Group();
+function warmShards(){recordGlassSounds();if(SHARD.warm)return;SHARD.warm=true;const pool=shardPool(),g=new THREE.Group();
   ['plain','brand','neon'].forEach(th=>{const [m,e]=shardMats(th),me=new THREE.Mesh(pool[0].geo,m);me.add(new THREE.LineSegments(pool[0].edges,e));g.add(me)});
   [false,true].forEach(nn=>{const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(3),3));pg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(3),3));g.add(new THREE.Points(pg,sparkMat(nn,1)))});
+  while(SHARD.meshes.length<84){const me=new THREE.Mesh(),ed=new THREE.LineSegments();me.add(ed);me.renderOrder=5;ed.renderOrder=6;SHARD.meshes.push(me)}
   g.scale.setScalar(1e-4);g.position.set(0,0,-1e3);scene.add(g);try{renderer.compile(scene,camera)}catch(e){}
   requestAnimationFrame(()=>requestAnimationFrame(()=>scene.remove(g)))} // drawn once off to the side, so its buffers are on the graphics card too
 function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.getWorldPosition(p);body.remove(o.mesh);shatterSound();warmShards();
   const sc=pivot.scale.x,V=THREE.Vector3,pool=shardPool(),[m,e]=shardMats();
   for(let i=0;i<42;i++){const sh=pool[i%pool.length],k=(.09+Math.random()*.12)*sc/.85; // a shape from the pool, sized like before
-    const mesh=new THREE.Mesh(sh.geo,m),edges=new THREE.LineSegments(sh.edges,e);mesh.add(edges);mesh.renderOrder=5;edges.renderOrder=6;mesh.scale.setScalar(k);
+    const mesh=shardMesh(),edges=mesh.children[0];mesh.geometry=sh.geo;mesh.material=m;edges.geometry=sh.edges;edges.material=e;mesh.scale.setScalar(k);
     const off=new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(.8*sc),pos=p.clone().add(off);
     const vel=off.clone().normalize().multiplyScalar((2.6+Math.random()*2)*sc).addScaledVector(SH_UP,(1.6+Math.random())*sc);
     const R=sh.R*k,s={mesh,pts:sh.pts,k,p:pos,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random()*6.3,Math.random()*6.3,Math.random()*6.3)),
       v:vel,w:new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(22),R,I:Math.max(.002*sc*sc,.4*R*R),
       ex:.32+Math.random()*.18,pitch:2600+(1-Math.min(R/(.3*sc),1))*3200+Math.random()*500,age:0,rest:0,sleep:false,shrink:-1,sc};
-    mesh.position.copy(pos);mesh.quaternion.copy(s.q);scene.add(mesh);shardsLive.push(mesh);SHARD.list.push(s)}
+    mesh.position.copy(pos);mesh.quaternion.copy(s.q);scene.add(mesh);mesh.userData.taken=false;shardsLive.push(mesh);SHARD.list.push(s)}
   // a small sparkle where it broke
   {const n=40,neon=theme==='neon',cols=neon?[0x9FE8FF,0xFF2E97,0xF4FF3A]:theme==='brand'?[0x007493,0x8FCBD6,0xF17B31]:[0x5F9AAA,0x9FD3DE,0x3E7C78];
     const pos=new Float32Array(n*3),col=new Float32Array(n*3),g=new THREE.BufferGeometry(),items=[];
@@ -888,18 +892,36 @@ function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.get
     g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
     const mat=sparkMat(neon,sc),pts=new THREE.Points(g,mat);pts.frustumCulled=false;pts.renderOrder=7;scene.add(pts);shardsLive.push(pts);
     SHARD.sparks.push({pts,mat,items,age:0,life:.6+Math.random()*.3,sc})}
-  if(!SHARD.sim){SHARD.acc=0;SHARD.sim={t:0,dur:1e9,last:0,step:()=>shardSim(SHARD.sim)};tweens.push(SHARD.sim)}}
-function shardTink(f,v){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;if(t-SHARD.lastTink<.028)return;SHARD.lastTink=t;
-  const vol=.004+.016*v;tone(a,'sine',f,f*.995,t,.07,vol,.001);tone(a,'sine',f*1.52,f*1.51,t,.05,vol*.35,.001)}
+  if(!SHARD.sim){SHARD.acc=0;SHARD.hasPrev=false;SHARD.sim={t:0,dur:1e9,last:0,step:()=>shardSim(SHARD.sim)};tweens.push(SHARD.sim)}}
+/* Glass sounds are recorded once, ahead of time, and replayed. Building the ~40 little sound generators of a break (and
+   four more for every shard tink) at the moment it happens held up iPhone frames while shards fell. */
+const GLASS_SND={shatter:[],tink:null,busy:false};
+function recordGlassSounds(){if(GLASS_SND.busy||GLASS_SND.tink)return;const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC)return;GLASS_SND.busy=true;
+  const sr=actx?actx.sampleRate:44100;
+  const rec=(len,fn)=>new Promise(res=>{const off=new OAC(1,Math.ceil(sr*len),sr),bus=sfxBus,nb=noiseBuf;
+    const n=off.createBuffer(1,sr,sr),ch=n.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
+    sfxBus=off.destination;noiseBuf=n;try{fn(off)}finally{sfxBus=bus;noiseBuf=nb}
+    off.oncomplete=e=>res(e.renderedBuffer);const p=off.startRendering();if(p&&p.then)p.then(res,()=>res(null))});
+  Promise.all([0,1,2].map(()=>rec(1.3,o=>shatterSoundTo(o,0))).concat([rec(.15,o=>{tone(o,'sine',4000,3980,0,.07,1,.001);tone(o,'sine',6080,6040,0,.05,.35,.001)})]))
+    .then(b=>{GLASS_SND.shatter=b.slice(0,3).filter(Boolean);GLASS_SND.tink=b[3]||null}).catch(()=>{}).finally(()=>{GLASS_SND.busy=false})}
+function playBuf(buf,vol,rate){const a=audio();if(!a||!buf)return;const s=a.createBufferSource();s.buffer=buf;if(rate)s.playbackRate.value=rate;
+  if(vol!=null){const g=a.createGain();g.gain.value=vol;s.connect(g).connect(sfxBus)}else s.connect(sfxBus);s.start()}
+function shardTink(f,v){if(!soundOn||!GLASS_SND.tink)return;const a=audio();if(!a)return;const t=a.currentTime;if(t-SHARD.lastTink<.04)return;SHARD.lastTink=t;
+  playBuf(GLASS_SND.tink,.004+.016*v,f/4000)}
 const _sr=new THREE.Vector3(),_sw=new THREE.Vector3(),_sl=new THREE.Vector3(),_sn=new THREE.Vector3(),_svc=new THREE.Vector3(),_srn=new THREE.Vector3(),_st=new THREE.Vector3(),_srt=new THREE.Vector3(),_scor=new THREE.Vector3(),_sq=new THREE.Quaternion(),
-  _bM=new THREE.Matrix4(),_bI=new THREE.Matrix4(),_qBI=new THREE.Quaternion(),_qL=new THREE.Quaternion(),_bAx=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()],_bC=[],_cand=[],_cPen=[],_cDir=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()];
+  _bM=new THREE.Matrix4(),_bI=new THREE.Matrix4(),_qBI=new THREE.Quaternion(),_qL=new THREE.Quaternion(),_bPrev=new THREE.Matrix4(),_bD=new THREE.Matrix4(),_qNow=new THREE.Quaternion(),_qPrev=new THREE.Quaternion(),_qD=new THREE.Quaternion(),_bAx=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()],_bC=[],_cand=[],_cPen=[],_cDir=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()];
 const SH_H=1/220; // fixed physics step: the same small step every time, so resting shards stay still and a slow frame never snowballs
 function shardSim(tw){let dt=tw.t-tw.last;tw.last=tw.t;if(dt<=0)return;
   if(!SHARD.list.length&&!SHARD.sparks.length){tw.dead=true;SHARD.sim=null;return}
   // the puzzle's frame (it may be turning or re-centering) and the cubes in it; all collision math happens in the puzzle's own space,
   // where every cube is a plain box, so each contact point is moved into that space just once
   pivot.updateMatrix();body.updateMatrix();_bM.multiplyMatrices(pivot.matrix,body.matrix);_bI.copy(_bM).invert();
-  const e=_bM.elements,S=Math.hypot(e[0],e[1],e[2]);_qBI.multiplyQuaternions(pivot.quaternion,body.quaternion).invert();_bAx[0].set(e[0],e[1],e[2]).divideScalar(S);_bAx[1].set(e[4],e[5],e[6]).divideScalar(S);_bAx[2].set(e[8],e[9],e[10]).divideScalar(S);
+  const e=_bM.elements,S=Math.hypot(e[0],e[1],e[2]);_qNow.multiplyQuaternions(pivot.quaternion,body.quaternion);_qBI.copy(_qNow).invert();
+  // shards lying on the cubes ride along when the puzzle turns or re-centers (like things resting on a tray you tilt);
+  // only shards in the air stay put. Gravity then slides the riders off as the tilt gets steep.
+  if(SHARD.hasPrev&&!_bM.equals(_bPrev)){_bD.copy(_bPrev).invert().premultiply(_bM);_qD.copy(_qPrev).invert().premultiply(_qNow);
+    for(const s of SHARD.list)if(s.touch||s.sleep){s.p.applyMatrix4(_bD);s.q.premultiply(_qD);s.v.applyQuaternion(_qD);s.w.applyQuaternion(_qD)}}
+  _bPrev.copy(_bM);_qPrev.copy(_qNow);SHARD.hasPrev=true;_bAx[0].set(e[0],e[1],e[2]).divideScalar(S);_bAx[1].set(e[4],e[5],e[6]).divideScalar(S);_bAx[2].set(e[8],e[9],e[10]).divideScalar(S);
   const HC=.985/2;let nb=0,sig=0,floorY=Infinity;
   for(const b of blocks){if(!b.alive||b.glass||!b.mesh)continue;const q=b.mesh.position;let c=_bC[nb];if(!c)c=_bC[nb]=new THREE.Vector3();c.copy(q);nb++;
     sig+=q.x*1.3+q.y*2.7+q.z*4.1;_sl.copy(q).applyMatrix4(_bM);floorY=Math.min(floorY,_sl.dot(SH_UP)-S)}
@@ -936,7 +958,8 @@ function shardSim(tw){let dt=tw.t-tw.last;tw.last=tw.t;if(dt<=0)return;
             if(vn<-1.4*s.sc)shardTink(s.pitch,Math.min(1,(-vn/s.sc-1.2)/5))}
           if(pen>_cPen[ci]){_cPen[ci]=pen;_cDir[ci].copy(_sn)}}}}
       // push the shard back out of every cube it touched (wedged between two cubes, both push)
-      for(let ci=0;ci<nc;ci++)if(_cPen[ci]>0)s.p.addScaledVector(_cDir[ci],_cPen[ci]*.85);
+      let hit=false;for(let ci=0;ci<nc;ci++)if(_cPen[ci]>0){hit=true;s.p.addScaledVector(_cDir[ci],_cPen[ci]*.85)}
+      s.touch=hit;
       if(onTop)s.w.multiplyScalar(.985);
       if(onTop&&s.v.lengthSq()<.012*s.sc*s.sc&&s.w.lengthSq()<.12)s.rest+=h;else s.rest=0;
       if(s.rest>.35){s.sleep=true;s.v.set(0,0,0);s.w.set(0,0,0)}}
@@ -954,7 +977,10 @@ function shardSim(tw){let dt=tw.t-tw.last;tw.last=tw.t;if(dt<=0)return;
     arr.needsUpdate=true;S.mat.opacity=Math.max(0,1-S.age/S.life);
     if(S.age>=S.life){scene.remove(S.pts);S.pts.geometry.dispose();S.mat.dispose();shardsLive=shardsLive.filter(x=>x!==S.pts);S.gone=true}}
   SHARD.sparks=SHARD.sparks.filter(S=>!S.gone)}
-function shatterSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+function shatterSound(){if(!soundOn)return;const a=audio();if(!a)return;
+  if(GLASS_SND.shatter.length){playBuf(GLASS_SND.shatter[Math.floor(Math.random()*GLASS_SND.shatter.length)]);return} // the recorded break (see recordGlassSounds)
+  recordGlassSounds();shatterSoundTo(a,a.currentTime)}
+function shatterSoundTo(a,t){
   // glass breaking: a sharp crack, then a shower of tiny shards clinking, thinning out as they settle
   hiss(a,'highpass',1600,1600,.7,t,.06,.11,.001);hiss(a,'bandpass',4200,2600,1,t,.22,.06,.002);hiss(a,'highpass',6000,9000,.6,t+.01,.35,.03,.004);
   for(let i=0;i<26;i++){const d=.03+Math.pow(Math.random(),1.7)*.75,f=2800+Math.random()*6000,v=.028*Math.max(.15,1-d/.8);
