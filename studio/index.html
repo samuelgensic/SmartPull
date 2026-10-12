@@ -488,7 +488,7 @@ TRIM_DB.lattice=2;{const f=NEW.lattice;NEW.lattice=(A,out,ui)=>{const o=A.create
    and a reversed electric-piano swell that pulls into each chord. Their rhythms are Euclidean patterns (k hits spread
    over n steps, n = 5, 7, 9, 11, 13) with fresh settings each section, so the texture keeps changing while the pulse
    holds. Wood and conga only as a rare sprinkle. Every hit is a pre-rendered one-shot (no pops). */
-NEW.mechanism=function(A,out0,ui){const lim=A.createDynamicsCompressor();lim.threshold.value=-14;lim.knee.value=10;lim.ratio.value=4;lim.attack.value=.005;lim.release.value=.2;lim.connect(out0);const out=lim;
+NEW.mechanism=function(A,out0,ui){const lim=A.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=0;lim.ratio.value=12;lim.attack.value=.003;lim.release.value=.15;lim.connect(out0);const out=lim;
   const mix=Mix(A,out,{verbSec:2.5,dark:.88}),stops=[],sr=A.sampleRate;
   const shot=(len,fn)=>{const b=A.createBuffer(1,Math.floor(sr*len),sr),d=b.getChannelData(0);fn(d);const fi=Math.floor(sr*.003),fo=Math.floor(sr*.012);let pk=0;
     for(let i=0;i<d.length;i++){let e=1;if(i<fi)e=i/fi;const r=d.length-i;if(r<fo)e*=r/fo;d[i]*=e;pk=Math.max(pk,Math.abs(d[i]))}if(pk)for(let i=0;i<d.length;i++)d[i]/=pk;return b};
@@ -513,8 +513,8 @@ NEW.mechanism=function(A,out0,ui){const lim=A.createDynamicsCompressor();lim.thr
     return kinds.map(kd=>{const n=pick([5,7,9,11,13]),k=1+Math.floor(R()*Math.min(4,n-2));return{kd,buf:MAKERS[kd](),pat:euclid(k,n,Math.floor(R()*n)),n,pan:(R()-.5)*1.2,vol:VOL[kd]*(.8+R()*.4)}})};
   let palette=newPalette();
   const drum=mix.bus(.9,.12),perc=mix.bus(.75,.3),elecLp=A.createBiquadFilter();elecLp.type='lowpass';elecLp.frequency.value=5000;elecLp.Q.value=.3;elecLp.connect(mix.bus(.7,.35));const elec=elecLp;
-  const bLp=A.createBiquadFilter();bLp.type='lowpass';bLp.frequency.value=650;bLp.Q.value=1.5;bLp.connect(mix.bus(.95,.05));
-  const bass=(m,t,dur,v)=>{[['sawtooth',.3],['sine',1]].forEach(([ty,w])=>{const o=A.createOscillator();o.type=ty;o.frequency.value=MT(m);const g=A.createGain(),pk=.075*v*w;
+  const bLp=A.createBiquadFilter();bLp.type='lowpass';bLp.frequency.value=420;bLp.Q.value=.5;bLp.connect(mix.bus(.95,.05));
+  const bass=(m,t,dur,v)=>{[['triangle',.25],['sine',1]].forEach(([ty,w])=>{const o=A.createOscillator();o.type=ty;o.frequency.value=MT(m);const g=A.createGain(),pk=.075*v*w;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+.01);g.gain.setTargetAtTime(pk*.55,t+.02,.12);g.gain.setTargetAtTime(0,t+dur,.035);o.connect(g).connect(bLp);o.start(t);o.stop(t+dur+.3)})};
   const ep=Sampler(A,'ep'),eLp=A.createBiquadFilter();eLp.type='lowpass';eLp.frequency.value=2400;eLp.connect(mix.bus(.6,.45));
   // reversed electric-piano swell that rises into a chord
@@ -538,7 +538,7 @@ NEW.mechanism=function(A,out0,ui){const lim=A.createDynamicsCompressor();lim.thr
     if(on.has('kick')&&(k===0||k===10))playBuf(A,drum,KB,t,k?.2:.26);
     if(on.has('snap')&&k===8)playBuf(A,drum,SB,t,.07);
     const lp=(x,buf,bus,v)=>{const s=L[x];if(on.has(x)&&s.pos.includes(n%s.len))playBuf(A,bus,buf,t,v,1,x==='click'?.25:-.3)};
-    lp('click',CB,drum,.02);lp('tick',TB,drum,.026);
+    lp('click',CB,drum,.02);lp('tick',TB,drum,.014);
     // wood and conga: only a rare sprinkle, a little loose like hands
     if(on.has('sprinkle')){if(L.wood.pos.includes(n%L.wood.len)&&R()<.1)playBuf(A,perc,WB,t+hum(),.04,1,.4);if(L.conga.pos.includes(n%L.conga.len)&&R()<.08)playBuf(A,perc,GB,t+hum(),.05,1,-.15)}
     // the electronic palette, each voice on its own Euclidean cycle
@@ -546,7 +546,7 @@ NEW.mechanism=function(A,out0,ui){const lim=A.createDynamicsCompressor();lim.thr
     // glitch dust and a stuttering click fill now and then
     if(on.has('elec')&&R()<.035)playBuf(A,elec,palette[0].buf,t+step/2,palette[0].vol*.5,1.5+R(),(R()-.5)*1.4);
     if(bar%4===3&&k===12&&R()<.4)for(let i=0;i<4;i++)playBuf(A,drum,CB,t+i*step/2,.018*(1-i*.2),1+i*.08,.25);
-    const bpos=n%12;if(on.has('bass'))for(const[p,dd]of bp)if(p===bpos){let m=pitchOf(53,r+dd)-24;while(m>45)m-=12;bass(m,t,step*2.2,1)}
+    const bpos=n%12;if(on.has('bass'))for(const[p,dd]of bp)if(p===bpos){let m=pitchOf(53,r+dd)-24;while(m>45)m-=12;bass(m,t,step*1.3,.85)}
     const chordMs=()=>[r,r+2,r+4,r+6].map(d=>{let m=pitchOf(53,d);while(m>72)m-=12;return m});
     if(on.has('swell')&&k===0&&bar%2===0&&R()<.6){const b=revSwell(chordMs());playBuf(A,eLp,b,t+6*step-1.1,.05,1,.1)}
     if(on.has('chords')&&k===6&&bar%2===0)chordMs().forEach((m,i)=>{const s=ep(m);playBuf(A,eLp,s.buf,t+i*.018,.035,s.rate,-.2+i*.13)});
@@ -554,7 +554,7 @@ NEW.mechanism=function(A,out0,ui){const lim=A.createDynamicsCompressor();lim.thr
     if(k===0)ui&&ui({sect:oi+1,key:'F',tex:secName+' · '+palette.map(v=>v.kd).join(', '),energy:on.size/10});
     n++;return step}));
   return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
-TRIM_DB.mechanism=-7.5;{const f=NEW.mechanism;NEW.mechanism=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.mechanism/20);o.connect(out);return f(A,o,ui)}}
+TRIM_DB.mechanism=-5;{const f=NEW.mechanism;NEW.mechanism=(A,out,ui)=>{const o=A.createGain();o.gain.value=Math.pow(10,TRIM_DB.mechanism/20);o.connect(out);return f(A,o,ui)}}
 /* ===== current game music (copied from the live game, Oct 12) ===== */
 const CUR=(function(){
 const MTOF=m=>440*Math.pow(2,(m-69)/12);
