@@ -252,11 +252,11 @@ html.toolsopen .panel:not(.levels){left:auto; right:66px}
 .botrow .blacklight{white-space:nowrap}
 
 /* Neon's Black Light: a round bulb button in the top right, just left of the menu button; its name shows when you hover over it */
-header .hleft{grid-column:3; grid-row:1; justify-self:end; margin-right:46px; position:relative; z-index:4}
+header .hleft{grid-column:3; grid-row:1; justify-self:end; margin-right:46px; position:relative; z-index:7}
 html.neon header .topspace{padding-right:92px}
 header .blacklight{position:relative; right:auto; bottom:auto; width:38px; height:38px; padding:0; gap:0; justify-content:center}
 header .blacklight .flash{width:20px; height:20px}
-header .blacklight::after{content:attr(data-tip); position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); padding:5px 10px; border-radius:8px; background:var(--chip); color:var(--ink);
+header .blacklight::after{content:attr(data-tip); position:absolute; top:50%; right:calc(100% + 8px); transform:translateY(-50%); padding:5px 10px; z-index:6; border-radius:8px; background:var(--chip); color:var(--ink);
   font-family:var(--display); font-weight:500; font-size:11px; letter-spacing:.04em; white-space:nowrap; box-shadow:0 0 0 1px rgba(244,236,255,.22); opacity:0; pointer-events:none; transition:opacity .15s}
 @media (hover:hover){header .blacklight:hover::after{opacity:1}}
 header .blacklight:focus-visible::after{opacity:1}
