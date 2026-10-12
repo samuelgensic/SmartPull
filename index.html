@@ -124,7 +124,11 @@ button.lvl[aria-expanded="true"] .lvX{display:block}
 button.lvl:active .lvDisc{transform:scale(.94)}
 button.lvl .lvtxt{align-items:flex-start; gap:3px; transition:opacity .25s,transform .25s}
 button.lvl .lvnum{font-family:var(--display); font-weight:400; font-size:20px; letter-spacing:.04em; line-height:1}
-button.lvl .lvsub{font-family:var(--body); font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:0}
+button.lvl .lvsub{font-family:var(--body); font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#007C92; margin-top:0}
+/* the chapter name takes a color from the mode: teal in Classic, orange in SmartPull, pink in Neon */
+html.brandtheme button.lvl .lvsub{color:#EB5D07}
+html.neon button.lvl .lvsub{color:#FF2E97}
+@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) button.lvl .lvsub{color:#54BED0} html.brandtheme button.lvl .lvsub{color:#FD9357}}
 button.lvl[aria-expanded="true"] .lvtxt{opacity:0; transform:translateX(-6px)}
 .panel.levels{width:min(300px,calc(100% - 32px)); background:transparent; box-shadow:none; padding:0; top:72px; left:18px}
 /* scrub ruler: drag sideways on the level button and a ruler slides out under it; the needle reads the level.
