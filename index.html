@@ -107,7 +107,22 @@ button.upclose{align-self:center}
 button.lvl{width:auto; height:38px; padding:0 10px; background:transparent; box-shadow:none; color:var(--ink); font-family:var(--display); font-weight:700; font-size:12px}
 button.lvl::after{content:""; display:inline-block; width:5px; height:5px; margin-left:7px; border-right:1.6px solid currentColor; border-bottom:1.6px solid currentColor; transform:translateY(-2px) rotate(45deg); opacity:.55}
 button.lvl[aria-expanded="true"]{background:var(--chip)}
-.panel.levels{left:16px; right:16px; margin-inline:auto; width:min(200px,calc(100% - 32px))}
+.panel.levels{width:min(320px,calc(100% - 32px))}
+/* chapter list: a collapsible medallion row per chapter, opening into a grid of level numbers */
+.chlist{display:flex; flex-direction:column; gap:6px; max-height:min(420px,calc(100vh - 160px)); overflow-y:auto}
+.chrow{border-radius:12px}
+.chrow>summary{list-style:none; display:flex; align-items:center; gap:10px; height:44px; padding-inline:10px; cursor:pointer; border-radius:12px;
+  font-family:var(--display); font-weight:500; font-size:14px}
+.chrow>summary::-webkit-details-marker{display:none}
+.chrow>summary::marker{content:''}
+.chrow>summary .wic{margin-right:0; opacity:.7}
+.chrow>summary .chname{flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.15}
+.chrow>summary .chname small{font-family:var(--display); font-size:10px; font-weight:400; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.chrow>summary em{font-style:normal; font-size:13px; color:var(--muted)}
+.chrow[open]>summary,.chrow.cur>summary{background:var(--bg2)}
+.chrow.locked>summary .wic{opacity:.4}
+.chrow .lvgrid{padding:10px 10px 4px}
+button.lv.locked{opacity:.35; pointer-events:none}
 button.lvl{touch-action:none; overflow:hidden; white-space:nowrap; display:inline-flex; flex-direction:row; align-items:center; justify-content:center}
 .lvtxt{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.1; transition:transform .12s ease-out}
 /* the level's group (Pull, Twist, Link...) in small letters under the number */
@@ -116,25 +131,7 @@ button.lvl{touch-action:none; overflow:hidden; white-space:nowrap; display:inlin
 html.brandtheme .lvsub{color:#E06A22}
 html.neon .lvsub{color:#FF2E97}
 @media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) .lvsub{color:#4FB6D2} html.brandtheme .lvsub{color:#F59A5E}}
-/* picker wheel: five rows tall, the middle row is the pick */
-.wheelbox{position:relative; height:220px}
-.wband{position:absolute; left:0; right:0; top:88px; height:44px; border-radius:10px; background:var(--bg2); pointer-events:none}
-.wheel{position:relative; height:100%; overflow-y:auto; scroll-snap-type:y mandatory; overscroll-behavior:contain; scrollbar-width:none;
-  -webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent); mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
-.wheel::-webkit-scrollbar{display:none}
-.wpad{height:88px}
-.wrow{height:44px; scroll-snap-align:center; display:flex; align-items:center; justify-content:center; position:relative; padding-inline:16px; cursor:pointer;
-  font-family:var(--display); font-weight:500; font-size:15px; font-variant-numeric:tabular-nums; transform-origin:center}
-.wrow em{position:absolute; right:14px; font-style:normal; font-size:12px; color:var(--muted)}
-/* the level's group (Pull, Twist...) under each level in the wheel: small and thin */
-.wlv{display:flex; flex-direction:column; align-items:center; line-height:1.1}
-.wlv small{font-family:var(--display); font-size:8.5px; font-weight:400; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-top:2px}
-.wrow.on{color:var(--accent)}
-.wrow.lock span{color:var(--muted)}
 .wic{width:16px; height:16px; flex:none; margin-right:8px; opacity:.7}
-.wrow.soon{cursor:default}
-.wrow.soon .wic{opacity:.4}
-button.wgo{align-self:stretch; height:40px; background:var(--accent); color:var(--chip)}
 .lvgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:6px}
 button.lv{width:100%; height:40px; border-radius:10px; background:var(--bg2); box-shadow:none; font-family:var(--display); font-weight:500; font-size:13px; font-variant-numeric:tabular-nums}
 button.lv.open{background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted)} /* unlocked, not yet cleared */
@@ -237,10 +234,10 @@ html.neon .thint{background:rgba(20,20,30,.8);color:#fff}
 .silbox{position:absolute;right:16px;top:156px;max-width:120px;text-align:center;z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;letter-spacing:.04em;color:#6A7378;pointer-events:none}
 .silbox canvas{display:block;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
 
-/* layout: the menu sits top right (the tip button just left of it), full screen sits bottom right with the timer just left of it,
-   and Neon's Black Light is a pill at the bottom center, next to Undo */
+/* layout: the level picker sits top left, the tools (sound/settings/modes/reset) sit top right with the tip button just left of them,
+   full screen sits bottom right with the timer just left of it, and Neon's Black Light is a pill at the bottom center, next to Undo */
 header .controls{grid-column:3; grid-row:1; justify-self:end}
-header .levelnav{grid-column:2; grid-row:1}
+header .levelnav{grid-column:1; grid-row:1; justify-self:start}
 header .topspace{grid-column:3; grid-row:1; justify-self:end; padding-right:46px}
 .tools{left:auto; right:0}
 html.toolsopen .panel:not(.levels){left:auto; right:66px}
@@ -264,7 +261,8 @@ header .blacklight::after{content:attr(data-tip); position:absolute; top:50%; ri
   font-family:var(--display); font-weight:500; font-size:11px; letter-spacing:.04em; white-space:nowrap; box-shadow:0 0 0 1px rgba(244,236,255,.22); opacity:0; pointer-events:none; transition:opacity .15s}
 @media (hover:hover){header .blacklight:hover::after{opacity:1}}
 header .blacklight:focus-visible::after{opacity:1}
-@media (max-width:480px){html.neon header .topspace{grid-column:1; justify-self:start; padding-right:0} html.neon header button.tipbtn{right:auto; left:0}}
+/* narrow Neon phones: the tip button drops to its own row under the controls instead of crowding column 1, which the level picker now occupies */
+@media (max-width:480px){html.neon header .topspace{grid-row:2; grid-column:1/-1; justify-self:end; padding-right:0}}
 @media (max-width:400px){header .blacklight{width:34px; height:34px} header .hleft{margin-right:42px} html.neon header .topspace{padding-right:84px}}
 </style>
 
@@ -342,8 +340,7 @@ header .blacklight:focus-visible::after{opacity:1}
     </div>
   </div>
   <div class="panel levels" id="levels" hidden>
-    <div class="wheelbox"><div class="wband"></div><div class="wheel" id="wheel"></div></div>
-    <button class="opt wgo" id="wheelGo" type="button">Select</button>
+    <div class="chlist" id="chlist"></div>
   </div>
   <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
 </div>
@@ -2793,10 +2790,9 @@ document.getElementById('timerBtn').addEventListener('click',e=>{e.stopPropagati
 showTotal();
 /* ---------- level picker, two ways (both on, to compare) ----------
    1. Swipe: drag up or down on "Level #" and it rolls through your unlocked levels like a dial.
-   2. Wheel: tap "Level #" to open an iPhone-style wheel; scroll it and tap Play. */
+   2. Menu: tap "Level #" to open the chapter list; tap a chapter to expand it, then tap a level number. */
 const lvBtn=document.getElementById('lvl'),lvPanel=document.getElementById('levels');
-const ROW=44; // height of one wheel row
-function tick(){ // the tiniest click as the dial or wheel passes each level
+function tick(){ // the tiniest click as the dial passes each level
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   hiss(a,'bandpass',3200,3200,4,t,.018,.05,.001);
 }
@@ -2815,47 +2811,49 @@ function menuSfx(which,open){
 }
 const stageEl=document.getElementById('stage');
 function closeLevels(){lvPanel.hidden=true;lvBtn.setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim');menuSfx('level',false)}
-let wheelPick=0,wheelLast=-1;
+// the level picker: one collapsible medallion row per chapter; tap a chapter to open it, tap a level number to jump there
 function openLevels(){
   panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');
   themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false');
   if(stageEl)stageEl.classList.add('dim');menuSfx('level',true);
-  const list=document.getElementById('wheel');list.innerHTML='';
-  const pad=()=>{const s=document.createElement('div');s.className='wpad';return s};
-  list.appendChild(pad());
-  for(let i=0;i<=topLevel();i++){
-    const r=document.createElement('div');r.className='wrow';r.dataset.i=i;
-    r.innerHTML=chapterIcon(groupOf(i))+'<span class="wlv">Level '+(i+1)+'<small>'+groupOf(i)+'</small></span><em>'+(i<best?'✓':'new')+'</em>';
-    // tapping any level picks it right away (no need to press Select): it rolls to the middle, then opens
-    r.onclick=()=>{list.scrollTo({top:i*ROW,behavior:'smooth'});tick();
-      setTimeout(()=>{closeLevels();if(i!==levelIdx){pageTurn();load(i)}},220)};list.appendChild(r);
-  }
-  if(tier!=='full'&&!devMode){const r=document.createElement('div');r.className='wrow lock';r.dataset.i='more';
-    r.innerHTML='<span>More levels</span><em>🔒</em>';r.onclick=()=>{closeLevels();openUpgrade()};list.appendChild(r)}
+  const list=document.getElementById('chlist');list.innerHTML='';
+  const top=topLevel(),cap=maxLevel();
+  let start=0;
+  GROUPS.forEach(([end,name])=>{
+    const s=start,e=end-1;start=end;
+    const curHere=levelIdx>=s&&levelIdx<=e,locked=s>top,cleared=e<best;
+    const det=document.createElement('details');det.className='chrow'+(curHere?' cur':'')+(locked?' locked':'');
+    const sum=document.createElement('summary');
+    sum.innerHTML=chapterIcon(name)+'<span class="chname">'+name+'<small>Levels '+(s+1)+'–'+(e+1)+'</small></span><em>'+(locked?'🔒':cleared?'✓':'')+'</em>';
+    det.appendChild(sum);
+    if(locked){
+      sum.addEventListener('click',ev=>{if(s>=cap&&!devMode){ev.preventDefault();closeLevels();openUpgrade()}else ev.preventDefault()});
+    }else{
+      const grid=document.createElement('div');grid.className='lvgrid';
+      for(let i=s;i<=e;i++){
+        const b=document.createElement('button');b.type='button';b.textContent=i+1;
+        b.className='lv'+(i===levelIdx?'':i>top?' locked':i>=best?' open':'');
+        if(i===levelIdx)b.setAttribute('aria-current','true');
+        if(i<=top)b.onclick=()=>{tick();closeLevels();if(i!==levelIdx){pageTurn();load(i)}};
+        grid.appendChild(b);
+      }
+      det.appendChild(grid);
+      if(curHere)det.open=true;
+    }
+    list.appendChild(det);
+  });
   // chapters 18–20 (levels 86–100) aren't designed yet — shown as a locked teaser, not playable
   ['Chapter 18','Chapter 19','Chapter 20'].forEach(name=>{
-    const r=document.createElement('div');r.className='wrow lock soon';
-    r.innerHTML=chapterIcon('Soon')+'<span class="wlv">'+name+'<small>Coming soon</small></span>';
-    list.appendChild(r);
+    const det=document.createElement('details');det.className='chrow locked';
+    const sum=document.createElement('summary');
+    sum.innerHTML=chapterIcon('Soon')+'<span class="chname">'+name+'<small>Coming soon</small></span><em>🔒</em>';
+    sum.addEventListener('click',ev=>ev.preventDefault());
+    det.appendChild(sum);list.appendChild(det);
   });
-  list.appendChild(pad());
   lvPanel.hidden=false;lvBtn.setAttribute('aria-expanded','true');
-  wheelPick=levelIdx;wheelLast=levelIdx;list.scrollTop=levelIdx*ROW;styleWheel();
+  const curRow=list.querySelector('.chrow.cur');
+  if(curRow)requestAnimationFrame(()=>curRow.scrollIntoView({block:'nearest'}));
 }
-function styleWheel(){
-  // rows fade and shrink the farther they sit from the middle, like a real picker wheel
-  const list=document.getElementById('wheel'),mid=list.scrollTop/ROW;
-  list.querySelectorAll('.wrow').forEach((r,k)=>{const d=Math.abs(k-mid);
-    r.style.opacity=Math.max(.15,1-d*.32);r.style.transform='scale('+Math.max(.78,1-d*.08)+')';r.classList.toggle('on',d<.5)});
-  const n=Math.round(mid);
-  if(n<=topLevel()){wheelPick=n;if(n!==wheelLast){wheelLast=n;tick()}}
-}
-document.getElementById('wheel').addEventListener('scroll',styleWheel,{passive:true});
-document.getElementById('wheelGo').onclick=()=>{
-  const n=Math.round(document.getElementById('wheel').scrollTop/ROW);closeLevels();
-  if(n>topLevel()){openUpgrade();return}
-  if(wheelPick!==levelIdx){pageTurn();load(wheelPick)}
-};
 document.addEventListener('pointerdown',e=>{if(!lvPanel.hidden&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
 // swipe dial on the level name: about every 26px of drag moves one level; letting go opens that level.
 // A tap without dragging opens the wheel instead.
