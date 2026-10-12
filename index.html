@@ -2,6 +2,21 @@
 html.neon .thint{background:rgba(20,20,30,.8);color:#fff}
 .silbox{position:absolute;right:16px;top:156px;max-width:120px;text-align:center;z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;letter-spacing:.04em;color:#6A7378;pointer-events:none}
 .silbox canvas{display:block;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+
+/* layout: the menu sits top right (the tip button just left of it), full screen sits bottom left with the counters beside it,
+   and Neon's Black Light is a pill at the bottom center, next to Undo */
+header .controls{grid-column:3; grid-row:1; justify-self:end}
+header .levelnav{grid-column:2; grid-row:1}
+header .topspace{grid-column:3; grid-row:1; justify-self:end; padding-right:46px}
+.tools{left:auto; right:0}
+html.toolsopen .panel:not(.levels){left:auto; right:66px}
+.app:has(#fsBtn:not([hidden])) .left{left:64px}
+.botrow{position:absolute; left:50%; transform:translateX(-50%); bottom:64px; z-index:4; display:flex; gap:10px; align-items:center}
+.botrow .undo{position:static; transform:none}
+.botrow .blacklight{position:static; height:34px; padding:0 14px 0 10px; gap:6px}
+.botrow .blacklight .flash{width:18px; height:18px}
+.botrow .blacklight[aria-pressed="true"] span{color:#E9D6FF}
+@media (max-width:400px){header .topspace{padding-right:42px} .app:has(#fsBtn:not([hidden])) .left{left:60px}}
 </style></head><body>
 <title>SmartPull</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -165,9 +180,9 @@ canvas{display:block; width:100%; height:100%}
 
 .timebox .clock{font-family:var(--display); font-weight:300; font-size:12px; letter-spacing:.08em; font-variant-numeric:tabular-nums; color:var(--muted); opacity:.7}
 /* full screen (web only; iPhone and iPad don't get it): a small button in the top-right corner of the play area */
-button.fsbtn{position:absolute; top:14px; right:16px; z-index:6; width:38px; height:38px; background:var(--chip); box-shadow:none; color:var(--muted)}
+button.fsbtn{position:absolute; bottom:12px; left:16px; z-index:6; width:38px; height:38px; background:var(--chip); box-shadow:none; color:var(--muted)}
 button.fsbtn svg{width:18px; height:18px}
-.app:has(#fsBtn:not([hidden])) .topspace{padding-right:46px} button.fsbtn .fs-out{display:none}
+button.fsbtn .fs-out{display:none}
 button.fsbtn[aria-pressed="true"] .fs-in{display:none} button.fsbtn[aria-pressed="true"] .fs-out{display:inline}
 /* iPhone and iPad in landscape: "immersive" hides the header so the puzzle fills the whole screen (and a TV, when mirrored) */
 html.immersive,html.immersive body{height:100vh; height:100dvh}
@@ -199,7 +214,7 @@ button.tipbtn svg{width:20px; height:20px; stroke-width:2.2}
 button.tipbtn.new{animation:tippulse 2s ease-in-out infinite}
 @keyframes tippulse{0%,100%{box-shadow:0 0 0 0 rgba(241,123,49,.0),0 2px 8px rgba(0,0,0,.12)}50%{box-shadow:0 0 0 7px rgba(241,123,49,.22),0 2px 8px rgba(0,0,0,.12)}}
 @media (prefers-reduced-motion: reduce){button.tipbtn.new{animation:none}}
-html.neon button.tipbtn{color:#FF2E97; top:calc(100% + 8px); right:auto; left:50%; transform:translateX(-50%)}
+html.neon button.tipbtn{color:#FF2E97}
 html.neon .controls button,html.neon .levelnav button:not(.lvl),html.neon button.fsbtn,html.neon button.ttoggle,html.neon button.tipbtn{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
 html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .tipitem{display:flex; gap:14px; align-items:flex-start}
@@ -250,7 +265,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
       <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Choose a level: swipe up or down, or tap for the wheel"><span class="lvtxt"><span class="lvnum">Level 1</span><span class="lvsub">Pull</span></span></button>
       <button id="next" aria-label="Next level"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
-    <div class="topspace"><div class="blbox"><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></button><span class="bllabel">Black Light</span><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button></div></div>
+    <div class="topspace"><div class="blbox"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button></div></div>
   </header>
   <button class="fsbtn" id="fsBtn" type="button" hidden aria-label="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   <div class="panel" id="themes" hidden>
@@ -310,7 +325,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
     <div class="wheelbox"><div class="wband"></div><div class="wheel" id="wheel"></div></div>
     <button class="opt wgo" id="wheelGo" type="button">Select</button>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg><span>Black Light</span></button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1952,7 +1967,7 @@ function refreshMusicOpts(){pressGroup('optMusic',musicOn?musicIdx+1:0)}
   btn.setAttribute('aria-pressed',glowOn?'true':'false');
   btn.onclick=e=>{e.stopPropagation();glowOn=!glowOn;try{localStorage.setItem('pa2_glow',glowOn?'1':'0')}catch(e){}
     btn.setAttribute('aria-pressed',glowOn?'true':'false');applyGlow();blSound(glowOn)};
-  btn.hidden=theme!=='neon'})();
+  btn.hidden=theme!=='neon';['pointerdown','pointerup'].forEach(ev=>btn.addEventListener(ev,e=>e.stopPropagation()))})();
 // a flashlight/light-switch click: a sharp snap plus a tiny plastic "tock" behind it.
 // On is a touch brighter and snappier than off, like the two directions of a real switch.
 function blSound(on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
