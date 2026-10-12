@@ -251,10 +251,20 @@ html.toolsopen .panel:not(.levels){left:auto; right:66px}
 @media (max-width:520px){.app:has(#fsBtn:not([hidden])) .timebox .clock{position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); white-space:nowrap}}
 .botrow .blacklight{white-space:nowrap}
 
+/* Neon's Black Light: a round bulb button in the top-left corner; its name shows when you hover over it */
+header .hleft{grid-column:1; grid-row:1; justify-self:start; position:relative; z-index:4}
+header .blacklight{position:relative; right:auto; bottom:auto; width:38px; height:38px; padding:0; gap:0; justify-content:center}
+header .blacklight .flash{width:20px; height:20px}
+header .blacklight::after{content:attr(data-tip); position:absolute; top:calc(100% + 8px); left:0; padding:5px 10px; border-radius:8px; background:var(--chip); color:var(--ink);
+  font-family:var(--display); font-weight:500; font-size:11px; letter-spacing:.04em; white-space:nowrap; box-shadow:0 0 0 1px rgba(244,236,255,.22); opacity:0; pointer-events:none; transition:opacity .15s}
+@media (hover:hover){header .blacklight:hover::after{opacity:1}}
+header .blacklight:focus-visible::after{opacity:1}
+@media (max-width:400px){header .blacklight{width:34px; height:34px}}
 </style>
 
 <div class="app">
   <header>
+    <div class="hleft"><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light" data-tip="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></button></div>
     <div class="controls" id="controls">
       <div class="tools" id="tools" inert>
       <button id="sound" aria-label="Sound" aria-expanded="false" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
@@ -329,7 +339,7 @@ html.toolsopen .panel:not(.levels){left:auto; right:66px}
     <div class="wheelbox"><div class="wband"></div><div class="wheel" id="wheel"></div></div>
     <button class="opt wgo" id="wheelGo" type="button">Select</button>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button><button class="blacklight" id="blBtn" type="button" hidden aria-pressed="true" aria-label="Black Light"><svg class="flash" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg><span>Black Light</span></button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="left" id="left">1 block</div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -400,6 +410,12 @@ function openTip(){const keys=TIP_AT[levelIdx];if(!keys)return;
     d.innerHTML='<div class="tipicon">'+(TIP_ICON[k]||'')+'</div><div><b></b><p></p></div>';if(keys.length>1)d.querySelector('b').textContent=TIPS[k].t;else d.querySelector('b').remove();d.querySelector('p').textContent=TIPS[k].x;return d}));
   tipSheet.hidden=false;keys.forEach(k=>tipsSeen[k]=1);try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}tipBtn.classList.remove('new');
   tipSound()}
+// the first time you switch to Neon, a short tip explains the Black Light button (once only)
+function blackLightTip(){if(tipsSeen.blacklight)return;tipsSeen.blacklight=1;try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}
+  setTimeout(()=>{document.getElementById('tipTitle').textContent='New: Black Light';const d=document.createElement('div');d.className='tipitem';
+    d.innerHTML='<div class="tipicon"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3 11v3h6v-3a6 6 0 0 0-3-11z"/><path d="M10 20h4M10.5 22h3"/><path d="M12 7v3"/></svg></div><div><p></p></div>';
+    d.querySelector('p').textContent='The bulb in the top-left corner is the Black Light. Tap it to turn it on and off. With it on, the cubes glow; turn it off for a darker, calmer look.';
+    document.getElementById('tipBody').replaceChildren(d);tipSheet.hidden=false;tipSound()},450)}
 // the tip opening: three quiet rising notes
 function tipSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   [1046.5,1318.5,1568].forEach((f,i)=>tone(a,'sine',f,f,t+i*.055,.5,.022,.008))}
@@ -1496,7 +1512,7 @@ document.addEventListener('pointerdown',e=>{if(!themesPanel.hidden&&!themesPanel
       sw.appendChild(s)});
     const price=document.createElement('span');price.className='price';price.textContent='🔒 '+(THEME_PRICE[id]||'');
     const right=document.createElement('span');right.className='tright';right.append(price,sw);
-    btn.append(name,right);btn.onclick=()=>{const was=theme;setTheme(id);if(theme!==was)themeSound(theme)};box.appendChild(btn)})})();
+    btn.append(name,right);btn.onclick=()=>{const was=theme;setTheme(id);if(theme!==was){themeSound(theme);if(theme==='neon')blackLightTip()}};box.appendChild(btn)})})();
 // locked themes show their price and a lock; unlocked ones just show their colors
 function refreshThemeLocks(){THEMES.forEach(([id],i)=>{const b=document.getElementById('optTheme-'+i);if(b)b.classList.toggle('locked',!themeOK(id))})}
 refreshThemeLocks();
