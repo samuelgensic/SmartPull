@@ -1,23 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.thint{position:absolute;left:50%;transform:translateX(-50%);top:64px;max-width:min(560px,86%);text-align:center;font-size:13px;line-height:1.35;color:var(--ink,#2C3631);background:rgba(255,255,255,.78);border-radius:12px;padding:8px 12px;z-index:3;pointer-events:none}
-html.neon .thint{background:rgba(20,20,30,.8);color:#fff}
-.silbox{position:absolute;right:16px;top:156px;max-width:120px;text-align:center;z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;letter-spacing:.04em;color:#6A7378;pointer-events:none}
-.silbox canvas{display:block;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
-
-/* layout: the menu sits top right (the tip button just left of it), full screen sits bottom right with the timer just left of it,
-   and Neon's Black Light is a pill at the bottom center, next to Undo */
-header .controls{grid-column:3; grid-row:1; justify-self:end}
-header .levelnav{grid-column:2; grid-row:1}
-header .topspace{grid-column:3; grid-row:1; justify-self:end; padding-right:46px}
-.tools{left:auto; right:0}
-html.toolsopen .panel:not(.levels){left:auto; right:66px}
-.app:has(#fsBtn:not([hidden])) .timebox{right:64px}
-.botrow{position:absolute; left:50%; transform:translateX(-50%); bottom:64px; z-index:4; display:flex; gap:10px; align-items:center}
-.botrow .undo{position:static; transform:none}
-.botrow .blacklight{position:static; height:34px; padding:0 14px 0 10px; gap:6px}
-.botrow .blacklight .flash{width:18px; height:18px}
-.botrow .blacklight[aria-pressed="true"] span{color:#E9D6FF}
-@media (max-width:400px){header .topspace{padding-right:42px} .app:has(#fsBtn:not([hidden])) .timebox{right:60px}}
-</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>SmartPull</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Krona+One&family=Quicksand:wght@500&family=Manrope:wght@300;400;600;700&display=swap">
@@ -247,6 +228,29 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
 @media (prefers-reduced-motion: reduce){.done small{animation:none}}
 .done b{max-width:18ch; padding-inline:16px; text-align:center; text-wrap:balance; line-height:1.2; font-family:var(--display); font-weight:500; font-size:clamp(22px,5vw,34px); letter-spacing:.04em; color:var(--accent)}
 @media (prefers-reduced-motion: reduce){.hint,.done{transition:none}}
+.thint{position:absolute;left:50%;transform:translateX(-50%);top:64px;max-width:min(560px,86%);text-align:center;font-size:13px;line-height:1.35;color:var(--ink,#2C3631);background:rgba(255,255,255,.78);border-radius:12px;padding:8px 12px;z-index:3;pointer-events:none}
+html.neon .thint{background:rgba(20,20,30,.8);color:#fff}
+.silbox{position:absolute;right:16px;top:156px;max-width:120px;text-align:center;z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;letter-spacing:.04em;color:#6A7378;pointer-events:none}
+.silbox canvas{display:block;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+
+/* layout: the menu sits top right (the tip button just left of it), full screen sits bottom right with the timer just left of it,
+   and Neon's Black Light is a pill at the bottom center, next to Undo */
+header .controls{grid-column:3; grid-row:1; justify-self:end}
+header .levelnav{grid-column:2; grid-row:1}
+header .topspace{grid-column:3; grid-row:1; justify-self:end; padding-right:46px}
+.tools{left:auto; right:0}
+html.toolsopen .panel:not(.levels){left:auto; right:66px}
+.app:has(#fsBtn:not([hidden])) .timebox{right:64px}
+.botrow{position:absolute; left:50%; transform:translateX(-50%); bottom:64px; z-index:4; display:flex; gap:10px; align-items:center}
+.botrow .undo{position:static; transform:none}
+.botrow .blacklight{position:static; height:34px; padding:0 14px 0 10px; gap:6px}
+.botrow .blacklight .flash{width:18px; height:18px}
+.botrow .blacklight[aria-pressed="true"] span{color:#E9D6FF}
+@media (max-width:400px){header .topspace{padding-right:42px} .app:has(#fsBtn:not([hidden])) .timebox{right:60px}}
+/* phones: the running clock shows just above the timer button, so it never runs into the SmartPull name */
+@media (max-width:520px){.app:has(#fsBtn:not([hidden])) .timebox .clock{position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); white-space:nowrap}}
+.botrow .blacklight{white-space:nowrap}
+
 </style>
 
 <div class="app">
