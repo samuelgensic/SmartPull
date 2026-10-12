@@ -3129,7 +3129,7 @@ function win(){
   if(oopsCount()===0&&(curPar==null||moves<=curPar)){const first=!cleanSet[levelIdx];cleanSet[levelIdx]=1;try{localStorage.setItem('pa4_clean',JSON.stringify(cleanSet))}catch(e){}
     const l3=document.createElement('div');l3.className='movesline';const c=document.createElement('span');c.textContent=first?'Clean clear!':'Clean clear';c.style.color=BEST_COLOR[theme]||BEST_COLOR.plain;l3.append(c);lines.push(l3)}
   // Today's level keeps a daily streak going
-  if(previewMode&&previewKey===dailyKey){streakClear();const l4=document.createElement('div');l4.className='movesline';l4.textContent='Daily streak '+plural(streak.n,'day');lines.push(l4)}
+  if(previewMode&&previewKey===dailyKey){streakClear();const l4=document.createElement('div');l4.className='movesline';l4.textContent='Daily Streak '+plural(streak.n,'day');lines.push(l4)}
   tl.replaceChildren(...lines);
   tl.classList.remove('best');
   // time is always recorded, but only shown when the player has turned the timer on
@@ -3253,7 +3253,7 @@ function openScorecard(){
   const box=document.getElementById('scCards');box.innerHTML='';
   {const c=document.createElement('div');c.className='sccard';c.style.setProperty('--sc',pal[0]);
     const cell=(val,lab)=>`<div><b>${val}</b><span>${lab}</span></div>`,n=v=>(v||0).toLocaleString();
-    let g=cell(n(life.cubes),'Cubes pulled')+cell(n(Object.keys(cleanSet).length),'Clean clears')+cell(streakNow(),'Daily streak')+(streak.best?cell(streak.best,'Best streak'):'');
+    let g=cell(n(life.cubes),'Cubes pulled')+cell(n(Object.keys(cleanSet).length),'Clean clears')+cell(streakNow(),'Daily Streak')+(streak.best?cell(streak.best,'Best Streak'):'');
     [['dots','Dots turned'],['gears','Gears turned'],['echoes','Echoes paired'],['fusions','Fusions made'],['glass','Glass shattered']].forEach(([k,lab])=>{if(life[k])g+=cell(n(life[k]),lab)});
     c.innerHTML=`<div class="schead"><span>Lifetime</span><small>Every level</small></div><div class="scgrid">${g}</div>`;box.appendChild(c)}
   SC_VERSIONS.forEach(([v,name,range,a,z],i)=>{
