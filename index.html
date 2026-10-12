@@ -516,7 +516,7 @@ function tipSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.cu
   [1046.5,1318.5,1568].forEach((f,i)=>tone(a,'sine',f,f,t+i*.055,.5,.022,.008))}
 tipBtn.addEventListener('pointerdown',e=>e.stopPropagation());tipBtn.addEventListener('pointerup',e=>e.stopPropagation());
 tipBtn.onclick=e=>{e.stopPropagation();openTip()};
-document.getElementById('tipClose').onclick=e=>{e.stopPropagation();tipSheet.hidden=true};
+document.getElementById('tipClose').onclick=e=>{e.stopPropagation();uiSfx('dismiss');tipSheet.hidden=true};
 tipSheet.addEventListener('pointerup',e=>e.stopPropagation());
 tipSheet.addEventListener('click',e=>{if(e.target===tipSheet)tipSheet.hidden=true});
 
@@ -1955,7 +1955,8 @@ function setTools(open){
 }
 moreBtn.onclick=e=>{e.stopPropagation();const open=!ctrlBox.classList.contains('open');menuSound(open);setTools(open)};
 paintBtn.onclick=e=>{e.stopPropagation();if(typeof closeSoundPanel==='function')closeSoundPanel();themesPanel.hidden=!themesPanel.hidden;paintBtn.setAttribute('aria-expanded',String(!themesPanel.hidden));
-  const p=document.getElementById('panel');if(!themesPanel.hidden&&p){p.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}};
+  const p=document.getElementById('panel');if(!themesPanel.hidden&&p){p.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false')}
+  uiSfx('modes',!themesPanel.hidden)};
 document.addEventListener('pointerdown',e=>{if(!themesPanel.hidden&&!themesPanel.contains(e.target)&&!e.target.closest('#paint')){themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false')}});
 (function(){const box=document.getElementById('optTheme');
   THEMES.forEach(([id,label,cols,back],i)=>{const btn=document.createElement('button');btn.className='topt';btn.id='optTheme-'+i;
@@ -2442,14 +2443,14 @@ function closeSoundPanel(){if(soundPanel&&!soundPanel.hidden){soundPanel.hidden=
 soundBtn.onclick=e=>{e.stopPropagation();const open=soundPanel.hidden;
   ['themes','panel'].forEach(id=>{const p=document.getElementById(id);if(p)p.hidden=true});
   paintBtn.setAttribute('aria-expanded','false');document.getElementById('tune').setAttribute('aria-expanded','false');
-  soundPanel.hidden=!open;soundBtn.setAttribute('aria-expanded',String(open))};
+  soundPanel.hidden=!open;soundBtn.setAttribute('aria-expanded',String(open));uiSfx('sound',open)};
 document.addEventListener('pointerdown',e=>{if(!soundPanel.hidden&&!soundPanel.contains(e.target)&&!e.target.closest('#sound'))closeSoundPanel()});
 function pressGroup(id,idx){document.querySelectorAll('#'+id+' .opt').forEach((b,j)=>b.setAttribute('aria-pressed',j===idx?'true':'false'))}
 function refreshMusicOpts(){pressGroup('optMusic',musicOn?musicIdx+1:0)}
 (function(){
   const mbox=document.getElementById('optMusic');
   ['Off',...MUSICS.map(m=>m.name)].forEach((label,i)=>{const b=document.createElement('button');b.className='opt';b.id='optMusic-'+i;b.textContent=label;
-    b.onclick=()=>{if(i===0){setMusic(false)}else{musicIdx=i-1;try{localStorage.setItem('pa3_track',musicIdx)}catch(e){}
+    b.onclick=()=>{if(i===0){if(musicOn)uiSfx('musoff');setMusic(false)}else{musicIdx=i-1;try{localStorage.setItem('pa3_track',musicIdx)}catch(e){}
       if(mus)stopMusic();setMusic(true)}refreshMusicOpts()};mbox.appendChild(b)});
   refreshMusicOpts();
 })();
@@ -2457,7 +2458,7 @@ function refreshMusicOpts(){pressGroup('optMusic',musicOn?musicIdx+1:0)}
 (function(){const box=document.getElementById('optSfx');
   [['On',true],['Off',false]].forEach(([label,val],i)=>{const btn=document.createElement('button');btn.className='opt';btn.id='optSfx-'+i;btn.textContent=label;
     btn.setAttribute('aria-pressed',soundOn===val?'true':'false');
-    btn.onclick=()=>{soundOn=val;try{localStorage.setItem('pa2_sound',val?'1':'0')}catch(e){}
+    btn.onclick=()=>{if(!val)uiSfx('sfx',false);soundOn=val;if(val)uiSfx('sfx',true);try{localStorage.setItem('pa2_sound',val?'1':'0')}catch(e){}
       box.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-pressed',b===btn?'true':'false'))};
     box.appendChild(btn)})})();
 // Blacklight: an on-screen switch in the Neon theme (bottom right), tap to turn it on or off
@@ -2475,7 +2476,7 @@ function blSound(on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.c
 document.getElementById('tune').onclick=e=>{e.stopPropagation();closeSoundPanel();
   const tp=document.getElementById('themes');if(tp&&!tp.hidden){tp.hidden=true;paintBtn.setAttribute('aria-expanded','false')}
   const opening=panel.hidden;panel.hidden=!panel.hidden;document.getElementById('tune').setAttribute('aria-expanded',String(!panel.hidden));
-  if(stageEl)stageEl.classList.toggle('dim',opening);menuSfx('tools',opening)};
+  if(stageEl)stageEl.classList.toggle('dim',opening);uiSfx('settings',opening)};
 document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!e.target.closest('#tune')){panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim')}});
 function click(){
   // the dot turn: Twist knob (soft clicks): three quiet knob detents over a gentle rising glide, with smooth fade-outs
@@ -3186,6 +3187,7 @@ sfxSlider.value=sfxVol;musSlider.value=musicVol;
 sfxSlider.addEventListener('input',()=>{audio();setVol('sfx',+sfxSlider.value)});
 sfxSlider.addEventListener('change',()=>{const a=audio();if(a&&sfxVol>0)bumpSound('Clay').play(a,a.currentTime+.02)});
 musSlider.addEventListener('input',()=>{audio();setVol('music',+musSlider.value)});
+musSlider.addEventListener('change',musicVolNote);
 // level timer show/hide (hidden by default, so nobody feels rushed)
 // the credit under the wordmark: 11px, shrinking only if it would ever without running past the end of SMART·PULL
 function fitCredit(){const m=document.querySelector('.mark'),c=document.querySelector('.credit');if(!m||!c)return;
@@ -3215,7 +3217,7 @@ function openScorecard(){
   document.getElementById('scorecard').hidden=false;
 }
 function closeScorecard(){document.getElementById('scorecard').hidden=true}
-document.getElementById('scoreOpen').onclick=openScorecard;document.getElementById('scClose').onclick=closeScorecard;
+document.getElementById('scoreOpen').onclick=()=>{uiSfx('score');openScorecard()};document.getElementById('scClose').onclick=()=>{uiSfx('dismiss');closeScorecard()};
 document.getElementById('scorecard').addEventListener('click',e=>{if(e.target.id==='scorecard')closeScorecard()});
 // full screen: offered on computers and other web browsers, never on iPhone or iPad (iPads report themselves as Macs, so touch gives them away)
 (function(){const btn=document.getElementById('fsBtn');if(!btn)return;
@@ -3229,7 +3231,7 @@ document.getElementById('scorecard').addEventListener('click',e=>{if(e.target.id
       if(!land()&&on){de.classList.remove('immersive');}
       btn.hidden=!land();btn.setAttribute('aria-pressed',de.classList.contains('immersive')?'true':'false');
       btn.setAttribute('aria-label',de.classList.contains('immersive')?'Exit full screen':'Full screen');resize()};
-    btn.addEventListener('click',e=>{e.stopPropagation();de.classList.toggle('immersive');window.scrollTo(0,1);sync()});
+    btn.addEventListener('click',e=>{e.stopPropagation();de.classList.toggle('immersive');uiSfx('fs',de.classList.contains('immersive'));window.scrollTo(0,1);sync()});
     ['pointerdown','pointerup'].forEach(ev=>btn.addEventListener(ev,e=>e.stopPropagation()));
     addEventListener('resize',sync);addEventListener('orientationchange',()=>setTimeout(sync,300));
     sync();return;
@@ -3238,7 +3240,7 @@ document.getElementById('scorecard').addEventListener('click',e=>{if(e.target.id
   btn.hidden=false;
   const isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
   const sync=()=>{btn.setAttribute('aria-pressed',isFs()?'true':'false');btn.setAttribute('aria-label',isFs()?'Exit full screen':'Full screen')};
-  btn.addEventListener('click',e=>{e.stopPropagation();
+  btn.addEventListener('click',e=>{e.stopPropagation();uiSfx('fs',!isFs());
     if(isFs())(document.exitFullscreen||document.webkitExitFullscreen).call(document);
     else{const r=req.call(de);if(r&&r.catch)r.catch(()=>{})}});
   ['pointerdown','pointerup'].forEach(ev=>btn.addEventListener(ev,e=>e.stopPropagation()));
@@ -3246,7 +3248,7 @@ document.getElementById('scorecard').addEventListener('click',e=>{if(e.target.id
 })();
 // the timer's show/hide button, right beside the timer
 document.getElementById('timerBtn').addEventListener('click',e=>{e.stopPropagation();showTimer=!showTimer;
-  try{localStorage.setItem('pa2_showtimer',showTimer?'1':'0')}catch(err){}updateLeft();tick()});
+  try{localStorage.setItem('pa2_showtimer',showTimer?'1':'0')}catch(err){}updateLeft();uiSfx('timer',showTimer)});
 ['pointerdown','pointerup'].forEach(ev=>document.getElementById('timerBtn').addEventListener(ev,e=>e.stopPropagation()));
 showTotal();
 /* ---------- level picker, two ways (both on, to compare) ----------
@@ -3257,6 +3259,26 @@ function tick(){ // the tiniest click as the dial passes each level
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
   hiss(a,'bandpass',3200,3200,4,t,.018,.05,.001);
 }
+// interface sounds (chosen Oct 12): one soft, felt-like family. Every control has its own pitch and shape, so each is
+// recognizable, but they all sound like the same app. Quiet, no hiss or buzz, and every sound fades fully to silence.
+function uiSfx(kind,on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
+  const panel=(f0,f1)=>{tone(a,'sine',f0,f0,t,.09,.03,.008);tone(a,'sine',f1,f1,t+.05,.11,.025,.008)};   // panels: rise to open, fall to close
+  const sw=(f,v)=>on?tone(a,'sine',f*.89,f,t,.1,v,.008):tone(a,'sine',f,f*.89,t,.1,v*.85,.008);          // switches: a lift for on, a drop for off
+  if(kind==='settings')return on?panel(330,440):panel(440,330);   // Felt switch
+  if(kind==='modes')return on?panel(392,523):panel(523,392);      // a step brighter
+  if(kind==='sound')return on?panel(294,370):panel(370,294);      // warmer and lower
+  if(kind==='sfx')return sw(587,.03);
+  if(kind==='dev')return sw(392,.024);
+  if(kind==='timer'){hiss(a,'bandpass',3200,3200,4,t,.018,.04,.001);return tone(a,'sine',on?700:787,on?787:700,t+.01,.08,.018,.008)}
+  if(kind==='fs')return hiss(a,'lowpass',on?500:1100,on?1100:500,.6,t,.14,.035,.03);
+  if(kind==='score'){[523,659,784].forEach((f,i)=>tone(a,'sine',f,f,t+i*.06,.35,.022,.01));return}
+  if(kind==='dismiss'){tone(a,'sine',440,440,t,.08,.022,.008);return tone(a,'sine',330,330,t+.045,.12,.02,.008)} // Done, Got it, Not now
+  if(kind==='select')return tone(a,'sine',659,659,t,.12,.022,.005);
+  if(kind==='musoff')return tone(a,'sine',294,262,t,.18,.022,.01)}
+// the Music volume slider: one soft note at the new music volume (only while music is off, so it never clashes with a track)
+function musicVolNote(){const a=audio();if(!a||!musicBus||mus||musicVol<=0)return;const t=a.currentTime;
+  const o=a.createOscillator();o.type='triangle';o.frequency.value=294;const g=a.createGain();const end=fadeEnv(g.gain,t,.01,.03,t+.5);
+  o.connect(g).connect(musicBus);o.start(t);o.stop(end)}
 // open and close are literal time-reverses of each other: the frequency sweep and the attack/decay shape both flip
 function menuSfx(which,open){
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
@@ -3414,7 +3436,7 @@ function openUpgrade(){
   upPanel.hidden=false;
 }
 function closeUpgrade(){upPanel.hidden=true}
-document.getElementById('upClose').onclick=closeUpgrade;
+document.getElementById('upClose').onclick=()=>{uiSfx('dismiss');closeUpgrade()};
 upPanel.addEventListener('pointerdown',e=>{if(e.target===upPanel)closeUpgrade()});
 /* Version (preview): try Free, $0.99 and $2.99 without buying anything */
 function setTier(t){
@@ -3459,7 +3481,7 @@ document.getElementById('devJump').addEventListener('submit',e=>{e.preventDefaul
 (function(){const box=document.getElementById('optDev');
   [['On',true],['Off',false]].forEach(([label,val],i)=>{const b=document.createElement('button');b.className='opt';b.id='optDev-'+i;b.textContent=label;
     b.setAttribute('aria-pressed',devMode===val?'true':'false');
-    b.onclick=()=>{devMode=val;try{localStorage.setItem('pa2_dev',val?'1':'0')}catch(e){}
+    b.onclick=()=>{uiSfx('dev',val);devMode=val;try{localStorage.setItem('pa2_dev',val?'1':'0')}catch(e){}
       box.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
       document.getElementById('devJump').hidden=!val;refreshFloorOpts();buildFloor();document.getElementById('undo').hidden=!val;
       // Developer Mode opens every level and theme, so the Version preview has nothing to do and hides
@@ -3469,7 +3491,7 @@ document.getElementById('devJump').addEventListener('submit',e=>{e.preventDefaul
 document.getElementById('tierRow').hidden=devMode;
 (function(){const box=document.getElementById('optTier');
   [['free','Free'],['plus','$0.99'],['full','$2.99']].forEach(([id,label],i)=>{const b=document.createElement('button');b.className='opt';b.id='optTier-'+i;b.textContent=label;
-    b.setAttribute('aria-pressed',tier===id?'true':'false');b.onclick=()=>setTier(id);box.appendChild(b)})})();
+    b.setAttribute('aria-pressed',tier===id?'true':'false');b.onclick=()=>{uiSfx('select');setTier(id)};box.appendChild(b)})})();
 // a barely-there "page turn" when moving between levels: a breath of air and a soft, low blip
 function pageTurn(){
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
