@@ -152,9 +152,9 @@ button.lvl{touch-action:none; overflow:hidden; white-space:nowrap; display:inlin
 /* the level's group (Pull, Twist, Link...) in small letters under the number */
 .lvsub{font-family:var(--display); font-size:8.5px; font-weight:400; letter-spacing:.08em; color:#007C92; margin-top:1px}
 /* the level-type subtitle takes a color from the theme: blue in Standard, orange in SmartPull, pink in Neon */
-html.brandtheme .lvsub{color:#E06A22}
+html.brandtheme .lvsub{color:#EB5D07}
 html.neon .lvsub{color:#FF2E97}
-@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) .lvsub{color:#4FB6D2} html.brandtheme .lvsub{color:#F59A5E}}
+@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) .lvsub{color:#54BED0} html.brandtheme .lvsub{color:#FD9357}}
 .wic{width:16px; height:16px; flex:none; margin-right:8px; opacity:.7}
 .lvgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:6px}
 button.lv{width:100%; height:40px; border-radius:10px; background:var(--bg2); box-shadow:none; font-family:var(--display); font-weight:500; font-size:13px; font-variant-numeric:tabular-nums}
@@ -1640,11 +1640,11 @@ const oopsCount=()=>bumps;
 let cheerColorIdx=0;
 function cheerPalette(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
   if(theme==='neon')return NEONS;
-  if(theme==='brand')return dark?['#F59A5E','#4FB6D2','#D8CF3A','#C9CBC6']:['#FF6C10','#007C92','#A39A08','#34363A'];
-  return dark?['#4FB6D2','#F59A5E','#D8CF3A','#E9ECE6']:['#007C92','#D9661E','#8C8410','#34363A']}
+  if(theme==='brand')return dark?['#FD9357','#54BED0','#C9D543','#C9CBC6']:['#FF6C10','#007C92','#979F19','#34363A'];
+  return dark?['#54BED0','#FD9357','#C9D543','#E9ECE6']:['#007C92','#E45900','#82881A','#34363A']}
 // the "Moves" total on the level-complete message has its own theme color (different from the "Best" note)
 function movesColor(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
-  return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#4FB6D2':'#007C92'):(dark?'#F59A5E':'#D9661E')}
+  return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#54BED0':'#007C92'):(dark?'#FD9357':'#E45900')}
 const BEST_COLOR={plain:'#007C92',brand:'#FF6C10',neon:'#39FF14'};
 const TAP_COLORS={plain:['var(--ink)'],brand:['#FF6C10','#007C92','#B2BB1E'],
   neon:['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF']};
@@ -1691,8 +1691,8 @@ const plural=(n,w)=>n+' '+w+(n===1?'':'s');
 const stat=(n,w)=>w+'s '+n;
 /* each stat has its own color from the current theme (lighter versions on a dark screen so they stay readable) */
 const STAT_COLORS={
-  plain:{light:{blocks:'var(--ink)',pulls:'#007C92',taps:'#8C8410',bumps:'#D9661E'},dark:{blocks:'var(--ink)',pulls:'#4FB6D2',taps:'#D8CF3A',bumps:'#F59A5E'}},
-  brand:{light:{blocks:'#34363A',pulls:'#FF6C10',taps:'#007C92',bumps:'#8C8410'},dark:{blocks:'#C9CBC6',pulls:'#F59A5E',taps:'#4FB6D2',bumps:'#D8CF3A'}},
+  plain:{light:{blocks:'var(--ink)',pulls:'#007C92',taps:'#82881A',bumps:'#E45900'},dark:{blocks:'var(--ink)',pulls:'#54BED0',taps:'#C9D543',bumps:'#FD9357'}},
+  brand:{light:{blocks:'#34363A',pulls:'#FF6C10',taps:'#007C92',bumps:'#82881A'},dark:{blocks:'#C9CBC6',pulls:'#FD9357',taps:'#54BED0',bumps:'#C9D543'}},
   neon:{light:{blocks:'#1FB8FF',pulls:'#39FF14',taps:'#F4FF3A',bumps:'#FF2E97'}}};
 function statColors(){const t=STAT_COLORS[theme]||STAT_COLORS.plain;
   let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
@@ -2765,7 +2765,7 @@ const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack 
 function openScorecard(){
   [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   bankPlay(elapsed());if(timeStart!==null)timeStart=performance.now();timeMs=0; // count the time on the current level so far
-  const sc=statColors(),pal={plain:['#007C92','#D9661E','#8C8410'],brand:['#FF6C10','#007C92','#B2BB1E'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007C92','#D9661E','#8C8410'];
+  const sc=statColors(),pal={plain:['#007C92','#E45900','#82881A'],brand:['#FF6C10','#007C92','#B2BB1E'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007C92','#E45900','#82881A'];
   const owned=v=>devMode||TIERS[tier].max>=TIERS[v].max;
   const fmtLong=ms=>{const m=Math.floor(ms/60000),h=Math.floor(m/60);return h?h+'h '+(m%60)+'m':m+'m '+Math.floor(ms/1000)%60+'s'};
   const box=document.getElementById('scCards');box.innerHTML='';
