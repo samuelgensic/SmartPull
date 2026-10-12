@@ -840,35 +840,45 @@ function shatterPath(unit){const out=[];
 /* Glass shatters with Burst (picked Oct 12 in the Glass Shatter Lab): it snaps apart and throws thin shards outward with a small sparkle.
    Shards are little solid pieces: they bounce off the cubes and settle on them. Gravity always pulls toward the bottom of the screen,
    so turning the puzzle tips resting shards off. Contact points cover each shard's faces and edges, so no cube edge pokes through one. */
-const SHARD={list:[],sparks:[],sim:null,sig:0,lastTink:0};
+const SHARD={list:[],sparks:[],sim:null,sig:0,lastTink:0,pool:null,mats:{},acc:0,warm:false};
 // "down" is the puzzle's floor direction in its starting view, so shards rest on the cubes there and slide off once you turn the puzzle away from it
 const SH_G=new THREE.Vector3(0,-1,0).applyQuaternion(new THREE.Quaternion().setFromEuler(new THREE.Euler(.5,-.65,0))),SH_UP=SH_G.clone().negate();
-function shardTriGeo(size,depth){let pts;
-  for(let t=0;t<20;t++){pts=[0,1,2].map(i=>{const a=i/3*Math.PI*2+(Math.random()-.5)*1.3,r=size*(.55+Math.random()*.6);return new THREE.Vector2(Math.cos(a)*r,Math.sin(a)*r)});
-    const ar=Math.abs((pts[1].x-pts[0].x)*(pts[2].y-pts[0].y)-(pts[2].x-pts[0].x)*(pts[1].y-pts[0].y))/2;if(ar>size*size*.35)break}
-  const g=new THREE.ExtrudeGeometry(new THREE.Shape(pts),{depth,bevelEnabled:false});g.center();g.computeVertexNormals();return g}
-function shardPoints(geo,step){const p=geo.attributes.position,idx=geo.index,seen=new Map(),a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),q=new THREE.Vector3();
-  const cnt=idx?idx.count:p.count,gi=i=>idx?idx.getX(i):i;
-  for(let i=0;i<cnt;i+=3){a.fromBufferAttribute(p,gi(i));b.fromBufferAttribute(p,gi(i+1));c.fromBufferAttribute(p,gi(i+2));
-    const L=Math.max(a.distanceTo(b),b.distanceTo(c),c.distanceTo(a)),n=Math.min(10,Math.max(1,Math.ceil(L/step)));
-    for(let u=0;u<=n;u++)for(let v=0;v<=n-u;v++){q.copy(a).multiplyScalar(1-(u+v)/n).addScaledVector(b,u/n).addScaledVector(c,v/n);
-      const k=Math.round(q.x/(step*.45))+','+Math.round(q.y/(step*.45))+','+Math.round(q.z/(step*.45));if(!seen.has(k))seen.set(k,q.clone())}}
-  return [...seen.values()]}
-function shardMats(){const neon=theme==='neon';
+/* Smoothness: 16 shard shapes are made once, ahead of time, and reused at any size, so breaking glass only places pieces
+   (no geometry is built at the moment of the break). Each shape keeps a small set of contact points spread over its face
+   and edges. The glass materials are compiled before the first break, so the first shatter doesn't stall either. */
+function shardShape(){let pts;
+  for(let t=0;t<20;t++){pts=[0,1,2].map(i=>{const a=i/3*Math.PI*2+(Math.random()-.5)*1.3,r=.55+Math.random()*.6;return new THREE.Vector2(Math.cos(a)*r,Math.sin(a)*r)});
+    const ar=Math.abs((pts[1].x-pts[0].x)*(pts[2].y-pts[0].y)-(pts[2].x-pts[0].x)*(pts[1].y-pts[0].y))/2;if(ar>.35)break}
+  const D=.12,geo=new THREE.ExtrudeGeometry(new THREE.Shape(pts),{depth:D,bevelEnabled:false});geo.center();geo.computeVertexNormals();geo.computeBoundingSphere();
+  const cx=(pts[0].x+pts[1].x+pts[2].x)/3,cy=(pts[0].y+pts[1].y+pts[2].y)/3,P=pts.map(v=>[v.x-cx,v.y-cy]),out=[];
+  // contact points: the six true corners, plus a grid over the middle of the face (it reaches the edges)
+  P.forEach(([x,y])=>{out.push(x,y,D/2,0,x,y,-D/2,0)});
+  const L=Math.max(...[0,1,2].map(i=>Math.hypot(P[i][0]-P[(i+1)%3][0],P[i][1]-P[(i+1)%3][1]))),n=Math.max(2,Math.ceil(L/.3));
+  for(let u=0;u<=n;u++)for(let v=0;v<=n-u;v++){if((u===0&&v===0)||(u===n)||(v===n))continue;const w=1-(u+v)/n;
+    out.push(P[0][0]*w+P[1][0]*u/n+P[2][0]*v/n,P[0][1]*w+P[1][1]*u/n+P[2][1]*v/n,0,D/2)}
+  return {geo,edges:new THREE.EdgesGeometry(geo,25),pts:new Float32Array(out),R:geo.boundingSphere.radius}}
+function shardPool(){return SHARD.pool||(SHARD.pool=Array.from({length:16},shardShape))}
+function shardMats(th){th=th||theme;if(SHARD.mats[th])return SHARD.mats[th];const neon=th==='neon';
   const m=neon?new THREE.MeshBasicMaterial({color:ICE,transparent:true,opacity:.5,depthWrite:false,side:THREE.DoubleSide})
     :new THREE.MeshPhongMaterial({color:0xBFE3EE,specular:0xffffff,shininess:90,transparent:true,opacity:.66,depthWrite:false,side:THREE.DoubleSide});
-  const e=new THREE.LineBasicMaterial({color:neon?ICE:theme==='brand'?0x4F8F9E:0x6FA3B3,transparent:true,opacity:neon?.9:.75,depthWrite:false,blending:neon?THREE.AdditiveBlending:THREE.NormalBlending});
-  return [m,e]}
-function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.getWorldPosition(p);body.remove(o.mesh);shatterSound();
-  const sc=pivot.scale.x,V=THREE.Vector3;
-  for(let i=0;i<42;i++){const g=shardTriGeo((.09+Math.random()*.12)*sc,.018*sc),[m,e]=shardMats();
-    const mesh=new THREE.Mesh(g,m),edges=new THREE.LineSegments(new THREE.EdgesGeometry(g,25),e);mesh.add(edges);mesh.renderOrder=5;edges.renderOrder=6;
+  const e=new THREE.LineBasicMaterial({color:neon?ICE:th==='brand'?0x4F8F9E:0x6FA3B3,transparent:true,opacity:neon?.9:.75,depthWrite:false,blending:neon?THREE.AdditiveBlending:THREE.NormalBlending});
+  return SHARD.mats[th]=[m,e]}
+function sparkMat(neon,sc){return new THREE.PointsMaterial({size:.07*sc,vertexColors:true,transparent:true,depthWrite:false,blending:neon?THREE.AdditiveBlending:THREE.NormalBlending})}
+// get everything glass needs ready before the first break: the shard shapes, and the materials compiled for every mode
+function warmShards(){if(SHARD.warm)return;SHARD.warm=true;const pool=shardPool(),g=new THREE.Group();
+  ['plain','brand','neon'].forEach(th=>{const [m,e]=shardMats(th),me=new THREE.Mesh(pool[0].geo,m);me.add(new THREE.LineSegments(pool[0].edges,e));g.add(me)});
+  [false,true].forEach(nn=>{const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(3),3));pg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(3),3));g.add(new THREE.Points(pg,sparkMat(nn,1)))});
+  g.scale.setScalar(1e-4);g.position.set(0,0,-1e3);scene.add(g);try{renderer.compile(scene,camera)}catch(e){}
+  requestAnimationFrame(()=>requestAnimationFrame(()=>scene.remove(g)))} // drawn once off to the side, so its buffers are on the graphics card too
+function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.getWorldPosition(p);body.remove(o.mesh);shatterSound();warmShards();
+  const sc=pivot.scale.x,V=THREE.Vector3,pool=shardPool(),[m,e]=shardMats();
+  for(let i=0;i<42;i++){const sh=pool[i%pool.length],k=(.09+Math.random()*.12)*sc/.85; // a shape from the pool, sized like before
+    const mesh=new THREE.Mesh(sh.geo,m),edges=new THREE.LineSegments(sh.edges,e);mesh.add(edges);mesh.renderOrder=5;edges.renderOrder=6;mesh.scale.setScalar(k);
     const off=new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(.8*sc),pos=p.clone().add(off);
     const vel=off.clone().normalize().multiplyScalar((2.6+Math.random()*2)*sc).addScaledVector(SH_UP,(1.6+Math.random())*sc);
-    g.computeBoundingSphere();const R=g.boundingSphere.radius;
-    const s={mesh,m,e,op:m.opacity,eop:e.opacity,p:pos,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random()*6.3,Math.random()*6.3,Math.random()*6.3)),
-      v:vel,w:new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(22),pts:shardPoints(g,.045*sc),R,I:Math.max(.002*sc*sc,.4*R*R),
-      ex:.32+Math.random()*.18,pitch:2600+(1-Math.min(R/(.3*sc),1))*3200+Math.random()*500,age:0,rest:0,sleep:false,fade:-1,sc};
+    const R=sh.R*k,s={mesh,pts:sh.pts,k,p:pos,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random()*6.3,Math.random()*6.3,Math.random()*6.3)),
+      v:vel,w:new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(22),R,I:Math.max(.002*sc*sc,.4*R*R),
+      ex:.32+Math.random()*.18,pitch:2600+(1-Math.min(R/(.3*sc),1))*3200+Math.random()*500,age:0,rest:0,sleep:false,shrink:-1,sc};
     mesh.position.copy(pos);mesh.quaternion.copy(s.q);scene.add(mesh);shardsLive.push(mesh);SHARD.list.push(s)}
   // a small sparkle where it broke
   {const n=40,neon=theme==='neon',cols=neon?[0x9FE8FF,0xFF2E97,0xF4FF3A]:theme==='brand'?[0x007493,0x8FCBD6,0xF17B31]:[0x5F9AAA,0x9FD3DE,0x3E7C78];
@@ -876,53 +886,69 @@ function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.get
     for(let i=0;i<n;i++){const c=new THREE.Color(cols[i%3]);col.set([c.r,c.g,c.b],i*3);
       items.push({p:p.clone(),v:new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(7*sc).addScaledVector(SH_UP,2*sc)})}
     g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
-    const mat=new THREE.PointsMaterial({size:.07*sc,vertexColors:true,transparent:true,depthWrite:false,blending:neon?THREE.AdditiveBlending:THREE.NormalBlending});
-    const pts=new THREE.Points(g,mat);pts.frustumCulled=false;pts.renderOrder=7;scene.add(pts);shardsLive.push(pts);
+    const mat=sparkMat(neon,sc),pts=new THREE.Points(g,mat);pts.frustumCulled=false;pts.renderOrder=7;scene.add(pts);shardsLive.push(pts);
     SHARD.sparks.push({pts,mat,items,age:0,life:.6+Math.random()*.3,sc})}
-  if(!SHARD.sim){SHARD.sim={t:0,dur:1e9,last:0,step:()=>shardSim(SHARD.sim)};tweens.push(SHARD.sim)}}
+  if(!SHARD.sim){SHARD.acc=0;SHARD.sim={t:0,dur:1e9,last:0,step:()=>shardSim(SHARD.sim)};tweens.push(SHARD.sim)}}
 function shardTink(f,v){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;if(t-SHARD.lastTink<.028)return;SHARD.lastTink=t;
   const vol=.004+.016*v;tone(a,'sine',f,f*.995,t,.07,vol,.001);tone(a,'sine',f*1.52,f*1.51,t,.05,vol*.35,.001)}
-const _sr=new THREE.Vector3(),_sw=new THREE.Vector3(),_sl=new THREE.Vector3(),_sn=new THREE.Vector3(),_svc=new THREE.Vector3(),_srn=new THREE.Vector3(),_st=new THREE.Vector3(),_srt=new THREE.Vector3(),_scor=new THREE.Vector3(),_sq=new THREE.Quaternion();
+const _sr=new THREE.Vector3(),_sw=new THREE.Vector3(),_sl=new THREE.Vector3(),_sn=new THREE.Vector3(),_svc=new THREE.Vector3(),_srn=new THREE.Vector3(),_st=new THREE.Vector3(),_srt=new THREE.Vector3(),_scor=new THREE.Vector3(),_sq=new THREE.Quaternion(),
+  _bM=new THREE.Matrix4(),_bI=new THREE.Matrix4(),_qBI=new THREE.Quaternion(),_qL=new THREE.Quaternion(),_bAx=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()],_bC=[],_cand=[],_cPen=[],_cDir=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()];
+const SH_H=1/220; // fixed physics step: the same small step every time, so resting shards stay still and a slow frame never snowballs
 function shardSim(tw){let dt=tw.t-tw.last;tw.last=tw.t;if(dt<=0)return;
   if(!SHARD.list.length&&!SHARD.sparks.length){tw.dead=true;SHARD.sim=null;return}
-  // the cubes shards can land on, wherever they are right now (the puzzle may be turning or re-centering)
-  const HC=.985/2,cols=[];let sig=0,floorY=Infinity;
-  for(const b of blocks){if(!b.alive||b.glass||!b.mesh)continue;b.mesh.updateMatrixWorld(true);const mw=b.mesh.matrixWorld;
-    const c=new THREE.Vector3().setFromMatrixPosition(mw),s=new THREE.Vector3().setFromMatrixScale(mw).x;
-    cols.push({mw,inv:new THREE.Matrix4().copy(mw).invert(),c,s,reach:HC*1.75*s});for(let i=0;i<16;i++)sig+=mw.elements[i]*(i+1);floorY=Math.min(floorY,c.dot(SH_UP)-s)}
+  // the puzzle's frame (it may be turning or re-centering) and the cubes in it; all collision math happens in the puzzle's own space,
+  // where every cube is a plain box, so each contact point is moved into that space just once
+  pivot.updateMatrix();body.updateMatrix();_bM.multiplyMatrices(pivot.matrix,body.matrix);_bI.copy(_bM).invert();
+  const e=_bM.elements,S=Math.hypot(e[0],e[1],e[2]);_qBI.multiplyQuaternions(pivot.quaternion,body.quaternion).invert();_bAx[0].set(e[0],e[1],e[2]).divideScalar(S);_bAx[1].set(e[4],e[5],e[6]).divideScalar(S);_bAx[2].set(e[8],e[9],e[10]).divideScalar(S);
+  const HC=.985/2;let nb=0,sig=0,floorY=Infinity;
+  for(const b of blocks){if(!b.alive||b.glass||!b.mesh)continue;const q=b.mesh.position;let c=_bC[nb];if(!c)c=_bC[nb]=new THREE.Vector3();c.copy(q);nb++;
+    sig+=q.x*1.3+q.y*2.7+q.z*4.1;_sl.copy(q).applyMatrix4(_bM);floorY=Math.min(floorY,_sl.dot(SH_UP)-S)}
+  for(let i=0;i<16;i++)sig+=e[i]*(i+1);
   if(!isFinite(floorY))floorY=-2*pivot.scale.x;
   const moved=Math.abs(sig-SHARD.sig)>1e-6;SHARD.sig=sig;
-  const SUB=Math.max(4,Math.ceil(dt/.004)),h=dt/SUB; // small steps keep resting shards still even on a slow frame
+  SHARD.acc+=dt;let steps=Math.floor(SHARD.acc/SH_H);if(steps>6){steps=6;SHARD.acc=0}else SHARD.acc-=steps*SH_H;const h=SH_H;
   for(const s of SHARD.list){if(moved){s.sleep=false;s.rest=0}
-    for(let k=0;k<SUB&&!s.sleep&&s.fade<0;k++){
+    const pts=s.pts,np=pts.length/4,Rl=s.R/S+HC;
+    for(let k=0;k<steps&&!s.sleep;k++){
       s.v.addScaledVector(SH_G,12*s.sc*h);s.p.addScaledVector(s.v,h);
       const wl=s.w.length();if(wl>1e-6){_sq.setFromAxisAngle(_sw.copy(s.w).divideScalar(wl),wl*h);s.q.premultiply(_sq).normalize()}
       s.w.multiplyScalar(1-.4*h);
-      let onTop=false,maxPen=0;
-      for(const C of cols){if(s.p.distanceTo(C.c)>C.reach+s.R)continue;
-        for(const lp of s.pts){_sr.copy(lp).applyQuaternion(s.q);_sl.copy(s.p).add(_sr).applyMatrix4(C.inv);
-          const ox=HC-Math.abs(_sl.x),oy=HC-Math.abs(_sl.y),oz=HC-Math.abs(_sl.z);if(ox<=0||oy<=0||oz<=0)continue;
-          let pen;if(ox<=oy&&ox<=oz){_sn.set(Math.sign(_sl.x)||1,0,0);pen=ox}else if(oy<=oz){_sn.set(0,Math.sign(_sl.y)||1,0);pen=oy}else{_sn.set(0,0,Math.sign(_sl.z)||1);pen=oz}
-          _sn.transformDirection(C.mw);pen*=C.s;if(_sn.dot(SH_G)<-.7)onTop=true;
+      // which cubes are close enough to touch (in the puzzle's space)
+      _sl.copy(s.p).applyMatrix4(_bI);let nc=0;
+      for(let i=0;i<nb&&nc<8;i++){const c=_bC[i];if(Math.abs(_sl.x-c.x)<Rl&&Math.abs(_sl.y-c.y)<Rl&&Math.abs(_sl.z-c.z)<Rl){_cPen[nc]=0;_cand[nc++]=c}}
+      let onTop=false;
+      // the shard's turn as seen from inside the puzzle, as a 3x3 table, so each contact point costs only a few multiplies
+      const cx0=_sl.x,cy0=_sl.y,cz0=_sl.z,kl=s.k/S;
+      if(nc){_qL.multiplyQuaternions(_qBI,s.q);const X=_qL.x,Y=_qL.y,Z=_qL.z,W=_qL.w,
+          m00=1-2*(Y*Y+Z*Z),m01=2*(X*Y-Z*W),m02=2*(X*Z+Y*W),m10=2*(X*Y+Z*W),m11=1-2*(X*X+Z*Z),m12=2*(Y*Z-X*W),m20=2*(X*Z-Y*W),m21=2*(Y*Z+X*W),m22=1-2*(X*X+Y*Y);
+        for(let j=0;j<np;j++){const j4=j*4,lx=pts[j4]*kl,ly=pts[j4+1]*kl,lz=pts[j4+2]*kl,HP=HC+pts[j4+3]*kl,
+          px=cx0+m00*lx+m01*ly+m02*lz,py=cy0+m10*lx+m11*ly+m12*lz,pz=cz0+m20*lx+m21*ly+m22*lz;
+        for(let ci=0;ci<nc;ci++){const c=_cand[ci],dx=px-c.x,dy=py-c.y,dz=pz-c.z;
+          const ox=HP-Math.abs(dx),oy=HP-Math.abs(dy),oz=HP-Math.abs(dz);if(ox<=0||oy<=0||oz<=0)continue;
+          _sr.set(pts[j4]*s.k,pts[j4+1]*s.k,pts[j4+2]*s.k).applyQuaternion(s.q);
+          let pen;if(ox<=oy&&ox<=oz){_sn.copy(_bAx[0]).multiplyScalar(Math.sign(dx)||1);pen=ox}else if(oy<=oz){_sn.copy(_bAx[1]).multiplyScalar(Math.sign(dy)||1);pen=oy}else{_sn.copy(_bAx[2]).multiplyScalar(Math.sign(dz)||1);pen=oz}
+          pen*=S;if(_sn.dot(SH_G)<-.7)onTop=true;
           _svc.crossVectors(s.w,_sr).add(s.v);const vn=_svc.dot(_sn);
-          if(vn<0){_srn.crossVectors(_sr,_sn);const j=-(1+(vn<-.9*s.sc?s.ex:0))*vn/(1+_srn.lengthSq()/s.I);
-            s.v.addScaledVector(_sn,j);s.w.addScaledVector(_srn,j/s.I);
+          if(vn<0){_srn.crossVectors(_sr,_sn);const jn=-(1+(vn<-.9*s.sc?s.ex:0))*vn/(1+_srn.lengthSq()/s.I);
+            s.v.addScaledVector(_sn,jn);s.w.addScaledVector(_srn,jn/s.I);
             _svc.crossVectors(s.w,_sr).add(s.v);_st.copy(_svc).addScaledVector(_sn,-_svc.dot(_sn));const tl=_st.length();
-            if(tl>1e-5){_st.divideScalar(tl);_srt.crossVectors(_sr,_st);const jt=Math.min(tl/(1+_srt.lengthSq()/s.I),.2*j);s.v.addScaledVector(_st,-jt);s.w.addScaledVector(_srt,-jt/s.I)}
+            if(tl>1e-5){_st.divideScalar(tl);_srt.crossVectors(_sr,_st);const jt=Math.min(tl/(1+_srt.lengthSq()/s.I),.2*jn);s.v.addScaledVector(_st,-jt);s.w.addScaledVector(_srt,-jt/s.I)}
             if(vn<-1.4*s.sc)shardTink(s.pitch,Math.min(1,(-vn/s.sc-1.2)/5))}
-          if(pen>maxPen){maxPen=pen;_scor.copy(_sn)}}}
-      if(maxPen>0)s.p.addScaledVector(_scor,maxPen*.85);
+          if(pen>_cPen[ci]){_cPen[ci]=pen;_cDir[ci].copy(_sn)}}}}
+      // push the shard back out of every cube it touched (wedged between two cubes, both push)
+      for(let ci=0;ci<nc;ci++)if(_cPen[ci]>0)s.p.addScaledVector(_cDir[ci],_cPen[ci]*.85);
       if(onTop)s.w.multiplyScalar(.985);
       if(onTop&&s.v.lengthSq()<.012*s.sc*s.sc&&s.w.lengthSq()<.12)s.rest+=h;else s.rest=0;
       if(s.rest>.35){s.sleep=true;s.v.set(0,0,0);s.w.set(0,0,0)}}
-    // a shard that falls off keeps falling, fully visible, until it has left the screen (at any zoom); only then is it removed
-    s.age+=dt;let off=false;
-    if(s.p.dot(SH_UP)<floorY){_sl.copy(s.p).project(camera);const m=1+s.R*4;off=_sl.z>1||_sl.y<-m||_sl.y>m||Math.abs(_sl.x)>m}
-    if(s.age>120&&s.fade<0)s.fade=0;else if(s.fade>=0)s.fade+=dt;
-    const kk=off?0:s.fade<0?1:Math.max(0,1-s.fade/.6);s.m.opacity=s.op*kk;s.e.opacity=s.eop*kk;
-    s.mesh.position.copy(s.p);s.mesh.quaternion.copy(s.q);
-    if(kk<=0){scene.remove(s.mesh);s.mesh.geometry.dispose();s.m.dispose();s.e.dispose();shardsLive=shardsLive.filter(x=>x!==s.mesh);s.gone=true}}
-  SHARD.list=SHARD.list.filter(s=>!s.gone);
+    // a shard that falls off keeps falling, fully visible, until it has left the screen (at any zoom); only then is it removed.
+    // (one left resting for two whole minutes quietly shrinks away)
+    s.age+=dt;let gone=false;
+    if(s.p.dot(SH_UP)<floorY){_sl.copy(s.p).project(camera);const m=1+s.R*4;gone=_sl.z>1||_sl.y<-m||_sl.y>m||Math.abs(_sl.x)>m}
+    if(s.age>120&&s.shrink<0)s.shrink=0;
+    if(s.shrink>=0){s.shrink+=dt;const f=1-s.shrink/.5;if(f<=0)gone=true;else s.mesh.scale.setScalar(s.k*f)}
+    if(!s.sleep||moved){s.mesh.position.copy(s.p);s.mesh.quaternion.copy(s.q)}
+    if(gone){scene.remove(s.mesh);s.gone=true}}
+  if(SHARD.list.some(s=>s.gone)){SHARD.list=SHARD.list.filter(s=>!s.gone);shardsLive=shardsLive.filter(m=>m.parent)}
   for(const S of SHARD.sparks){S.age+=dt;const arr=S.pts.geometry.attributes.position;
     S.items.forEach((it,i)=>{it.v.addScaledVector(SH_G,12*.35*S.sc*dt);it.v.multiplyScalar(1-1.6*dt);it.p.addScaledVector(it.v,dt);arr.setXYZ(i,it.p.x,it.p.y,it.p.z)});
     arr.needsUpdate=true;S.mat.opacity=Math.max(0,1-S.age/S.life);
@@ -2028,6 +2054,7 @@ function load(i){
   // a linked pair is a two-cube piece from the start
   lv.blocks.forEach(b=>{if(b.partner&&!b.group){const g={members:[b,b.partner],color:b.pairColor};b.group=g;b.partner.group=g}});
   setTimeout(()=>{const e=PAR[levelIdx];curPar=e&&e[0]===levelSig()?e[1]:null},0); // (blocks are in place by then)
+  if(lv.blocks.some(b=>b.glass))setTimeout(warmShards,250);
   floorSpec=gravity?{w:mx[0]-mn[0]+1.5,dz:mx[2]-mn[2]+1.5,x:(mn[0]+mx[0])/2-ctr[0],y:-ctr[1]-.56,z:(mn[2]+mx[2])/2-ctr[2]}:null;
   buildFloor(); // gravity levels sit on a floor, so it's clear which way is down
   lv.blocks.forEach(b=>{
