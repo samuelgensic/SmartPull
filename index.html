@@ -361,7 +361,12 @@ header .blacklight:focus-visible::after{opacity:1}
 /* Where the SMART·PULL wordmark goes (Oct 13): iPhone, iPad and touch phones keep it at the bottom center (Undo above it);
    web on a computer moves it into the top bar, centered between the level button and the menu (html.logotop, set in script) */
 html.logotop header .brandbox.foot{position:static; transform:none; grid-column:2; grid-row:1; align-self:center; justify-self:center}
-html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px} /* with the logo up top, Undo sits on the bottom row */
+html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
+/* Replay: a quieter outlined button under Continue on the win screen; it appears with Continue (Oct 13) */
+.done .replay{width:auto; height:auto; margin-top:-4px; padding:9px 22px; border-radius:var(--cubeR,8px); background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--muted);
+  font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:0; pointer-events:none; transition:opacity .6s}
+.done.ready .replay{opacity:1; pointer-events:auto}
+html.neon .done .replay{box-shadow:inset 0 0 0 1.5px rgba(244,236,255,.4)} /* with the logo up top, Undo sits on the bottom row */
 </style>
 
 <div class="app">
@@ -441,7 +446,7 @@ html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px} /* with the l
   <div class="panel levels" id="levels" hidden>
     <div class="lvcol" id="lvcol"></div>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small><button class="replay" id="replayBtn" type="button">Replay</button></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -3915,6 +3920,9 @@ function win(){
   clearTimeout(readyTimer);readyTimer=setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('ready');waiting=true}},2800);
 }
 let waiting=false,readyTimer=0;
+// Replay: play the level you just cleared again from the start (a daily or sampler stays a preview)
+document.getElementById('replayBtn').addEventListener('click',e=>{e.stopPropagation();if(!waiting)return;waiting=false;
+  const pm=previewMode,pk=previewKey,pr=previewReturn;rewind();resetZoom=true;load(levelIdx);previewMode=pm;previewKey=pk;previewReturn=pr});
 function advance(){
   if(!waiting)return;waiting=false;pageTurn();
   if(previewMode){const back=previewReturn,wasSamp=previewKey!==dailyKey;load(back);if(wasSamp&&!devMode&&tier!=='full')openUpgrade();return} // after a preview, back to where you were
@@ -3926,7 +3934,7 @@ const nextAllowed=()=>TESTING||levelIdx<topLevel();
 const nextUpsell=()=>!devMode&&tier!=='full'&&capCleared()&&levelIdx===maxLevel()-1;
 function refreshNav(){} // (the ‹ › level buttons were removed; levels change from the menu or the scrub ruler)
 document.addEventListener('pointerup',e=>{if(waiting&&!e.target.closest('button'))advance()});
-document.addEventListener('keydown',e=>{if(waiting&&(e.key==='Enter'||e.key===' ')){e.preventDefault();advance()}});
+document.addEventListener('keydown',e=>{if(waiting&&(e.key==='Enter'||e.key===' ')&&!(e.target.closest&&e.target.closest('button'))){e.preventDefault();advance()}});
 
 /* ---------- input ---------- */
 const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
