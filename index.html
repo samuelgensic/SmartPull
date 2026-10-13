@@ -4246,7 +4246,7 @@ function openLevels(){
     trayT=setTimeout(()=>{if(!lvPanel.hidden&&!lvPanel.classList.contains('closing')){r.classList.add('show');traySfx(true)}},d+280)});
 }
 let trayT=0;
-// a chapter's tray of level pills sliding out (a soft rising swish) and back in (the same swish, falling and a touch shorter); kept very quiet
+// a chapter's tray of level pills sliding out: a soft, very quiet rising swish (sliding back in is silent)
 function traySfx(open){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
   if(open){hiss(a,'bandpass',520,1500,1.4,t,.22,.03,.05);tone(a,'sine',420,560,t+.02,.12,.006,.02)}
   else{hiss(a,'bandpass',1400,480,1.4,t,.18,.024,.03);tone(a,'sine',520,400,t+.01,.1,.005,.015)}}
@@ -4258,7 +4258,7 @@ document.getElementById('lvcol').addEventListener('click',e=>{
   if(t.dataset.lv!=null){const i=+t.dataset.lv;tick();closeLevels();if(i!==levelIdx||previewMode){pageTurn();load(i)}return}
   if(t.classList.contains('med')){const r=t.closest('.chrow').dataset.r,was=col.querySelector('.chrow.show')?openRow:null;openRow=openRow===r?null:r;tick();
     col.querySelectorAll('.chrow').forEach(x=>x.classList.toggle('show',x.dataset.r===openRow));
-    if(was!=null&&was!==openRow)traySfx(false);if(openRow!=null&&openRow!==was)setTimeout(()=>traySfx(true),was!=null?90:0)}
+    if(openRow!=null&&openRow!==was)traySfx(true)} // only the slide-out has a sound (a slide-in sound competed with it when switching chapters)
 });
 document.addEventListener('pointerdown',e=>{if(lvOpen()&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
 // scrub ruler on the level button: drag sideways and a ruler slides out; every 11px is one level.
