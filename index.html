@@ -2383,7 +2383,7 @@ let bestTaps={};try{bestTaps=JSON.parse(localStorage.getItem('pa2_besttaps')||'{
 const ease=k=>1-Math.pow(1-k,3);
 
 /* ---------- sound (synthesized, very quiet) ---------- */
-let actx=null,noiseBuf=null,softBuf=null,soundOn=true,mus=null,musicOn=false,sfxBus=null,musicBus=null;
+let actx=null,noiseBuf=null,softBuf=null,soundOn=true,mus=null,musicOn=false,sfxBus=null,musicBus=null,outBus=null;
 try{musicOn=localStorage.getItem('pa2_music')==='1'}catch(e){}
 // volume sliders run 0–100; 70 is the original loudness, so there's room to go up as well as down
 let sfxVol=70,musicVol=70;
@@ -2419,7 +2419,7 @@ function unlockPlayback(){
    If that element can't start, the sound goes straight to the device as before. */
 let mediaOut=null;
 function routeOut(){
-  const direct=()=>{sfxBus.connect(actx.destination);musicBus.connect(actx.destination)};
+  const direct=()=>outBus.connect(actx.destination);
   // iOS 17+ (audioSession set to "playback" above) follows AirPlay and mirroring on its own. There, the <audio>-element
   // route below can pin the sound to the phone, since iOS treats a live media stream like a call, so go direct.
   if(navigator.audioSession)return direct();
@@ -2427,8 +2427,8 @@ function routeOut(){
     const md=actx.createMediaStreamDestination();
     if(!md||!window.Audio)return direct();
     const el=new Audio();el.setAttribute('playsinline','');el.srcObject=md.stream;
-    sfxBus.connect(md);musicBus.connect(md);
-    el.play().then(()=>{mediaOut=el}).catch(()=>{try{sfxBus.disconnect(md);musicBus.disconnect(md)}catch(e){}direct()});
+    outBus.connect(md);
+    el.play().then(()=>{mediaOut=el}).catch(()=>{try{outBus.disconnect(md)}catch(e){}direct()});
   }catch(e){direct()}
 }
 function audio(){
@@ -2442,6 +2442,13 @@ function audio(){
     softBuf=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate);{const sd=softBuf.getChannelData(0);let last=0;for(let i=0;i<sd.length;i++){const w=Math.random()*2-1;last=(last+.04*w)/1.04;sd[i]=w*.45+last*5}} // a rounder, lower noise for the soft sounds
     sfxBus=actx.createGain();sfxBus.gain.value=volGain(sfxVol);
     musicBus=actx.createGain();musicBus.gain.value=volGain(musicVol);
+    // the overall level, underneath the sliders (Oct 13): sound effects 40% louder, music 35% louder than before.
+    // Both then pass through a gentle limiter, so when many sounds stack up the peaks are smoothed instead of crackling.
+    const sfxLift=actx.createGain();sfxLift.gain.value=1.4;const musLift=actx.createGain();musLift.gain.value=1.35;
+    const lim=actx.createDynamicsCompressor();lim.threshold.value=-6;lim.knee.value=6;lim.ratio.value=8;lim.attack.value=.003;lim.release.value=.25;
+    // (the limiter adds about 2 dB of its own "makeup" volume; this takes it back out, so the lift is exactly 40% and 35%)
+    outBus=actx.createGain();outBus.gain.value=.8;lim.connect(outBus);
+    sfxBus.connect(sfxLift).connect(lim);musicBus.connect(musLift).connect(lim);
     routeOut(); // sound goes out through a media element, which AirPlay and screen mirroring follow
   }catch(e){actx=null}}
   if(actx&&actx.state!=='running')actx.resume().catch(()=>{}); // "suspended", or iOS's "interrupted"
@@ -2459,7 +2466,7 @@ function rebuildAudio(){
   const old=actx;audioStale=false;wdLast=-1;wdSame=0;wdOff=0;
   if(mus){const m=mus;mus=null;try{m.stopGen&&m.stopGen()}catch(e){}try{m.out.disconnect()}catch(e){}}
   if(mediaOut){try{mediaOut.pause()}catch(e){}mediaOut=null}
-  actx=null;sfxBus=null;musicBus=null;try{old&&old.close()}catch(e){}
+  actx=null;sfxBus=null;musicBus=null;outBus=null;try{old&&old.close()}catch(e){}
   audio(); // the new engine; the music starts again if it was on
   if(!actx||actx.state!=='running')needTap=true;
 }
