@@ -281,7 +281,7 @@ html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .done .taps{display:block; text-align:center; font-family:var(--display); font-weight:500; font-size:13px; letter-spacing:.06em; color:var(--ink); font-variant-numeric:tabular-nums; margin-top:-4px; white-space:pre}
 .done .taps.best{color:var(--accent)}
 .done .movesline{margin-top:7px}
-/* New best / Clean clear: button-shaped badges (outlined pill, soft tint of the color); not tappable, the whole message is */
+/* New best / Perfect Pull: button-shaped badges (outlined pill, soft tint of the color); not tappable, the whole message is */
 .done .parrow{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; column-gap:12px; width:min(330px,calc(100vw - 40px))}
 .done .pr-l{text-align:right} .done .pr-r{text-align:left}
 .done .parpill{display:inline-block; padding:5px 13px; border-radius:999px; font-weight:600; color:var(--c); background:color-mix(in srgb, var(--c) 14%, transparent); box-shadow:inset 0 0 0 1.5px var(--c)}
@@ -435,7 +435,7 @@ header .blacklight:focus-visible::after{opacity:1}
   <div class="panel levels" id="levels" hidden>
     <div class="lvcol" id="lvcol"></div>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Tap to continue</small></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -2232,8 +2232,10 @@ function cheerPalette(){let dark=false;try{dark=matchMedia('(prefers-color-schem
 // the "Moves" total on the level-complete message has its own theme color (different from the "Best" note)
 function movesColor(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
   return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#54BED0':'#007C92'):(dark?'#FD9357':'#E45900')}
-/* Best and Clean clear take the theme's spare color: Neon's purple (unused on the win screen), and in Classic/SmartPull the Taps color,
+/* Best (New best) takes the theme's spare color: Neon's purple (unused on the win screen), and in Classic/SmartPull the Taps color,
    which is free on levels without dots; it uses the stat palette, so it softens in dark mode like the counts */
+/* Perfect Pull gets its own color, never the Continue button's or New best's: Classic orange, SmartPull olive, Neon green (Oct 12) */
+const perfectColor=()=>theme==='neon'?'#39FF14':statColors().bumps;
 const bestColor=()=>theme==='neon'?'#B026FF':statColors().taps;
 const TAP_COLORS={plain:['var(--ink)'],brand:['#FF6C10','#007C92','#B2BB1E'],
   neon:['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF']};
@@ -3857,13 +3859,13 @@ function win(){
   const mR=word('Best',isBest?moves:prev);mR.className='pr-r';
   l2.append(mL,mC,mR);
   const lines=[l1,l2];
-  // New best and Clean clear sit together on their own line, as button-shaped badges in the theme's spare color
+  // New best and Perfect Pull sit together on their own line, as button-shaped badges in the theme's spare color
   const badges=document.createElement('div');badges.className='badges';badges.style.setProperty('--c',bestColor());
-  const badge=t=>{const b=document.createElement('span');b.className='badge';b.textContent=t;badges.append(b)};
+  const badge=(t,c)=>{const b=document.createElement('span');b.className='badge';b.textContent=t;if(c)b.style.setProperty('--c',c);badges.append(b)};
   if(prev!==undefined&&isBest)badge('New best!');
-  // a clean clear: no bumps, in par or fewer (no bumps is enough on a level without a par). It marks the level's pill in the menu.
+  // a Perfect Pull (called a clean clear in code): no bumps, in par or fewer (no bumps is enough on a level without a par). It marks the level's pill in the menu.
   if(oopsCount()===0&&(curPar==null||moves<=curPar)){const first=!cleanSet[levelIdx];cleanSet[levelIdx]=1;try{localStorage.setItem('pa4_clean',JSON.stringify(cleanSet))}catch(e){}
-    badge(first?'Clean clear!':'Clean clear')}
+    badge(first?'Perfect Pull!':'Perfect Pull',perfectColor())}
   if(badges.childElementCount)lines.push(badges);
   // Today's level keeps a daily streak going
   if(previewMode&&previewKey===dailyKey){streakClear();const l4=document.createElement('div');l4.className='movesline';l4.textContent='Daily Streak '+plural(streak.n,'day');lines.push(l4)}
@@ -3885,7 +3887,7 @@ function win(){
   refreshNav();
   // what tapping does next: the next level, the upgrade screen, or (after level 50) the level picker
   const atEnd=!previewMode&&levelIdx+1>=(devMode?NLEV:maxLevel());
-  document.querySelector('#done small').textContent=previewMode?'Tap to go back':!atEnd?'Tap to continue':tier==='full'?'All 100 levels cleared! Tap to pick any level':'Tap to unlock more levels';
+  document.querySelector('#done small').textContent=previewMode?'Go back':!atEnd?'Continue':tier==='full'?'All 100 levels cleared! Pick any level':'Unlock more levels';
   // the message stays until the player taps or clicks anywhere
   // the message and stats appear first; the continue button joins after a pause so there's time to read them
   setTimeout(()=>{if(clearing)document.getElementById('done').classList.add('show')},450);
@@ -3991,7 +3993,7 @@ function openScorecard(){
   const box=document.getElementById('scCards');box.innerHTML='';
   {const c=document.createElement('div');c.className='sccard';c.style.setProperty('--sc',pal[0]);
     const cell=(val,lab)=>`<div><b>${val}</b><span>${lab}</span></div>`,n=v=>(v||0).toLocaleString();
-    let g=cell(n(life.cubes),'Cubes pulled')+cell(n(Object.keys(cleanSet).length),'Clean clears')+cell(streakNow(),'Daily Streak')+(streak.best?cell(streak.best,'Best Streak'):'');
+    let g=cell(n(life.cubes),'Cubes pulled')+cell(n(Object.keys(cleanSet).length),'Perfect Pulls')+cell(streakNow(),'Daily Streak')+(streak.best?cell(streak.best,'Best Streak'):'');
     [['dots','Dots turned'],['gears','Gears turned'],['echoes','Echoes paired'],['fusions','Fusions made'],['glass','Glass shattered']].forEach(([k,lab])=>{if(life[k])g+=cell(n(life[k]),lab)});
     c.innerHTML=`<div class="schead"><span>Lifetime</span><small>Every level</small></div><div class="scgrid">${g}</div>`;box.appendChild(c)}
   SC_VERSIONS.forEach(([v,name,range,a,z],i)=>{
@@ -4136,7 +4138,7 @@ function openLevels(){
     const locked=chLocked(s),c=chColor(k),cur=Math.floor(levelIdx/5)===k;
     let tray;
     if(locked){tray=`<button class="trlv samp${sampled.has(String(s))?' clr':''}${previewKey===String(s)?' now':''}" type="button" data-samp="${s}" aria-label="Free sampler, level ${s+1}">${s+1}</button><button class="unlockPill" type="button" data-unlock="1">${LOCK_SVG}4 more</button>`}
-    else{tray='';for(let i=s;i<end;i++)tray+=`<button class="trlv${i<best?' clr':''}${cleanSet[i]?' cln':''}${i===levelIdx&&!previewMode?' now':''}" type="button" data-lv="${i}"${i>top?' disabled':''}${cleanSet[i]?` aria-label="Level ${i+1}, clean clear"`:''}>${i+1}</button>`}
+    else{tray='';for(let i=s;i<end;i++)tray+=`<button class="trlv${i<best?' clr':''}${cleanSet[i]?' cln':''}${i===levelIdx&&!previewMode?' now':''}" type="button" data-lv="${i}"${i>top?' disabled':''}${cleanSet[i]?` aria-label="Level ${i+1}, Perfect Pull"`:''}>${i+1}</button>`}
     h+=`<div class="chrow" data-r="${k}"><button class="med${cur?' cur':''}${locked?' locked':''}" type="button" style="--c:${c};transition-delay:${delay}ms" aria-label="${name}, levels ${s+1} to ${end}">${ringSvg(s,locked,c)}<span class="disc">${chapterIcon(name)}</span>${locked?`<span class="lockBadge">${LOCK_SVG}</span>`:''}</button>`+
        `<div class="tray" style="--c:${c}"><span class="trnm">${name}</span>${tray}</div></div>`;
   });
