@@ -4087,7 +4087,7 @@ const stageEl=document.getElementById('stage');
 // closing pulls the medallions back up into the level button, bottom one first (like the tools sliding back into the menu button)
 let lvCloseT=0;
 const lvOpen=()=>!lvPanel.hidden&&!lvPanel.classList.contains('closing');
-function closeLevels(){
+function closeLevels(){clearTimeout(trayT);
   if(!lvOpen())return;
   lvBtn.setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim');menuSfx('level',false);
   const col=document.getElementById('lvcol'),cr=col.getBoundingClientRect(),br=lvBtn.getBoundingClientRect(),meds=[...col.querySelectorAll('.med')];
@@ -4140,10 +4140,17 @@ function openLevels(){
   for(let n=21;n<=23;n++){delay+=24;h+=`<div class="chrow soon"><button class="med locked" type="button" disabled style="transition-delay:${delay}ms" aria-label="Chapter ${n}, coming soon"><span class="disc">${chapterIcon('Soon')}</span><span class="lockBadge">${LOCK_SVG}</span></button></div>`}
   col.innerHTML=h;
   openRow=String(Math.floor(levelIdx/5));if(previewKey===dailyKey)openRow='d';
-  col.querySelectorAll('.chrow').forEach(r=>r.classList.toggle('show',r.dataset.r===openRow));
+  // the medallions drop out of the level button first; the current chapter's tray of level pills slides out only once its medallion has landed
+  col.querySelectorAll('.chrow').forEach(r=>r.classList.remove('show'));
   lvPanel.hidden=false;lvBtn.setAttribute('aria-expanded','true');
-  requestAnimationFrame(()=>{col.classList.add('show');const r=col.querySelector(`.chrow[data-r="${openRow}"]`);if(r)col.scrollTop=Math.max(0,r.offsetTop-col.clientHeight/2+21)});
+  clearTimeout(trayT);
+  requestAnimationFrame(()=>{col.classList.add('show');const r=col.querySelector(`.chrow[data-r="${openRow}"]`);if(!r)return;col.scrollTop=Math.max(0,r.offsetTop-col.clientHeight/2+21);
+    // wait for the last medallion you can see to finish dropping (its stagger delay + the .32 s drop), then slide the tray out
+    const box=col.getBoundingClientRect();let d=0;
+    col.querySelectorAll('.med').forEach(m=>{const b=m.getBoundingClientRect();if(b.bottom>box.top&&b.top<box.bottom)d=Math.max(d,parseFloat(m.style.transitionDelay)||0)});
+    trayT=setTimeout(()=>{if(!lvPanel.hidden&&!lvPanel.classList.contains('closing'))r.classList.add('show')},d+280)});
 }
+let trayT=0;
 document.getElementById('lvcol').addEventListener('click',e=>{
   const col=e.currentTarget,t=e.target.closest('button');if(!t||t.disabled)return;
   if(t.dataset.unlock){closeLevels();openUpgrade();return}
