@@ -358,12 +358,10 @@ header .blacklight::after{content:attr(data-tip); position:absolute; top:50%; ri
 header .blacklight:focus-visible::after{opacity:1}
 /* narrow Neon phones: the tip button drops to its own row under the controls instead of crowding column 1, which the level picker now occupies */
 @media (max-width:400px){header .blacklight{width:34px; height:34px} header .hleft{margin-right:42px} html.neon header .topspace{padding-right:84px}}
-/* Oct 12: the SMART·PULL wordmark and its credit sit centered at the top of the play area, just under the top bar
-   (the top bar itself is too narrow on phones beside the level number). Undo drops to the bottom row, level with the timer. */
-.brandbox.foot{top:6px; bottom:auto}
-.botrow{bottom:14px}
-.stuck{bottom:62px}
-.thint{top:58px}
+/* Where the SMART·PULL wordmark goes (Oct 13): iPhone, iPad and touch phones keep it at the bottom center (Undo above it);
+   web on a computer moves it into the top bar, centered between the level button and the menu (html.logotop, set in script) */
+html.logotop header .brandbox.foot{position:static; transform:none; grid-column:2; grid-row:1; align-self:center; justify-self:center}
+html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px} /* with the logo up top, Undo sits on the bottom row */
 </style>
 
 <div class="app">
@@ -4036,6 +4034,13 @@ function closeScorecard(){document.getElementById('scorecard').hidden=true}
 document.getElementById('scoreOpen').onclick=()=>{uiSfx('score');openScorecard()};document.getElementById('scClose').onclick=()=>{uiSfx('dismiss');closeScorecard()};
 document.getElementById('scorecard').addEventListener('click',e=>{if(e.target.id==='scorecard')closeScorecard()});
 // full screen: offered on computers and other web browsers, never on iPhone or iPad (iPads report themselves as Macs, so touch gives them away)
+// logo placement: bottom center on iPhone / iPad / touch phones; in the top bar for web on a computer, when the window is wide enough
+(function(){const ua=navigator.userAgent,ios=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&(navigator.maxTouchPoints>1||'ontouchend' in document));
+  const mobile=ios||/Android|Mobile/.test(ua)||(matchMedia('(pointer: coarse)').matches&&!matchMedia('(hover: hover)').matches);
+  const box=document.querySelector('.brandbox.foot'),stage=document.getElementById('stage'),head=document.querySelector('.app>header');if(!box||!stage||!head)return;
+  const place=()=>{const top=!mobile&&innerWidth>=600;document.documentElement.classList.toggle('logotop',top);
+    if(top&&box.parentNode!==head)head.appendChild(box);else if(!top&&box.parentNode!==stage)stage.insertBefore(box,stage.firstChild)};
+  place();addEventListener('resize',place)})();
 (function(){const btn=document.getElementById('fsBtn');if(!btn)return;
   const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&(navigator.maxTouchPoints>1||'ontouchend' in document));
   const de=document.documentElement,req=de.requestFullscreen||de.webkitRequestFullscreen,
