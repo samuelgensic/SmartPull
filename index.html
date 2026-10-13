@@ -1844,11 +1844,11 @@ function drawDeco(g,s,deco,fillC,glowing){
   g.save();if(glowing){g.shadowColor=col;g.shadowBlur=14}
   g.strokeStyle=col;g.fillStyle=col;g.lineCap='round';g.lineJoin='round';
   if(type.startsWith('ripple')){const n=+type.slice(6),cx=s/2,cy=s/2,rings=[36,57,78].slice(0,n).map((r,i)=>[r,.3+.7*(n-1-i)/n]); /* layered depths: the outer ring is shallowest, each ring in is deeper, and the center dot is deepest of all (spread evenly for 1, 2 or 3 rings) */
-    if(col0.toLowerCase()==='#ffffff'){ // the dent's shape: stepped terraces, each ring's whole area sunk lower than the ring outside it, down to the center dot
-      [...rings].reverse().forEach(([r,v])=>{const c=Math.round(255*v);g.fillStyle='rgb('+c+','+c+','+c+')';g.beginPath();g.arc(cx,cy,r+6,0,7);g.fill()});
-      g.fillStyle='#fff';g.beginPath();g.arc(cx,cy,17,0,7);g.fill()}
-    else if(col0==='none'){ // a faint shade that darkens a little with each step down, so the terraces read even in flat light
-      g.fillStyle='rgba(0,0,0,.028)';[...rings].reverse().forEach(([r])=>{g.beginPath();g.arc(cx,cy,r+6,0,7);g.fill()});g.fillStyle='rgba(0,0,0,.05)';g.beginPath();g.arc(cx,cy,17,0,7);g.fill()}
+    if(col0.toLowerCase()==='#ffffff'){g.fillStyle='#fff';g.beginPath();g.arc(cx,cy,16,0,7);g.fill();rings.forEach(([r,v])=>{const c=Math.round(255*v);g.strokeStyle='rgb('+c+','+c+','+c+')';g.lineWidth=11;g.beginPath();g.arc(cx,cy,r,0,7);g.stroke()})}
+    else if(col0==='none'){ // Classic / SmartPull: soft shadows inside the grooves and the center hole, like the pips, so the ripple reads as carved in (deeper parts darker)
+      rings.forEach(([r,v])=>{g.strokeStyle='rgba(0,0,0,'+(.07+.1*v).toFixed(3)+')';g.lineWidth=11;g.beginPath();g.arc(cx,cy,r,0,7);g.stroke();
+        g.strokeStyle='rgba(0,0,0,'+(.06+.12*v).toFixed(3)+')';g.lineWidth=4;g.beginPath();g.arc(cx,cy+2.5,r-2,Math.PI*1.08,Math.PI*1.92);g.stroke()});
+      const gr=g.createRadialGradient(cx,cy+5,3,cx,cy,17);gr.addColorStop(0,'rgba(0,0,0,.1)');gr.addColorStop(.75,'rgba(0,0,0,.24)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.beginPath();g.arc(cx,cy,17,0,7);g.fill()}
     else if(col0==='neon'&&glowing){g.shadowColor='rgba(190,140,255,.9)';g.shadowBlur=10;g.strokeStyle='rgba(205,170,255,.75)';g.lineWidth=3.5;g.beginPath();g.arc(cx,cy,14,0,7);g.stroke();rings.forEach(([r])=>{g.beginPath();g.arc(cx,cy,r,0,7);g.stroke()})}
     g.restore();return}
   if(type==='echo'){ // Echo: a soft chevron on each side pointing away (twins leave in opposite directions), with a dot in another color between them
