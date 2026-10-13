@@ -743,7 +743,7 @@ NEW.glasswork=function(A,out,ui){const K=yorkeKit(A,out,{verbSec:5,dark:.9}),{mi
     const solo=t>dropA+2&&t<dropB+2,dr=DR[Math.floor(bar/4)%4];
     if(k===0){dLp.frequency.setTargetAtTime(500+i*1800,t,1.5);if(bar%4===0)drone(t,DR[(bar/4)%4]);
       if(bar%8===7&&R()<.5){const j=Math.floor(R()*4);FIG[j][1]=5+Math.floor(R()*5)}if(bar%8===0&&R()<.4){tokP=K.euclid(2+Math.floor(R()*3),pick([5,7,9]),Math.floor(R()*5))}
-      ui&&ui({sect:Math.floor((t-K.t0)/(360*EVO.s))+1,key:'E',tex:[t>dropA&&t<dropB?'drone out: kick, sub & bass':'drone',gF&&'bowed figure',gP&&'wood & seeds',gH&&'heartbeat',gM&&'melody'].filter(Boolean).join(' · ')||'drone',energy:i})}
+      ui&&ui({sect:Math.floor((t-K.t0)/(360*EVO.s))+1,key:'E',tex:[t>dropA&&t<dropB?'drone out: kick & sub':'drone',gF&&'bowed figure',gP&&'wood & seeds',gH&&'heartbeat',gM&&'melody'].filter(Boolean).join(' · ')||'drone',energy:i})}
     // the glass figure loops every 10 sixteenths, so it slides against the bar
     if(gF>.02)for(const[p,d]of FIG)if(n%10===p&&R()<.8){const s=glass(pent(d));playBuf(A,glassBus,s.buf,t,.045*gF,s.rate,-.3+p*.07)}
     // dry found percussion: a felted knock on a wooden box, and a faint seed shaker near the top
@@ -753,8 +753,7 @@ NEW.glasswork=function(A,out,ui){const K=yorkeKit(A,out,{verbSec:5,dark:.9}),{mi
     // the kick rhythm drifts in and out on its own slow wave (and takes the lead when the drone drops out)
     const wk=Math.pow(Math.max(0,Math.sin((t-K.t0)*2*Math.PI/58+1)),1.3),gKk=solo?.9:G(i,.45)*wk;
     if(gKk>.02&&(k===8||(k===11&&R()<.7)||(k===14&&bar%2===1&&R()<.5)||(solo&&k===6&&R()<.4)))playBuf(A,heartBus,HEART,t,(k===8?.15:.09)*gKk,1.04);
-    if(solo){if(k===0&&bar%2===0){const o=A.createOscillator();o.frequency.value=MT(ROOT-24+dr);const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.06,t+.6);g.gain.setTargetAtTime(0,t+step*30,.3);o.connect(g).connect(subBus);o.start(t);o.stop(t+step*32+1.5)}
-      for(const[pp,sm]of bl)if(pp===(n%32>=16?k:k)&&(n%32<16||R()<.85)){const s=ebass(ROOT-12+dr+sm);playBuf(A,bassBus,s.buf,t+(R()-.5)*.008,.13*(pp===0?1:.8),s.rate,-.05)}}
+    if(solo){if(k===0&&bar%2===0){const o=A.createOscillator();o.frequency.value=MT(ROOT-24+dr);const g=A.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.06,t+.6);g.gain.setTargetAtTime(0,t+step*30,.3);o.connect(g).connect(subBus);o.start(t);o.stop(t+step*32+1.5)}}
     if(gM>.02&&k===0&&bar%4===2&&t>lastMel&&R()<.7){const st=8+Math.floor(R()*4);[st,st-1,st+1].slice(0,2+Math.floor(R()*2)).forEach((d,j)=>{const s=glass(pent(d));const at=t+j*step*8;playBuf(A,glassBus,s.buf,at,.05*gM,s.rate,.2)});lastMel=t+step*48}
     n++;return step}));
   return stopAll(stops)};
@@ -1106,7 +1105,7 @@ const TRACKS=[
   opts:[['Current',CUR.gen('kalimba')],['New',(A,o,u)=>NEW.lanternLofi(A,o,u)]]},
  {name:'Mechanism (new · Yorke-style)',desc:'Unfolds the way Radiohead and Thom Yorke\'s electronic tracks do, with original notes. A warm chord pulses in a stuttering, syncopated pattern (the chord itself is the rhythm). A muffled kick creeps in from another room and comes into focus, then a deep syncopated bass, a small dry snare with ghost notes, a lightly swung hi-hat, and processed, slightly 8-bit digital chord stabs with a dub echo. Near the top, a few high notes on an Ondes Martenot-style voice. Every so often a deep sub swells in under the chord. When it strips back down, the kick stays: clear and in focus, with a couple of soft ghost notes, so it gets its moment before everything builds again (about five minutes).',
   opts:[['Mechanism',(A,o,u)=>NEW.mechanism(A,o,u)]]},
- {name:'Bloom (new · Yorke-style, was Glasswork)',desc:'A breathing, harmonium-like drone that waxes and wanes, and every minute or two drops out completely for 20 seconds or so. In that solo space: the soft kick rhythm, a deep sub, and a melodic, picked bass line in the spirit of Colin Greenwood. Above it all, soft warm bowed tones that swell in with no strike, looping every 10 steps so they slide against the 4/4; dry found percussion (a felted knock on a wooden box, a faint seed shaker); a heartbeat whose kick rhythm drifts in and out on its own slow wave; and near the top a slow bowed melody.',
+ {name:'Bloom (new · Yorke-style, was Glasswork)',desc:'A breathing, harmonium-like drone that waxes and wanes, and every minute or two drops out completely for 20 seconds or so. In that solo space: the soft kick rhythm and a deep sub. Above it all, soft warm bowed tones that swell in with no strike, looping every 10 steps so they slide against the 4/4; dry found percussion (a felted knock on a wooden box, a faint seed shaker); a heartbeat whose kick rhythm drifts in and out on its own slow wave; and near the top a slow bowed melody.',
   opts:[['Bloom',(A,o,u)=>NEW.glasswork(A,o,u)]]},
  {name:'Undertow (new · Yorke-style)',desc:'The dub and Afrobeat side: a slow 12/8 lilt, a warm drawbar organ with a gentle tremolo, a slowly wobbling sub bass, cardboard-box knocks in a cross-rhythm, a dub skank on the backbeats, a soft half-time thud and a rice shaker. Phasing in and out on their own slow waves, two small touches from the early live Videotape: soft piano chords whose accents fall between the beats, and a felted four-on-the-floor pulse. Warm and unhurried, in a five-minute arc.',
   opts:[['Undertow',(A,o,u)=>NEW.undertow(A,o,u)]]},
