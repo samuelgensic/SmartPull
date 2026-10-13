@@ -280,6 +280,11 @@ html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .done .taps{display:block; text-align:center; font-family:var(--display); font-weight:500; font-size:13px; letter-spacing:.06em; color:var(--ink); font-variant-numeric:tabular-nums; margin-top:-4px; white-space:pre}
 .done .taps.best{color:var(--accent)}
 .done .movesline{margin-top:7px}
+/* New best / Clean clear: button-shaped badges (outlined pill, soft tint of the color); not tappable, the whole message is */
+.done .badges{display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:12px}
+.done .badge{display:inline-block; padding:6px 14px; border-radius:999px; font-family:var(--display); font-weight:600; font-size:12px; letter-spacing:.06em; white-space:nowrap;
+  color:var(--c); background:color-mix(in srgb, var(--c) 14%, transparent); box-shadow:inset 0 0 0 1.5px var(--c)}
+html.neon .done .badge{background:transparent; box-shadow:inset 0 0 0 1.5px var(--c), 0 0 10px color-mix(in srgb, var(--c) 55%, transparent)}
 .done .taps.time{margin-top:-8px; font-weight:300; color:var(--muted)}
 .done .taps.time.best{color:var(--accent)}
 #devLevel{width:80px; height:32px; border:0; border-radius:999px; padding:0 12px; background:var(--bg2); color:var(--ink); font:600 13px var(--body); font-variant-numeric:tabular-nums}
@@ -294,6 +299,12 @@ html.neon .done small{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.
 /* Scorecard button takes the theme's color: accent in Classic and SmartPull, a pink outline in Neon */
 #scoreOpen{background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12)}
 html.brandtheme #scoreOpen{background:#FF6C10}
+@media (prefers-color-scheme: dark){
+  html.brandtheme .done small,html.brandtheme #scoreOpen{background:#FD9357}
+  html:not(.neon) .done small,html:not(.neon) #scoreOpen,html:not(.neon) button.trlv.clr{color:var(--bg)}
+  .tapc{color:#FD9357}
+  html:not(.neon) button.tipbtn.new{animation-name:tippulseSoft}}
+@keyframes tippulseSoft{0%,100%{box-shadow:0 0 0 0 rgba(253,147,87,0),0 2px 8px rgba(0,0,0,.12)}50%{box-shadow:0 0 0 7px rgba(253,147,87,.22),0 2px 8px rgba(0,0,0,.12)}}
 html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 12px rgba(255,46,151,.4)}
 @keyframes breathe{50%{opacity:.4}}
 .done:not(.ready) small{animation:none; opacity:0}
@@ -2185,6 +2196,11 @@ const oopsCount=()=>bumps;
 //   Neon: the six neons
 // color of the "Best" note on the level-complete message: teal in Standard, orange in SmartPull, neon green in Neon
 let cheerColorIdx=0;
+/* Dark mode softens every UI use of the brand colors to one shared set (the cubes themselves keep their colors):
+   orange #FF6C10 → #FD9357, teal #007C92 → #54BED0, olive #B2BB1E → #C9D543, gray → #C9CBC6. Use these, never the bright ones, for UI in dark mode. */
+const darkMode=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}};
+const SOFT={'#FF6C10':'#FD9357','#EB5D07':'#FD9357','#E45900':'#FD9357','#007C92':'#54BED0','#B2BB1E':'#C9D543','#979F19':'#C9D543','#82881A':'#C9D543','#ABABA8':'#C9CBC6','#34363A':'#C9CBC6'};
+const uiCol=c=>darkMode()&&SOFT[c]||c;
 function cheerPalette(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
   if(theme==='neon')return NEONS;
   if(theme==='brand')return dark?['#FD9357','#54BED0','#C9D543','#C9CBC6']:['#FF6C10','#007C92','#979F19','#34363A'];
@@ -3304,11 +3320,18 @@ function win(){
   const l1=document.createElement('div');parts.forEach(([w,n,k],i)=>{if(i)l1.append('  ·  ');const lb=document.createElement('span');lb.textContent=w;lb.style.color=sc[k];l1.append(lb,' '+n)});
   const l2=document.createElement('div');l2.className='movesline';const mv=document.createElement('span');{const ml=document.createElement('span');ml.textContent='Moves';ml.style.color=movesColor();mv.append(ml,' '+moves)} // the word in color, the number plain like the counts above
   if(curPar!=null){const pl=document.createElement('span');pl.textContent='Par';pl.style.color=movesColor();mv.append('  ·  ',pl,' '+curPar)}
-  l2.append(bestBit(mv,prev===undefined?'':isBest?'  ·  New best!':'  ·  Best: '+prev));
+  // an older best stays on the Moves line as plain text; a new best gets a badge on the line below
+  if(prev!==undefined&&!isBest){const bl=document.createElement('span');bl.textContent='Best';bl.style.color=movesColor();mv.append('  ·  ',bl,' '+prev)}
+  l2.append(mv);
   const lines=[l1,l2];
+  // New best and Clean clear sit together on their own line, as button-shaped badges in the theme's spare color
+  const badges=document.createElement('div');badges.className='badges';badges.style.setProperty('--c',bestColor());
+  const badge=t=>{const b=document.createElement('span');b.className='badge';b.textContent=t;badges.append(b)};
+  if(prev!==undefined&&isBest)badge('New best!');
   // a clean clear: no bumps, in par or fewer (no bumps is enough on a level without a par). It marks the level's pill in the menu.
   if(oopsCount()===0&&(curPar==null||moves<=curPar)){const first=!cleanSet[levelIdx];cleanSet[levelIdx]=1;try{localStorage.setItem('pa4_clean',JSON.stringify(cleanSet))}catch(e){}
-    const l3=document.createElement('div');l3.className='movesline';const c=document.createElement('span');c.textContent=first?'Clean clear!':'Clean clear';c.style.color=bestColor();l3.append(c);lines.push(l3)}
+    badge(first?'Clean clear!':'Clean clear')}
+  if(badges.childElementCount)lines.push(badges);
   // Today's level keeps a daily streak going
   if(previewMode&&previewKey===dailyKey){streakClear();const l4=document.createElement('div');l4.className='movesline';l4.textContent='Daily Streak '+plural(streak.n,'day');lines.push(l4)}
   tl.replaceChildren(...lines);
@@ -3428,7 +3451,8 @@ const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack 
 function openScorecard(){
   [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   bankPlay(elapsed());if(timeStart!==null)timeStart=performance.now();timeMs=0; // count the time on the current level so far
-  const sc=statColors(),pal={plain:['#007C92','#E45900','#82881A'],brand:['#FF6C10','#007C92','#B2BB1E'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007C92','#E45900','#82881A'];
+  const sc=statColors();let pal={plain:['#007C92','#E45900','#82881A'],brand:['#FF6C10','#007C92','#B2BB1E'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007C92','#E45900','#82881A'];
+  if(theme!=='neon')pal=pal.map(uiCol);
   const owned=v=>devMode||TIERS[tier].max>=TIERS[v].max;
   const fmtLong=ms=>{const m=Math.floor(ms/60000),h=Math.floor(m/60);return h?h+'h '+(m%60)+'m':m+'m '+Math.floor(ms/1000)%60+'s'};
   const box=document.getElementById('scCards');box.innerHTML='';
@@ -3537,7 +3561,7 @@ function closeLevels(){lvPanel.hidden=true;lvBtn.setAttribute('aria-expanded','f
 const LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>';
 const SUN_ICON='<svg class="wic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17a6 6 0 0 1 12 0"/><path d="M12 4v3M5.5 9.5l1.6 1.6M18.5 9.5l-1.6 1.6"/><path d="M2 17h20"/></svg>';
 const MENU_PAL={brand:['#FF6C10','#007C92','#B2BB1E','#ABABA8'],neon:NEONS};
-const chColor=k=>{const p=MENU_PAL[theme];return p?p[k%p.length]:'var(--accent)'};
+const chColor=k=>{const p=MENU_PAL[theme];return p?(theme==='neon'?p[k%p.length]:uiCol(p[k%p.length])):'var(--accent)'};
 let sampled=new Set();try{sampled=new Set((localStorage.getItem('pa3_sampled')||'').split(',').filter(Boolean))}catch(e){}
 const saveSampled=()=>{try{localStorage.setItem('pa3_sampled',[...sampled].join(','))}catch(e){}};
 const dayN=Math.floor(Date.now()/864e5-new Date().getTimezoneOffset()/1440);
