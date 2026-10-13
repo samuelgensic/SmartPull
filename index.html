@@ -2234,8 +2234,9 @@ function movesColor(){let dark=false;try{dark=matchMedia('(prefers-color-scheme:
   return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#54BED0':'#007C92'):(dark?'#FD9357':'#E45900')}
 /* Best (New best) takes the theme's spare color: Neon's purple (unused on the win screen), and in Classic/SmartPull the Taps color,
    which is free on levels without dots; it uses the stat palette, so it softens in dark mode like the counts */
-/* Perfect Pull gets its own color, never the Continue button's or New best's: Classic orange, SmartPull olive, Neon green (Oct 12) */
-const perfectColor=()=>theme==='neon'?'#39FF14':statColors().bumps;
+/* Perfect Pull gets its own color, never the Continue button's, New best's or Par's: Classic ink (its three colors are all taken on that screen),
+   SmartPull olive, Neon green (Oct 12) */
+const perfectColor=()=>theme==='neon'?'#39FF14':theme==='brand'?statColors().bumps:'var(--ink)';
 const bestColor=()=>theme==='neon'?'#B026FF':statColors().taps;
 const TAP_COLORS={plain:['var(--ink)'],brand:['#FF6C10','#007C92','#B2BB1E'],
   neon:['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF']};
