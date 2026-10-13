@@ -1663,7 +1663,7 @@ function symbolDent(type){
     for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const xx=x+k;if(xx>=0&&xx<s){sum+=a[y*s+xx];n++}}t[y*s+x]=sum/n}
     for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const yy=y+k;if(yy>=0&&yy<s){sum+=t[yy*s+x];n++}}o[y*s+x]=sum/n}return o};
   h=blur(blur(h,2),2);
-  const D=type.startsWith('pips')?32:type.startsWith('ripple')?30:SYMBOL_DEPTH, // Echo ripples press in like the pips: the center dot deepest, each ring out shallower
+  const D=type.startsWith('pips')?32:type.startsWith('ripple')?36:SYMBOL_DEPTH, // Echo ripples press in like the pips: the center dot deepest, each ring out shallower
     _=0,img=g.createImageData(s,s),d=img.data,H=(x,y)=>-D*h[Math.min(s-1,Math.max(0,y))*s+Math.min(s-1,Math.max(0,x))];
   for(let y=0;y<s;y++)for(let x=0;x<s;x++){
     const dx=(H(x+1,y)-H(x-1,y))/2,dy=(H(x,y+1)-H(x,y-1))/2;let nx=-dx,ny=dy,nz=1;const L=Math.hypot(nx,ny,nz);nx/=L;ny/=L;nz/=L;
@@ -1843,7 +1843,7 @@ function drawDeco(g,s,deco,fillC,glowing){
   const col=fillC&&col0.toLowerCase()===String(fillC).toLowerCase()?(isDark(fillC)?LIGHT_INK:INK):col0;
   g.save();if(glowing){g.shadowColor=col;g.shadowBlur=14}
   g.strokeStyle=col;g.fillStyle=col;g.lineCap='round';g.lineJoin='round';
-  if(type.startsWith('ripple')){const n=+type.slice(6),cx=s/2,cy=s/2,rings=[[36,.72],[57,.5],[78,.34]].slice(0,n);
+  if(type.startsWith('ripple')){const n=+type.slice(6),cx=s/2,cy=s/2,rings=[36,57,78].slice(0,n).map((r,i)=>[r,.3+.7*(n-1-i)/n]); /* layered depths: the outer ring is shallowest, each ring in is deeper, and the center dot is deepest of all (spread evenly for 1, 2 or 3 rings) */
     if(col0.toLowerCase()==='#ffffff'){g.fillStyle='#fff';g.beginPath();g.arc(cx,cy,16,0,7);g.fill();rings.forEach(([r,v])=>{const c=Math.round(255*v);g.strokeStyle='rgb('+c+','+c+','+c+')';g.lineWidth=11;g.beginPath();g.arc(cx,cy,r,0,7);g.stroke()})}
     else if(col0==='none'){g.fillStyle='rgba(0,0,0,.14)';g.beginPath();g.arc(cx,cy,16,0,7);g.fill();rings.forEach(([r,v])=>{g.strokeStyle='rgba(0,0,0,'+(.14*v).toFixed(3)+')';g.lineWidth=11;g.beginPath();g.arc(cx,cy,r,0,7);g.stroke()})}
     else if(col0==='neon'&&glowing){g.shadowColor='rgba(190,140,255,.9)';g.shadowBlur=10;g.strokeStyle='rgba(205,170,255,.75)';g.lineWidth=3.5;g.beginPath();g.arc(cx,cy,14,0,7);g.stroke();rings.forEach(([r])=>{g.beginPath();g.arc(cx,cy,r,0,7);g.stroke()})}
