@@ -127,7 +127,7 @@ button.lvl .lvnum{font-family:var(--display); font-weight:400; font-size:20px; l
 button.lvl .lvsub{font-family:var(--body); font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#007C92; margin-top:0}
 /* the chapter name takes a color from the mode: teal in Classic, orange in SmartPull, pink in Neon */
 html.brandtheme button.lvl .lvsub{color:#FF6C10} /* same orange as Pulls (was label orange #EB5D07 until Oct 12) */
-html.neon button.lvl .lvsub{color:#FF2E97}
+html.neon button.lvl .lvsub{color:#39FF14} /* the chapter name is the Pulls color in every mode (Neon was pink until Oct 12) */
 @media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) button.lvl .lvsub{color:#54BED0} html.brandtheme button.lvl .lvsub{color:#FD9357}}
 button.lvl[aria-expanded="true"] .lvtxt{opacity:0; transform:translateX(-6px)}
 .panel.levels{width:min(300px,calc(100% - 32px)); background:transparent; box-shadow:none; padding:0; top:72px; left:18px}
@@ -228,6 +228,8 @@ canvas{display:block; width:100%; height:100%}
 /* the tip button sits just above the counts, in the one band no menu ever opens into; as counts add lines, it rises with them */
 .left{position:static; z-index:3; pointer-events:none; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; line-height:1.15; font-family:var(--display); font-weight:500; font-variant-numeric:tabular-nums; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
 .left .clock{opacity:.55; font-weight:300}
+.left{transition:opacity .4s}
+.app:has(#done.show) .left{opacity:0} /* the corner counts fade out while the win screen shows; they come back with the next level */
 /* the level timer: bottom right, quiet gray, with its own small show/hide button beside it
    (in Neon it sits just above the Blacklight switch) */
 .timebox{position:absolute; right:16px; bottom:12px; z-index:4; display:flex; flex-direction:row-reverse; align-items:center; gap:8px}
@@ -315,7 +317,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
 .done:not(.ready) small{animation:none; opacity:0}
 .done.ready small{opacity:1}
 @media (prefers-reduced-motion: reduce){.done small{animation:none}}
-.done b{max-width:18ch; padding-inline:16px; text-align:center; text-wrap:balance; line-height:1.2; font-family:var(--display); font-weight:500; font-size:clamp(22px,5vw,34px); letter-spacing:.04em; color:var(--accent)}
+.done b{max-width:18ch; padding-inline:16px; text-align:center; text-wrap:balance; line-height:1.2; font-family:var(--display); font-weight:500; font-size:clamp(26px,6.4vw,40px); letter-spacing:.04em; color:var(--ink)} /* the cheeky line: white on dark screens (ink on light), a bit larger so it stands out (Oct 12) */
 @media (prefers-reduced-motion: reduce){.hint,.done{transition:none}}
 /* Text buttons and badges share the cubes' rounded corners instead of a full round pill (Samuel, Oct 12).
    Round icon buttons, medallions and the small round level dots stay round. */
@@ -2083,7 +2085,7 @@ function setTheme(t,trial){
   if(typeof updateBridges==='function')updateBridges();
   const bl=document.getElementById('blBtn');if(bl)bl.hidden=t!=='neon'; // the on-screen Blacklight switch only shows in Neon
   if(glowReady)applyGlow(); // (skipped during startup, before the Blacklight setting has loaded)
-  if(typeof updateLeft==='function'&&blocks.length)updateLeft(); // re-color the tap count for the new theme
+  if(typeof updateLeft==='function'&&blocks.length)updateLeft();if(typeof recolorWin==='function')recolorWin(); // re-color the tap count for the new theme
   if(blocks.some(b=>b.glass)&&typeof warmShards==='function')setTimeout(warmShards,60); // get glass ready in the new mode's look
 }
 // the paint button opens the Themes panel
@@ -3827,6 +3829,17 @@ let lastCheer=-1,bumps=0,startBlocks=1;
 const SASS=['Took the scenic route, huh?','Bump. Bump. Bump. Done!','Those cubes will need a nap.','Subtle. Very subtle.',
   'Bonk count: impressive.','Who needs a plan anyway?','Brute force is still a strategy.','The cubes felt every one of those.',
   'You won! The cubes are a little bruised.','Efficiency was optional, apparently.','Bumper cars champion.','Well, that’s one way to do it.'];
+/* switching modes (or light/dark) while the win screen is up recolors it, so it never keeps the old mode's colors */
+function recolorWin(){const box=document.getElementById('done');if(!box||!box.classList.contains('show'))return; // only while the win screen is up (setTheme also runs at startup)
+  const sc=statColors(),q=sel=>box.querySelectorAll(sel);
+  q('[data-stat]').forEach(e=>e.style.color=sc[e.dataset.stat]);
+  q('[data-role="moves"]').forEach(e=>e.style.color=movesColor());
+  q('[data-role="movesc"]').forEach(e=>e.style.setProperty('--c',movesColor()));
+  q('[data-role="best"]').forEach(e=>e.style.color=bestColor());
+  q('[data-role="bestc"]').forEach(e=>e.style.setProperty('--c',bestColor()));
+  q('[data-role="perfectc"]').forEach(e=>e.style.setProperty('--c',perfectColor()))}
+// the phone switching between light and dark while playing: recolor the cubes (dark-mode orange), the corner counts and any win screen
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{for(const b of blocks)if(b.mesh)b.mesh.material=materialsFor(b);updateLeft();recolorWin()})}catch(e){}
 function win(){
   // the gravity floor fades away as the level clears, so the message reads cleanly
   if(floorMesh){const f=floorMesh,mats=[...new Set(f.material)];mats.forEach(m=>{m.transparent=true;m.depthWrite=false});
@@ -3837,7 +3850,7 @@ function win(){
   // level 1 always gets the same friendly line; every other level gets a random line that fits its rules and size
   document.querySelector('#done b').textContent=levelIdx===0?'Ooo, nice one.':pickLine(bumpy?SASS:cheerPool());
   // the cheer takes a different color each time, from the current theme's palette (never the same twice in a row)
-  {const pal=cheerPalette();cheerColorIdx=(cheerColorIdx+1+Math.floor(Math.random()*(pal.length-1)))%pal.length;document.querySelector('#done b').style.color=pal[cheerColorIdx]}
+  document.querySelector('#done b').style.color=''; // the line is always the plain text color now (it used to rotate through the palette)
   // tap count for this clear, compared with the best so far on this level
   // best = fewest total moves (pulls + taps + oops)
   const moves=pulls+taps+oopsCount(),prev=bestTaps[levelIdx],isBest=prev===undefined||moves<prev;
@@ -3846,23 +3859,23 @@ function win(){
   const tl=document.getElementById('tapsLine');
   // the "Best" part stands out in a color from the current theme's palette
   const bestBit=(main,extra)=>{const f=document.createDocumentFragment();f.append(main);
-    if(extra){const sp=document.createElement('span');sp.textContent=extra;sp.style.color=bestColor();f.append(sp)}return f};
+    if(extra){const sp=document.createElement('span');sp.textContent=extra;sp.dataset.role='best';sp.style.color=bestColor();f.append(sp)}return f};
   // each count's word takes the same color as that count in the corner (per theme); the numbers stay the plain text color
   const sc=statColors(),parts=[['Pulls',pulls,'pulls']];if(taps||blocks.some(b=>b.dotFace))parts.push(['Taps',taps,'taps']);parts.push(['Bumps',oopsCount(),'bumps']);
   // two lines with a little breathing room between them: the counts, then the total moves and best
-  const l1=document.createElement('div');parts.forEach(([w,n,k],i)=>{if(i)l1.append('  ·  ');const lb=document.createElement('span');lb.textContent=w;lb.style.color=sc[k];l1.append(lb,' '+n)});
+  const l1=document.createElement('div');parts.forEach(([w,n,k],i)=>{if(i)l1.append('  ·  ');const lb=document.createElement('span');lb.textContent=w;lb.dataset.stat=k;lb.style.color=sc[k];l1.append(lb,' '+n)});
   // Moves · [Par] · Best: Par is a button-shaped pill pinned to the center, Moves to its left and Best to its right (a 3-column grid,
   // so Par stays centered whatever the numbers are). Best is the fewest moves on this level so far, this clear included.
-  const l2=document.createElement('div');l2.className='movesline parrow';l2.style.setProperty('--c',movesColor());
-  const word=(w,n)=>{const d=document.createElement('span');const l=document.createElement('span');l.textContent=w;l.style.color=movesColor();d.append(l,' '+n);return d};
+  const l2=document.createElement('div');l2.className='movesline parrow';l2.dataset.role='movesc';l2.style.setProperty('--c',movesColor());
+  const word=(w,n)=>{const d=document.createElement('span');const l=document.createElement('span');l.textContent=w;l.dataset.role='moves';l.style.color=movesColor();d.append(l,' '+n);return d};
   const mL=word('Moves',moves);mL.className='pr-l';
   const mC=document.createElement('span');mC.className='pr-c';if(curPar!=null){mC.className='pr-c parpill';mC.textContent='Par '+curPar}
   const mR=word('Best',isBest?moves:prev);mR.className='pr-r';
   l2.append(mL,mC,mR);
   const lines=[l1,l2];
   // New best and Perfect Pull sit together on their own line, as button-shaped badges in the theme's spare color
-  const badges=document.createElement('div');badges.className='badges';badges.style.setProperty('--c',bestColor());
-  const badge=(t,c)=>{const b=document.createElement('span');b.className='badge';b.textContent=t;if(c)b.style.setProperty('--c',c);badges.append(b)};
+  const badges=document.createElement('div');badges.className='badges';badges.dataset.role='bestc';badges.style.setProperty('--c',bestColor());
+  const badge=(t,c)=>{const b=document.createElement('span');b.className='badge';b.textContent=t;if(c){b.dataset.role='perfectc';b.style.setProperty('--c',c)}badges.append(b)};
   if(prev!==undefined&&isBest)badge('New best!');
   // a Perfect Pull (called a clean clear in code): no bumps, in par or fewer (no bumps is enough on a level without a par). It marks the level's pill in the menu.
   if(oopsCount()===0&&(curPar==null||moves<=curPar)){const first=!cleanSet[levelIdx];cleanSet[levelIdx]=1;try{localStorage.setItem('pa4_clean',JSON.stringify(cleanSet))}catch(e){}
