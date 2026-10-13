@@ -164,6 +164,7 @@ html.scrub #stage canvas{filter:blur(2px); opacity:.45}
 .med{--c:var(--accent); position:relative; width:42px; height:42px; flex:none; border:0; padding:0; background:none; box-shadow:none; display:block; cursor:pointer; color:var(--ink);
   opacity:0; transform:translateY(-16px) scale(.5); transition:transform .32s cubic-bezier(.3,1.4,.5,1),opacity .2s}
 .lvcol.show .med{opacity:1; transform:none}
+.panel.levels.closing{pointer-events:none}
 .med .disc{position:absolute; inset:4px; border-radius:50%; background:var(--chip); display:grid; place-items:center; box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .med .disc svg{width:18px; height:18px; margin:0; display:block} /* no leftover margin, so the symbol sits dead center */
 .med .ring{position:absolute; inset:0; width:42px; height:42px; transform:rotate(-90deg)}
@@ -4050,7 +4051,20 @@ function menuSfx(which,open){
   }
 }
 const stageEl=document.getElementById('stage');
-function closeLevels(){lvPanel.hidden=true;lvBtn.setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim');menuSfx('level',false)}
+// closing pulls the medallions back up into the level button, bottom one first (like the tools sliding back into the menu button)
+let lvCloseT=0;
+const lvOpen=()=>!lvPanel.hidden&&!lvPanel.classList.contains('closing');
+function closeLevels(){
+  if(!lvOpen())return;
+  lvBtn.setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim');menuSfx('level',false);
+  const col=document.getElementById('lvcol'),cr=col.getBoundingClientRect(),br=lvBtn.getBoundingClientRect(),meds=[...col.querySelectorAll('.med')];
+  const seen=meds.filter(m=>{const r=m.getBoundingClientRect();return r.bottom>cr.top&&r.top<cr.bottom});
+  lvPanel.classList.add('closing');col.querySelectorAll('.chrow').forEach(r=>r.classList.remove('show'));
+  meds.forEach(m=>{if(!seen.includes(m)){m.style.transition='none';m.style.opacity='0'}});
+  seen.forEach((m,i)=>{const r=m.getBoundingClientRect(),dy=(r.top+r.height/2)-(br.top+br.height/2);
+    m.style.transitionDelay=((seen.length-1-i)*22)+'ms';m.style.transform=`translateY(${-dy}px) scale(.55)`;m.style.opacity='0'});
+  clearTimeout(lvCloseT);lvCloseT=setTimeout(()=>{lvPanel.hidden=true;lvPanel.classList.remove('closing');col.classList.remove('show')},seen.length*22+360);
+}
 // the level menu: a column of chapter medallions drops out below the level button (same as the prototype).
 // Each medallion has a 5-segment ring that fills as its levels are cleared; tap one to slide out its level pills.
 // The sun at the top is today's daily level (any chapter); every locked chapter offers its first level as a free sampler.
@@ -4071,6 +4085,7 @@ function ringSvg(s,locked,c){const C=2*Math.PI*19,sg=C/5;let o='';
     o+=`<circle${cls} cx="21" cy="21" r="19" stroke-dasharray="${sg-4} ${C-sg+4}" stroke-dashoffset="${-k*sg-2}"/>`}
   return `<svg class="ring" viewBox="0 0 42 42" style="--c:${c}">${o}</svg>`}
 function openLevels(){
+  clearTimeout(lvCloseT);lvPanel.classList.remove('closing');
   panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');
   themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false');
   if(stageEl)stageEl.classList.add('dim');menuSfx('level',true);
@@ -4105,7 +4120,7 @@ document.getElementById('lvcol').addEventListener('click',e=>{
   if(t.classList.contains('med')){const r=t.closest('.chrow').dataset.r;openRow=openRow===r?null:r;tick();
     col.querySelectorAll('.chrow').forEach(x=>x.classList.toggle('show',x.dataset.r===openRow))}
 });
-document.addEventListener('pointerdown',e=>{if(!lvPanel.hidden&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
+document.addEventListener('pointerdown',e=>{if(lvOpen()&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
 // scrub ruler on the level button: drag sideways and a ruler slides out; every 11px is one level.
 // Dragging left moves forward. The number, chapter name and symbol roll along, with a soft click per level
 // and a firmer one at each new chapter. It stops at your furthest open level with a little rubber band.
@@ -4152,12 +4167,12 @@ function startDrag(e,el){
   if(drag)return;try{el.setPointerCapture(e.pointerId)}catch(_){}
   const resume=scrubAt!=null;if(resume){clearTimeout(scrubHold);scrubHold=0}
   const st=resume?scrubAt:Math.min(levelIdx,topLevel());
-  drag={x:e.clientX,y:e.clientY,t:performance.now(),start:st,cur:st,scrub:resume,resume,menuWasOpen:!lvPanel.hidden};
+  drag={x:e.clientX,y:e.clientY,t:performance.now(),start:st,cur:st,scrub:resume,resume,menuWasOpen:lvOpen()};
 }
 function moveDrag(e){
   if(!drag)return;const dx=e.clientX-drag.x;
   if(!drag.scrub){if(Math.abs(dx)>6&&Math.abs(dx)>Math.abs(e.clientY-drag.y)){
-      drag.scrub=true;drag.x=e.clientX;drag.t=performance.now();if(!lvPanel.hidden)closeLevels();openRuler()}return}
+      drag.scrub=true;drag.x=e.clientX;drag.t=performance.now();if(lvOpen())closeLevels();openRuler()}return}
   scrubTo(dx);
 }
 function endDrag(e,fromRuler){
