@@ -4202,7 +4202,7 @@ function openRuler(){
 function closeRuler(){ruler.classList.remove('on');document.documentElement.classList.remove('scrub')}
 function setTrack(v){rtrack.style.transform=`translateX(${ruler.clientWidth/2-v*STEP}px)`}
 function showScrub(n,dir){
-  if(n===drag.cur)return;const newCh=Math.floor(n/5)!==Math.floor(drag.cur/5);drag.cur=n;lvLabel(n);
+  const st=drag||glide;if(!st||n===st.cur)return;const newCh=Math.floor(n/5)!==Math.floor(st.cur/5);st.cur=n;lvLabel(n);
   const num=lvBtn.querySelector('.lvnum');
   try{num.animate([{transform:`translateY(${dir*45}%)`,opacity:.2},{transform:'none',opacity:1}],{duration:150,easing:'ease-out'})}catch(e){}
   if(newCh){try{lvBtn.querySelector('.lvDisc').animate([{transform:'scale(.82)'},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.3,1.6,.5,1)'})}catch(e){}}
@@ -4214,7 +4214,7 @@ function scrubTo(dx){
   const n=Math.max(0,Math.min(L,Math.round(v)));if(n!==drag.cur)showScrub(n,n>drag.cur?1:-1);
 }
 function commitScrub(n){
-  clearTimeout(scrubHold);scrubHold=0;scrubAt=null;
+  stopGlide();clearTimeout(scrubHold);scrubHold=0;scrubAt=null;
   rtrack.style.transition='transform .25s cubic-bezier(.3,1.4,.5,1)';setTrack(n);
   setTimeout(()=>{rtrack.style.transition='';closeRuler();if(n!==levelIdx){pageTurn();load(n)}else lvLabel(levelIdx)},230);
 }
@@ -4224,15 +4224,34 @@ const SCRUB_HOLD=1800;
 let scrubHold=0,scrubAt=null; // scrubAt = the level the ruler is resting on between drags
 function holdScrub(n){clearTimeout(scrubHold);scrubAt=n;scrubHold=setTimeout(()=>commitScrub(n),SCRUB_HOLD)}
 function startDrag(e,el){
-  if(drag)return;try{el.setPointerCapture(e.pointerId)}catch(_){}
+  if(drag)return;stopGlide(); // a touch while the ruler is still gliding catches it where it is
+  try{el.setPointerCapture(e.pointerId)}catch(_){}
   const resume=scrubAt!=null;if(resume){clearTimeout(scrubHold);scrubHold=0}
   const st=resume?scrubAt:Math.min(levelIdx,topLevel());
-  drag={x:e.clientX,y:e.clientY,t:performance.now(),start:st,cur:st,scrub:resume,resume,menuWasOpen:lvOpen()};
+  drag={x:e.clientX,y:e.clientY,t:performance.now(),start:st,cur:st,scrub:resume,resume,menuWasOpen:lvOpen(),samples:[]};
 }
+/* inertia: let go mid-swipe and the ruler keeps gliding, slowing down like a real wheel, clicking past each level,
+   then settles on the nearest level (and waits for your thumb as usual). Touch it while it glides to catch it. (Oct 12) */
+let glide=null;
+function stopGlide(){if(glide){cancelAnimationFrame(glide.raf);glide=null}}
+function releaseSpeed(d){ // finger speed over the last ~100 ms, in px per ms (0 if the finger had stopped before lifting)
+  const now=performance.now(),sm=d.samples.filter(q=>now-q[1]<=110);if(sm.length<2||now-sm[sm.length-1][1]>70)return 0;
+  const a=sm[0],b=sm[sm.length-1];return b[1]>a[1]?(b[0]-a[0])/(b[1]-a[1]):0}
+function startGlide(pos,vel,cur){ // pos in levels, vel in levels per ms
+  const L=topLevel();glide={p:pos,vel,cur,last:performance.now(),raf:0};scrubAt=cur;
+  const step=now=>{const g=glide;if(!g)return;const dt=Math.min(32,now-g.last);g.last=now;
+    g.p+=g.vel*dt;g.vel*=Math.exp(-dt/250);
+    let edge=false;if(g.p<0){g.p=0;edge=true}else if(g.p>L){g.p=L;edge=true}
+    setTrack(g.p);const n=Math.max(0,Math.min(L,Math.round(g.p)));if(n!==g.cur)showScrub(n,n>g.cur?1:-1);scrubAt=g.cur;
+    if(edge||Math.abs(g.vel)<.0018){glide=null;
+      rtrack.style.transition='transform .22s cubic-bezier(.3,1.4,.5,1)';setTrack(n);setTimeout(()=>{rtrack.style.transition=''},240);holdScrub(n);return}
+    g.raf=requestAnimationFrame(step)};
+  glide.raf=requestAnimationFrame(step)}
 function moveDrag(e){
   if(!drag)return;const dx=e.clientX-drag.x;
   if(!drag.scrub){if(Math.abs(dx)>6&&Math.abs(dx)>Math.abs(e.clientY-drag.y)){
       drag.scrub=true;drag.x=e.clientX;drag.t=performance.now();if(lvOpen())closeLevels();openRuler()}return}
+  drag.samples.push([e.clientX,performance.now()]);if(drag.samples.length>12)drag.samples.shift();
   scrubTo(dx);
 }
 function endDrag(e,fromRuler){
@@ -4243,9 +4262,12 @@ function endDrag(e,fromRuler){
     // a tap: on the level button it opens the level now (mid-scrub) or toggles the menu; on the ruler it just keeps it up
     if(d.resume){if(fromRuler)holdScrub(d.cur);else commitScrub(d.cur);return}
     if(e.type==='pointerup')(d.menuWasOpen?closeLevels():openLevels());return}
-  if(dt<240&&Math.abs(dx)<70&&!d.resume){const n=Math.max(0,Math.min(topLevel(),d.start+(dx<0?1:-1)));drag=d;showScrub(n,n>d.start?1:-1);drag=null;
+  if(dt<240&&Math.abs(dx)<30&&!d.resume){const n=Math.max(0,Math.min(topLevel(),d.start+(dx<0?1:-1)));drag=d;showScrub(n,n>d.start?1:-1);drag=null;
     rtrack.style.transition='transform .25s cubic-bezier(.3,1.4,.5,1)';setTrack(n);setTimeout(()=>{rtrack.style.transition=''},260);holdScrub(n);return}
-  // settle the track on the level under the needle, then wait for the thumb to come back
+  // a swipe that's still moving when you let go keeps gliding
+  const vx=releaseSpeed(d);
+  if(Math.abs(vx)>.25){const L=topLevel(),pos=Math.max(0,Math.min(L,d.start-dx/STEP));startGlide(pos,-vx/STEP,d.cur);return}
+  // otherwise settle the track on the level under the needle, then wait for the thumb to come back
   rtrack.style.transition='transform .2s cubic-bezier(.3,1.4,.5,1)';setTrack(d.cur);setTimeout(()=>{rtrack.style.transition=''},220);
   holdScrub(d.cur);
 }
