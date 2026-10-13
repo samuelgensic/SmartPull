@@ -4243,17 +4243,22 @@ function openLevels(){
     // wait for the last medallion you can see to finish dropping (its stagger delay + the .32 s drop), then slide the tray out
     const box=col.getBoundingClientRect();let d=0;
     col.querySelectorAll('.med').forEach(m=>{const b=m.getBoundingClientRect();if(b.bottom>box.top&&b.top<box.bottom)d=Math.max(d,parseFloat(m.style.transitionDelay)||0)});
-    trayT=setTimeout(()=>{if(!lvPanel.hidden&&!lvPanel.classList.contains('closing'))r.classList.add('show')},d+280)});
+    trayT=setTimeout(()=>{if(!lvPanel.hidden&&!lvPanel.classList.contains('closing')){r.classList.add('show');traySfx(true)}},d+280)});
 }
 let trayT=0;
+// a chapter's tray of level pills sliding out (a soft rising swish) and back in (the same swish, falling and a touch shorter); kept very quiet
+function traySfx(open){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
+  if(open){hiss(a,'bandpass',520,1500,1.4,t,.22,.03,.05);tone(a,'sine',420,560,t+.02,.12,.006,.02)}
+  else{hiss(a,'bandpass',1400,480,1.4,t,.18,.024,.03);tone(a,'sine',520,400,t+.01,.1,.005,.015)}}
 document.getElementById('lvcol').addEventListener('click',e=>{
   const col=e.currentTarget,t=e.target.closest('button');if(!t||t.disabled)return;
   if(t.dataset.unlock){closeLevels();openUpgrade();return}
   if(t.dataset.play){tick();playPreview(DAILY,dailyKey);return}
   if(t.dataset.samp!=null){tick();playPreview(+t.dataset.samp,t.dataset.samp);return}
   if(t.dataset.lv!=null){const i=+t.dataset.lv;tick();closeLevels();if(i!==levelIdx||previewMode){pageTurn();load(i)}return}
-  if(t.classList.contains('med')){const r=t.closest('.chrow').dataset.r;openRow=openRow===r?null:r;tick();
-    col.querySelectorAll('.chrow').forEach(x=>x.classList.toggle('show',x.dataset.r===openRow))}
+  if(t.classList.contains('med')){const r=t.closest('.chrow').dataset.r,was=col.querySelector('.chrow.show')?openRow:null;openRow=openRow===r?null:r;tick();
+    col.querySelectorAll('.chrow').forEach(x=>x.classList.toggle('show',x.dataset.r===openRow));
+    if(was!=null&&was!==openRow)traySfx(false);if(openRow!=null&&openRow!==was)setTimeout(()=>traySfx(true),was!=null?90:0)}
 });
 document.addEventListener('pointerdown',e=>{if(lvOpen()&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
 // scrub ruler on the level button: drag sideways and a ruler slides out; every 11px is one level.
