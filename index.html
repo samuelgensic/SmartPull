@@ -2191,12 +2191,14 @@ function load(i){
       let sc;if(k<.7){const u=k/.7,e=u*u*(3-2*u);sc=.12+(1.04-.12)*e}else{const u=(k-.7)/.3;sc=1.04-.04*(u*u*(3-2*u))}
       pivot.scale.setScalar(sc)},end:()=>pivot.scale.setScalar(1)});
   }else{
-    // a new level pulls into view: it starts far away and invisible, drifts toward you at an easy pace and fades in as it comes
-    const cv=renderer.domElement,far=camDist*3,D=1.4;
+    // a new level eases in: a short, subtle drift toward you (a quarter of the camera distance) in about half a second.
+    // The fade is one CSS transition the browser runs by itself, not a style change every frame (the old 1.4 s pull from 3x away froze some phones; Oct 12)
+    const cv=renderer.domElement,far=camDist*.25,D=.5;
     cv.style.transition='transform .45s cubic-bezier(.3,1,.4,1),filter .25s';cv.style.opacity='0';
     pivot.scale.setScalar(1);pivot.position.z=-far;
-    tweens.push({t:0,dur:D,step:k=>{const e=1-Math.pow(1-k,2);pivot.position.z=-far*(1-e);const o=Math.min(1,k/.75);cv.style.opacity=String(o*o*(3-2*o))},
-      end:()=>{pivot.position.z=0;cv.style.opacity='';cv.style.transition=''}});
+    requestAnimationFrame(()=>{cv.style.transition='transform .45s cubic-bezier(.3,1,.4,1),filter .25s,opacity .35s ease-out';cv.style.opacity='1'});
+    tweens.push({t:0,dur:D,step:k=>{const e=1-Math.pow(1-k,3);pivot.position.z=-far*(1-e)},
+      end:()=>{pivot.position.z=0;cv.style.opacity='';setTimeout(()=>{if(!pivot.position.z)cv.style.transition=''},400)}});
   }
   lvLabel(levelIdx);setTip();
   refreshNav();
@@ -4304,10 +4306,11 @@ document.getElementById('tierRow').hidden=devMode;
 // a barely-there "page turn" when moving between levels: a breath of air and a soft, low blip
 function pageTurn(){ // Approach: plays as a new level pulls into view
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime;
-  hiss(a,'lowpass',260,1400,.5,t,1.15,.018,.75);          // air swelling as it comes closer
-  tone(a,'sine',196,262,t,1.2,.012,.65);                    // a low tone gliding up with it
-  tone(a,'triangle',110,82,t+1.02,.14,.016,.004);           // a soft landing
-  tone(a,'sine',392,392,t+1.04,.7,.013,.01);tone(a,'sine',587,587,t+1.1,.6,.007,.01); // and a quiet open fifth to settle
+  // shortened with the quicker pull-in (Oct 12): about half a second of rising air, then the soft landing and the fifth
+  hiss(a,'lowpass',260,1400,.5,t,.45,.014,.3);            // air swelling as it comes closer
+  tone(a,'sine',196,262,t,.5,.01,.25);                      // a low tone gliding up with it
+  tone(a,'triangle',110,82,t+.42,.14,.014,.004);            // a soft landing
+  tone(a,'sine',392,392,t+.44,.6,.011,.01);tone(a,'sine',587,587,t+.5,.5,.006,.01); // and a quiet open fifth to settle
 }
 var resetZoom=false;
 document.getElementById('reset').onclick=()=>{rewind();resetZoom=true;load(levelIdx)};
