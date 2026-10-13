@@ -3254,11 +3254,12 @@ function setMusic(val){
 }
 soundBtn.setAttribute('aria-pressed',musicOn?'true':'false');
 const soundPanel=document.getElementById('soundp');
-function closeSoundPanel(){if(soundPanel&&!soundPanel.hidden){soundPanel.hidden=true;soundBtn.setAttribute('aria-expanded','false')}}
+function closeSoundPanel(){if(soundPanel&&!soundPanel.hidden){soundPanel.hidden=true;soundBtn.setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim')}}
 soundBtn.onclick=e=>{e.stopPropagation();const open=soundPanel.hidden;
   ['themes','panel'].forEach(id=>{const p=document.getElementById(id);if(p)p.hidden=true});
   paintBtn.setAttribute('aria-expanded','false');document.getElementById('tune').setAttribute('aria-expanded','false');
-  soundPanel.hidden=!open;soundBtn.setAttribute('aria-expanded',String(open));uiSfx('sound',open)};
+  soundPanel.hidden=!open;soundBtn.setAttribute('aria-expanded',String(open));uiSfx('sound',open);
+  if(stageEl)stageEl.classList.toggle('dim',open)}; // the puzzle steps back while the sound menu is open, as it does for Settings
 document.addEventListener('pointerdown',e=>{if(!soundPanel.hidden&&!soundPanel.contains(e.target)&&!e.target.closest('#sound'))closeSoundPanel()});
 function pressGroup(id,idx){document.querySelectorAll('#'+id+' .opt').forEach((b,j)=>b.setAttribute('aria-pressed',j===idx?'true':'false'))}
 function refreshMusicOpts(){pressGroup('optMusic',musicOn?musicIdx+1:0)}
