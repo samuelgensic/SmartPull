@@ -298,7 +298,7 @@ html.neon .done .badge{background:transparent; box-shadow:inset 0 0 0 1.5px var(
 #devLevel:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .statrow{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
 .stat{font-family:var(--display); font-weight:500; font-size:22px; font-variant-numeric:tabular-nums; letter-spacing:.02em}
-.done small{opacity:0; transition:opacity .6s; font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; animation:breathe 2.4s ease-in-out infinite;
+.done small{opacity:0; font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase;
   /* shaped like a button (the whole message is tappable, this just makes it obvious) */
   display:inline-block; margin-top:6px; padding:11px 22px; border-radius:999px; background:var(--accent); color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.15); max-width:calc(100vw - 48px); text-align:center}
 html.brandtheme .done small{background:#FF6C10}
@@ -313,10 +313,14 @@ html.brandtheme #scoreOpen{background:#FF6C10}
   html:not(.neon) button.tipbtn.new{animation-name:tippulseSoft}}
 @keyframes tippulseSoft{0%,100%{box-shadow:0 0 0 0 rgba(253,147,87,0),0 2px 8px rgba(0,0,0,.12)}50%{box-shadow:0 0 0 7px rgba(253,147,87,.22),0 2px 8px rgba(0,0,0,.12)}}
 html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 12px rgba(255,46,151,.4)}
-@keyframes breathe{50%{opacity:.4}}
+/* Continue and Replay pull into place like a cube coming the other way: from behind you, big and close, shrinking back into
+   the screen and settling with a tiny overshoot. Once settled they hold still (no fading). Every ~4 s Continue gives a small
+   wobble to draw the eye, then rests. (Oct 13) */
+@keyframes pullInBtn{0%{opacity:0;transform:perspective(500px) translateZ(330px)} 30%{opacity:1} 78%{transform:perspective(500px) translateZ(-12px)} 100%{opacity:1;transform:perspective(500px) translateZ(0)}}
+@keyframes nudgeBtn{0%,15%,100%{transform:none} 3%{transform:rotate(-2.4deg) scale(1.035)} 6%{transform:rotate(2deg) scale(1.035)} 9%{transform:rotate(-1.1deg) scale(1.02)} 12%{transform:rotate(.4deg) scale(1.005)}}
 .done:not(.ready) small{animation:none; opacity:0}
-.done.ready small{opacity:1}
-@media (prefers-reduced-motion: reduce){.done small{animation:none}}
+.done.ready small{opacity:1; animation:pullInBtn .6s cubic-bezier(.2,.8,.3,1) both, nudgeBtn 4.2s ease-in-out 2.4s infinite}
+@media (prefers-reduced-motion: reduce){.done.ready small,.done.ready .replay{animation:none; opacity:1; transform:none}}
 .done b{max-width:18ch; padding-inline:16px; text-align:center; text-wrap:balance; line-height:1.2; font-family:var(--display); font-weight:500; font-size:clamp(26px,6.4vw,40px); letter-spacing:.04em; color:var(--ink)} /* the cheeky line: white on dark screens (ink on light), a bit larger so it stands out (Oct 12) */
 @media (prefers-reduced-motion: reduce){.hint,.done{transition:none}}
 /* Text buttons and badges share the cubes' rounded corners instead of a full round pill (Samuel, Oct 12).
@@ -364,8 +368,8 @@ html.logotop header .brandbox.foot{position:static; transform:none; grid-column:
 html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
 /* Replay: a quieter outlined button under Continue on the win screen; it appears with Continue (Oct 13) */
 .done .replay{width:auto; height:auto; margin-top:-4px; padding:9px 22px; border-radius:var(--cubeR,8px); background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--muted);
-  font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:0; pointer-events:none; transition:opacity .6s}
-.done.ready .replay{opacity:1; pointer-events:auto}
+  font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:0; pointer-events:none}
+.done.ready .replay{opacity:1; pointer-events:auto; animation:pullInBtn .6s cubic-bezier(.2,.8,.3,1) .14s both}
 html.neon .done .replay{box-shadow:inset 0 0 0 1.5px rgba(244,236,255,.4)} /* with the logo up top, Undo sits on the bottom row */
 </style>
 
