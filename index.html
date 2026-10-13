@@ -2380,7 +2380,9 @@ function routeOut(){
 }
 function audio(){
   unlockPlayback();
-  if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();
+  // "playback" asks for a larger, steadier audio buffer: AirPlay (HomePod, Apple TV) and mirroring stay smooth instead of crackling,
+  // even under the heavier music tracks; on the phone's own speaker the extra delay is too small to notice
+  if(!actx){try{const AC=window.AudioContext||window.webkitAudioContext;try{actx=new AC({latencyHint:'playback'})}catch(e){actx=new AC()}
     // when the audio route changes (AirPlay connects, a call comes in), iOS pauses the sound; pick it back up
     actx.onstatechange=()=>{if(actx.state!=='running'&&!document.hidden)actx.resume().catch(()=>{})};
     noiseBuf=actx.createBuffer(1,actx.sampleRate,actx.sampleRate);const ch=noiseBuf.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
