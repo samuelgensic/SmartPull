@@ -1651,7 +1651,7 @@ function pressedDot(g,color,fillC){
    button. The 3D lighting uses it to shade the dent, as if it were really carved into the cube. */
 /* Locks and keys are pressed into the face the same way: the symbol's shape, softened at its edges, becomes a
    shallow dent that the scene's light shades (the keyhole stays at face level, like a little island). */
-const symbolOf=deco=>{const m=/(?:^|;)(lock|unlock|key|pips\d)\|/.exec(deco||'');return m?m[1]:null};
+const symbolOf=deco=>{const m=/(?:^|;)(lock|unlock|key|pips\d|ripple\d)\|/.exec(deco||'');return m?m[1]:null};
 const symDents={};
 function symbolDent(type){
   if(symDents[type])return symDents[type];
@@ -1663,7 +1663,8 @@ function symbolDent(type){
     for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const xx=x+k;if(xx>=0&&xx<s){sum+=a[y*s+xx];n++}}t[y*s+x]=sum/n}
     for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const yy=y+k;if(yy>=0&&yy<s){sum+=t[yy*s+x];n++}}o[y*s+x]=sum/n}return o};
   h=blur(blur(h,2),2);
-  const D=type.startsWith('pips')?32:SYMBOL_DEPTH,img=g.createImageData(s,s),d=img.data,H=(x,y)=>-D*h[Math.min(s-1,Math.max(0,y))*s+Math.min(s-1,Math.max(0,x))];
+  const D=type.startsWith('pips')?32:type.startsWith('ripple')?30:SYMBOL_DEPTH, // Echo ripples press in like the pips: the center dot deepest, each ring out shallower
+    _=0,img=g.createImageData(s,s),d=img.data,H=(x,y)=>-D*h[Math.min(s-1,Math.max(0,y))*s+Math.min(s-1,Math.max(0,x))];
   for(let y=0;y<s;y++)for(let x=0;x<s;x++){
     const dx=(H(x+1,y)-H(x-1,y))/2,dy=(H(x,y+1)-H(x,y-1))/2;let nx=-dx,ny=dy,nz=1;const L=Math.hypot(nx,ny,nz);nx/=L;ny/=L;nz/=L;
     const k=(y*s+x)*4;d[k]=(nx*.5+.5)*255;d[k+1]=(ny*.5+.5)*255;d[k+2]=(nz*.5+.5)*255;d[k+3]=255}
