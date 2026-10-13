@@ -413,7 +413,7 @@ header .blacklight:focus-visible::after{opacity:1}
     <div class="upsheet" role="dialog" aria-labelledby="tipTitle">
       <div class="uptitle" id="tipTitle">Tip</div>
       <div id="tipBody" style="display:flex;flex-direction:column;gap:14px"></div>
-      <button class="opt upclose" id="tipClose" type="button">Got it</button>
+      <button class="opt upclose" id="tipClose" type="button">Bet</button>
     </div>
   </div>
   <div class="upwrap" id="upgrade" hidden>
@@ -1660,7 +1660,12 @@ function arrowGlyph(g,glideK,ordN){
   else{g.save();if(ordN)g.translate(-14,0);g.beginPath();g.moveTo(-26,-50);g.quadraticCurveTo(3,-22,30,0);g.quadraticCurveTo(3,22,-26,50);g.stroke();g.restore()}
   for(let k=0;k<ordN;k++){g.save();g.translate(100-k*32,-98);g.scale(.31,.31);g.lineWidth=42;g.beginPath();g.moveTo(-26,-50);g.quadraticCurveTo(3,-22,30,0);g.quadraticCurveTo(3,22,-26,50);g.stroke();g.restore()}
   g.lineWidth=lw}
+// dark mode check (used by the cubes and the UI palette) and the toned-down cube orange for dark mode
+const CUBE_ORANGE_DARK='#D96B30';
+const darkMode=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}};
 function faceTex(fillC,kind,color,deco){
+  // dark mode: orange on the cubes (whole cubes and orange dots) is toned down to match the soft dark-mode palette (Oct 12)
+  if(darkMode()){const so=c=>String(c).toUpperCase()==='#FF6C10'?CUBE_ORANGE_DARK:c;fillC=so(fillC);color=so(color);if(deco)deco=deco.replace(/#ff6c10/gi,CUBE_ORANGE_DARK)}
   const km=/^(g)?(?:o(\d))?(right|left|up|down)$/.exec(kind),glideK=!!(km&&km[1]),ordN=km&&km[2]?+km[2]:0;if(km)kind=km[3];
   // dark cubes get a lighter rim so their edges still read; light cubes get a darker one
   const lighten=(h,k)=>'#'+hexRGB(h).map(v=>Math.round(v+(255-v)*k).toString(16).padStart(2,'0')).join('');
@@ -1727,7 +1732,7 @@ function neonTex(kind,color,halo,deco,fill,edgeC){
   const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
 }
 function mat(skin,kind,color,deco){
-  const k=skin+kind+(color||'')+(deco||'');
+  const k=skin+kind+(color||'')+(deco||'')+(darkMode()?'~d':'');
   if(!matCache[k]){
     const isNeon=skin.startsWith('neon'),tintEdge=isNeon&&skin[4]==='~',nfill=isNeon&&!tintEdge?skin.slice(4)||null:null,nedge=tintEdge?skin.slice(5):null;
     const map=isNeon?null:faceTex(skin,kind,color,deco);let m;
@@ -2218,7 +2223,6 @@ const oopsCount=()=>bumps;
 let cheerColorIdx=0;
 /* Dark mode softens every UI use of the brand colors to one shared set (the cubes themselves keep their colors):
    orange #FF6C10 → #FD9357, teal #007C92 → #54BED0, olive #B2BB1E → #C9D543, gray → #C9CBC6. Use these, never the bright ones, for UI in dark mode. */
-const darkMode=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}};
 const SOFT={'#FF6C10':'#FD9357','#EB5D07':'#FD9357','#E45900':'#FD9357','#007C92':'#54BED0','#B2BB1E':'#C9D543','#979F19':'#C9D543','#82881A':'#C9D543','#ABABA8':'#C9CBC6','#34363A':'#C9CBC6'};
 const uiCol=c=>darkMode()&&SOFT[c]||c;
 function cheerPalette(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
