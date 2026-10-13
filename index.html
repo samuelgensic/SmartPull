@@ -390,6 +390,12 @@ html.neon .pstick{filter:drop-shadow(0 0 7px rgba(57,255,20,.5))}
 .done .parpill{background:var(--c); color:#fff; box-shadow:none; padding:6px 13px}
 @media (prefers-color-scheme: dark){html:not(.neon) .done .parpill{color:var(--bg)}}
 html.neon .done .parpill{background:var(--chip); color:var(--c); box-shadow:inset 0 0 0 1.5px var(--c), 0 0 10px color-mix(in srgb, var(--c) 55%, transparent)}
+
+/* the sound menu: a narrow column like the settings menu (it used to stretch across the screen); music choices sit two to a row */
+#soundp{width:228px; max-width:calc(100% - 82px)}
+#soundp input.vol{min-width:0}
+#optMusic{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+#optMusic button.opt{width:100%; padding:0 6px; white-space:nowrap}
 </style>
 
 <div class="app">
