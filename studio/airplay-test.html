@@ -19,6 +19,11 @@ pre{background:var(--chip);border-radius:14px;padding:12px;font-size:12px;white-
 <button id="b3">3 · A plain audio clip<small>Like a video or song would play</small></button>
 <button id="b4">4 · Game sound, fresh start<small>Throws away the audio engine and builds a new one</small></button>
 <button id="b5">5 · Game sound, "auto" mode<small>Lets iOS pick the audio type</small></button>
+<p style="margin-top:22px">New: each of these plays the chime <b>four times in a row</b>, so you can hear whether it stays clean.</p>
+<button id="b6">6 · Game sound, stream kept open<small>A silent signal runs underneath so the TV never drops the stream</small></button>
+<button id="b7">7 · Same as 6, at 44.1 kHz<small>The sample rate AirPlay itself uses</small></button>
+<button id="b8">8 · Same as 6, at 48 kHz</button>
+<button id="b9">9 · Plain audio clip, four times<small>Number 3 again, for comparison</small></button>
 <pre id="log">Status shows here.</pre>
 <script>
 const L=document.getElementById('log'),lines=[];function log(s){lines.unshift(s);L.textContent=status()+'\n\n'+lines.slice(0,12).join('\n')}
@@ -43,6 +48,17 @@ b2.onclick=()=>{const a=ctx();if(!md){md=a.createMediaStreamDestination();el=new
   chime(a,md);log('played 2 (media player)')};
 b3.onclick=()=>{const c=new Audio(clip);c.setAttribute('playsinline','');c.play().then(()=>log('played 3 (plain clip)')).catch(e=>log('clip failed: '+e.message))};
 b4.onclick=()=>{try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}const a=ctx(true);setTimeout(()=>{chime(a,a.destination);log('played 4 (fresh start)')},150)};
+function keepOpen(a){if(a.__k)return;a.__k=1;let n;
+  if(a.createConstantSource){n=a.createConstantSource();n.offset.value=.0001}else{n=a.createOscillator();n.frequency.value=20}
+  const g=a.createGain();g.gain.value=a.createConstantSource?1:.0003;n.connect(g).connect(a.destination);n.start();log('stream kept open')}
+function fresh(rate){try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+  if(A){try{A.close()}catch(e){}A=null;md=null;if(el){el.pause();el=null}}
+  try{A=new AC(rate?{latencyHint:'playback',sampleRate:rate}:{latencyHint:'playback'})}catch(e){A=new AC()}A.onstatechange=()=>log('engine state: '+A.state);A.resume().catch(()=>{});return A}
+function four(a,label){keepOpen(a);for(let i=0;i<4;i++)setTimeout(()=>chime(a,a.destination),300+i*1300);log('playing '+label+' x4')}
+b6.onclick=()=>four(fresh(),'6 (kept open)');
+b7.onclick=()=>four(fresh(44100),'7 (44.1 kHz)');
+b8.onclick=()=>four(fresh(48000),'8 (48 kHz)');
+b9.onclick=()=>{for(let i=0;i<4;i++)setTimeout(()=>{const c=new Audio(clip);c.setAttribute('playsinline','');c.play().catch(()=>{})},i*1300);log('playing 9 (plain clip) x4')};
 b5.onclick=()=>{try{if(navigator.audioSession)navigator.audioSession.type='auto'}catch(e){}const a=ctx(true);setTimeout(()=>{chime(a,a.destination);log('played 5 ("auto")')},150)};
 setInterval(()=>{L.textContent=status()+'\n\n'+lines.slice(0,12).join('\n')},500);
 </script></body></html>
