@@ -186,6 +186,35 @@ function GrandPiano(A){if(pianoSets.has(A))return pianoSets.get(A);const S={read
   S.get=m=>{if(!S.ready)return null;let best=S.bufs[0];for(const x of S.bufs)if(Math.abs(x.m-m)<Math.abs(best.m-m))best=x;return{buf:best.buf,rate:Math.pow(2,(m-best.m)/12)}};
   pianoSets.set(A,S);return S}
 
+/* Our own grand piano, generated in code (no recordings). Built from measurements of a real concert grand:
+   stretched overtones (inharmonicity about doubling per octave), a hammer strike near 1/8 of the string (a dip around the
+   8th overtone), a soft-felt rolloff of about 12 dB per octave, two or three strings per note a fraction of a cent apart
+   (the slow beating that makes a piano shimmer), a two-stage decay (a quick drop, then a long quiet ring; bass rings far
+   longer than treble), a weaker fundamental in the bass, a soft hammer knock and a low soundboard thump. */
+function pianoModelNote(sr,m,rand){const R2=rand||Math.random,f0=440*Math.pow(2,(m-69)/12),dur=Math.min(10,Math.max(3.5,10-(m-36)*.12)),L=Math.floor(sr*dur),d=new Float32Array(L);
+  const B=.0009*Math.pow(2,(m-60)/12),s=Math.pow(2,-(m-60)/24),fc=Math.min(4200,Math.max(1200,2000+(m-60)*30)),str=m<34?1:m<46?2:3,DET=[0,-.55,.6];
+  for(let n=1;n<=48;n++){const fn=n*f0*Math.sqrt(1+B*n*n);if(fn>Math.min(8500,sr*.45))break;
+    let a=Math.pow(n,-1.05)/(1+Math.pow(fn/fc,2))*(.3+.7*Math.abs(Math.sin(Math.PI*n/7.8)));if(n===1)a*=m<40?.18:m<48?.5:1;if(m<44&&(n===2||n===3))a*=1.3;if(a<.0015)continue;
+    const t1=.38*Math.pow(2,-(m-60)/48)/(1+.08*(n-1)),t2=4*Math.pow(2,-(m-60)/36)/(1+Math.pow(fn/900,1.2)),w2=.14;
+    for(let j=0;j<str;j++){const fr=fn*Math.pow(2,(DET[j]+(R2()-.5)*.25)/1200),w=2*Math.PI*fr/sr,cw=Math.cos(w),sw=Math.sin(w),
+        k1=Math.exp(-1/(t1*(1+j*.07)*sr)),k2=Math.exp(-1/(t2*(1+j*.12)*sr));const sa=[1,.7,.5][j]/[1,1.7,2.2][str-1];let ss=0,c=1,e1=a*sa,e2=a*w2*sa;
+      for(let i=0;i<L;i++){const ns=ss*cw+c*sw;c=c*cw-ss*sw;ss=ns;d[i]+=ss*(e1+e2);e1*=k1;e2*=k2;if(((i&1023)===0)&&e1+e2<2e-5)break}}}
+  // hammer knock (felt on string) and a soft, low soundboard thump
+  let pk=0;for(let i=0;i<400&&i<L;i++)pk=Math.max(pk,Math.abs(d[i]));pk=pk||1;let y=0;const kc=Math.min(.6,fc/sr*6),ph1=R2()*6.28,ph2=R2()*6.28;
+  for(let i=0;i<sr*.12&&i<L;i++){const t=i/sr,w0=R2()*2-1;y+=kc*(w0-y);const att=Math.min(1,t/.003);
+    d[i]+=pk*(.1*y*Math.exp(-t/.004)+att*Math.exp(-t/.05)*(.05*Math.sin(2*Math.PI*110*t+ph1)+.035*Math.sin(2*Math.PI*245*t+ph2)))}
+  const fi=Math.floor(sr*.0015),fo=Math.floor(sr*.4);let q=0;for(let i=0;i<L;i++){let e=1;if(i<fi)e=i/fi;const r=L-i;if(r<fo)e*=r/fo;d[i]*=e;q=Math.max(q,Math.abs(d[i]))}for(let i=0;i<L;i++)d[i]/=q||1;
+  return d}
+
+
+// the model piano with the same interface as the recorded one: each exact pitch rendered once, level-matched, warmed in the background
+const modelSets=new WeakMap();
+function ModelPiano(A){if(modelSets.has(A))return modelSets.get(A);const cache={},S={ready:true,load:Promise.resolve()};
+  const make=m=>{const sr=A.sampleRate,d=pianoModelNote(sr,m),L=Math.min(d.length,Math.floor(sr*.5));let q=0;for(let i=0;i<L;i++)q+=d[i]*d[i];const g=.1/Math.sqrt(q/L||1e-9);
+    const b=A.createBuffer(1,d.length,sr),o=b.getChannelData(0);for(let i=0;i<d.length;i++)o[i]=d[i]*g;return b};
+  S.get=m=>{m=Math.round(m);if(!cache[m])cache[m]=make(m);return{buf:cache[m],rate:1}};
+  S.warm=list=>{let i=0;const go=()=>{if(i<list.length){S.get(list[i++]);setTimeout(go,15)}};setTimeout(go,20)};
+  modelSets.set(A,S);return S}
 /* ---- scale, form and phrases ---- */
 const MAJOR=[0,2,4,5,7,9,11];
 const pitchOf=(root,d)=>root+MAJOR[mod(d,7)]+12*Math.floor(d/7);
@@ -250,7 +279,7 @@ function keyName(root){return NOTE_NAMES[mod(root,12)]}
 const NEW={};
 
 /* Calm: hopeful, open add9 pads, a soft shimmer, faint air, and a real grand piano that drifts in now and then: wide, sparse notes with room to breathe */
-NEW.calm=function(A,out,ui){const mix=Mix(A,out,{verbSec:8,dark:.92}),stops=[];
+function calmMake(model){return function(A,out,ui){const mix=Mix(A,out,{verbSec:8,dark:.92}),stops=[];
   const lp=A.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=.3;
   const lfo=A.createOscillator();lfo.frequency.value=.031;const la=A.createGain();la.gain.value=380;lfo.connect(la).connect(lp.frequency);lfo.start();stops.push(lfo);
   const padBus=mix.bus(.32,.95);lp.connect(padBus);
@@ -260,7 +289,7 @@ NEW.calm=function(A,out,ui){const mix=Mix(A,out,{verbSec:8,dark:.92}),stops=[];
   const air=A.createBufferSource();air.buffer=nb;air.loop=true;const af=A.createBiquadFilter();af.type='bandpass';af.frequency.value=420;af.Q.value=.6;
   const ag=A.createGain();ag.gain.value=.012;const al=A.createOscillator();al.frequency.value=.045;const ala=A.createGain();ala.gain.value=.008;al.connect(ala).connect(ag.gain);
   air.connect(af).connect(ag).connect(mix.bus(.3,.8));air.start();al.start();stops.push(air,al);
-  const gp=GrandPiano(A),bell=Sampler(A,'bell');const pLp=A.createBiquadFilter();pLp.type='lowpass';pLp.frequency.value=7500;pLp.Q.value=.4;pLp.connect(mix.bus(.75,.7));
+  const gp=model?ModelPiano(A):GrandPiano(A),bell=Sampler(A,'bell');if(model){const w=[];for(let m=26;m<=84;m++)w.push(m);gp.warm([...w.filter(m=>m>=48&&m<=72),...w.filter(m=>m<48||m>72)])}const pLp=A.createBiquadFilter();pLp.type='lowpass';pLp.frequency.value=7500;pLp.Q.value=.4;pLp.connect(mix.bus(.75,.7));
   // the piano, in the spirit of open-world field music: short fragments placed freely in time, mostly high in the treble,
   // a rare very low note, lots of silence, staccato touches next to notes left to ring, and now and then a bright accent
   const P=(m,at,v,dur)=>{const s=gp.get(m);if(!s)return;const src=A.createBufferSource();src.buffer=s.buf;src.playbackRate.value=s.rate;const g=A.createGain();
@@ -305,7 +334,8 @@ NEW.calm=function(A,out,ui){const mix=Mix(A,out,{verbSec:8,dark:.92}),stops=[];
       ui&&ui({sect:info.sect,key:keyName(info.key),tex:'pads, shimmer & field piano',energy:info.energy})}
     if(t>=nextFrag){fieldPiano(t,info);nextFrag=t+wpick([1.4,2.6,5,8,11,15],[1.2,1.6,2,2.6,2,1.2])*(1.15-info.energy*.3)}
     tick++;return beat}));
-  return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
+  return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})}};
+NEW.calm=calmMake(false);NEW.calmModel=calmMake(true);
 
 /* Dawn: today's Dawn (the same soft triangle voice, the same rolling arpeggio, the same D–Bm–G–A home),
    slowed to a steady half speed. It keeps an even pulse; the variety comes from the arpeggio's shape changing
@@ -538,7 +568,7 @@ NEW.strings=function(A,out,ui){const mix=Mix(A,out,{verbSec:7,dark:.9}),stops=[]
   return()=>stops.forEach(s=>{try{typeof s==='function'?s():s.stop()}catch(e){}})};
 
 // loudness trims so each new track sits at the same level as the one it replaces (measured offline)
-const TRIM_DB={calm:-5.5,dawn:13.5,dawnSlow:14.5,boxLullaby:5,boxDuet:7,lantern:4,lanternUpright:0,lanternJazz:-1.5,lanternRain:4,lanternAnima:-5.5,strings:3};
+const TRIM_DB={calm:-5.5,calmModel:-3.5,dawn:13.5,dawnSlow:14.5,boxLullaby:5,boxDuet:7,lantern:4,lanternUpright:0,lanternJazz:-1.5,lanternRain:4,lanternAnima:-5.5,strings:3};
 for(const k in TRIM_DB){const f=NEW[k],g=Math.pow(10,TRIM_DB[k]/20);NEW[k]=(A,out,ui)=>{const o=A.createGain();o.gain.value=g;o.connect(out);return f(A,o,ui)}}
 
 /* Lattice (new, replaces Dawn): built like the puzzle itself. Five short musical "pieces", each a loop of a different length
@@ -1066,8 +1096,8 @@ function calmCurrent(a,out){const cfg=MUSICS[0];const t0=a.currentTime;let mus;
 return{calm:calmCurrent,gen:(name)=>(A,out)=>genTrack(A,out,name)};
 })();
 const TRACKS=[
- {name:'Open World (was Calm)',desc:'More hopeful and open: wide add9 chords that swell slowly, a gentle shimmer, faint wind, and a real grand piano in the style of open-world field music. Short fragments with free timing and lots of silence, and a left hand that now often answers the right: a low root, a root with its fifth, octave or tenth, or a mid-range chord tone, a moment after a high or mid phrase. The notes are its own, not the game\'s.',
-  opts:[['Current',(A,o)=>CUR.calm(A,o)],['New',(A,o,u)=>NEW.calm(A,o,u)]]},
+ {name:'Open World (was Calm)',desc:'Your pick. Two versions of the same music to compare: "recorded piano" uses recordings of a real grand (free, but its license requires a credit); "our own piano" is generated entirely in code, built from measurements of how a real grand rings (stretched overtones, the hammer position, two or three strings per note beating gently, a quick drop then a long quiet ring), so it needs no credit. Wide add9 pads, a gentle shimmer, faint wind, and the piano in the style of open-world field music, with a left hand that answers the right.',
+  opts:[['Current',(A,o)=>CUR.calm(A,o)],['New · recorded piano',(A,o,u)=>NEW.calm(A,o,u)],['New · our own piano',(A,o,u)=>NEW.calmModel(A,o,u)]]},
  {name:'Lattice (new, replaces Dawn)',desc:'Built like the puzzle itself. Five short pieces, mostly a soft, ambient electric-piano bell with a little wooden marimba, each looping at a different length, so they keep sliding apart and fitting back together and it never repeats exactly. Underneath, a soft bed of slow swells that fade in and out and always overlap, plus a low drone, so it is never silent. One piece is swapped out every couple of minutes, and now and then the whole thing shifts key. One gentle major scale, so nothing ever clashes.',
   opts:[['Lattice',(A,o,u)=>NEW.lattice(A,o,u)]]},
  {name:'Music Box',desc:'The Lullaby version (slow waltz, darker and softer comb, about one note every few seconds) with a Kid A layer: a slight tape wobble on every note, a warm analog-style pad underneath (each voice drifting slightly on its own, a slowly swelling filter, a wide stereo chorus), reversed music-box notes that swell into chord changes, faint glittering grains, and now and then one long Ondes Martenot-style note.',
