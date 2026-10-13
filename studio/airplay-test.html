@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SmartPull Sound Test</title>
+<style>
+:root{--bg:#E7EBE3;--ink:#25302A;--muted:#66736B;--chip:#F4F3EE;--accent:#3E7C78;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#191E1C;--ink:#E9ECE6;--muted:#97A39B;--chip:#2A322F;--accent:#7FC0B9;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#191E1C;--ink:#E9ECE6;--muted:#97A39B;--chip:#2A322F;--accent:#7FC0B9;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px -apple-system,system-ui,sans-serif;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 6px}p{margin:0 0 16px;color:var(--muted);line-height:1.4}
+button{display:block;width:100%;text-align:left;border:0;border-radius:14px;background:var(--chip);color:var(--ink);font:600 16px -apple-system,system-ui,sans-serif;padding:14px 16px;margin:0 0 10px}
+button small{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:3px}
+button:active{outline:2px solid var(--accent)}
+pre{background:var(--chip);border-radius:14px;padding:12px;font-size:12px;white-space:pre-wrap;word-break:break-word}
+</style></head><body>
+<h1>SmartPull sound test</h1>
+<p>Start mirroring to the Apple TV, then tap each button and note which ones you hear <b>from the TV</b>. Each plays a short three-note chime.</p>
+<button id="b1">1 · Game sound, sent straight out<small>How the game plays sound now</small></button>
+<button id="b2">2 · Game sound through a media player<small>The older fallback route</small></button>
+<button id="b3">3 · A plain audio clip<small>Like a video or song would play</small></button>
+<button id="b4">4 · Game sound, fresh start<small>Throws away the audio engine and builds a new one</small></button>
+<button id="b5">5 · Game sound, "auto" mode<small>Lets iOS pick the audio type</small></button>
+<pre id="log">Status shows here.</pre>
+<script>
+const L=document.getElementById('log'),lines=[];function log(s){lines.unshift(s);L.textContent=status()+'\n\n'+lines.slice(0,12).join('\n')}
+try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+let A=null,md=null,el=null;
+const AC=window.AudioContext||window.webkitAudioContext;
+function ctx(fresh){if(fresh&&A){try{A.close()}catch(e){}A=null;md=null;if(el){el.pause();el=null}}
+  if(!A){try{A=new AC({latencyHint:'playback'})}catch(e){A=new AC()}A.onstatechange=()=>log('engine state: '+A.state)}
+  if(A.state!=='running')A.resume().catch(()=>{});return A}
+function chime(a,dest){const t=a.currentTime+.05;[523,659,784].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=f;
+  g.gain.setValueAtTime(0,t+i*.18);g.gain.linearRampToValueAtTime(.25,t+i*.18+.01);g.gain.exponentialRampToValueAtTime(.001,t+i*.18+.6);o.connect(g).connect(dest);o.start(t+i*.18);o.stop(t+i*.18+.65)})}
+function status(){const s=navigator.audioSession;return ['iOS audio type: '+(s?s.type:'(not supported)')+(s&&s.state?' · session '+s.state:''),
+  'engine: '+(A?A.state+' · clock '+A.currentTime.toFixed(2)+' s · '+A.sampleRate+' Hz · output delay '+(A.outputLatency||0).toFixed(3)+' s':'not started'),
+  'media player: '+(el?(el.paused?'paused':'playing'):'not started')].join('\n')}
+function wav(){const sr=22050,n=Math.floor(sr*1.3),buf=new ArrayBuffer(44+n*2),v=new DataView(buf),w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const t=i/sr;let x=0;[523,659,784].forEach((f,k)=>{const s=t-k*.18;if(s>0)x+=Math.sin(2*Math.PI*f*s)*.25*Math.exp(-s*7)});v.setInt16(44+i*2,Math.max(-1,Math.min(1,x))*32767,true)}
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}))}
+const clip=wav();
+b1.onclick=()=>{const a=ctx();chime(a,a.destination);log('played 1 (straight out)')};
+b2.onclick=()=>{const a=ctx();if(!md){md=a.createMediaStreamDestination();el=new Audio();el.setAttribute('playsinline','');el.srcObject=md.stream;el.play().then(()=>log('media player started')).catch(e=>log('media player failed: '+e.message))}
+  chime(a,md);log('played 2 (media player)')};
+b3.onclick=()=>{const c=new Audio(clip);c.setAttribute('playsinline','');c.play().then(()=>log('played 3 (plain clip)')).catch(e=>log('clip failed: '+e.message))};
+b4.onclick=()=>{try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}const a=ctx(true);setTimeout(()=>{chime(a,a.destination);log('played 4 (fresh start)')},150)};
+b5.onclick=()=>{try{if(navigator.audioSession)navigator.audioSession.type='auto'}catch(e){}const a=ctx(true);setTimeout(()=>{chime(a,a.destination);log('played 5 ("auto")')},150)};
+setInterval(()=>{L.textContent=status()+'\n\n'+lines.slice(0,12).join('\n')},500);
+</script></body></html>

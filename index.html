@@ -2396,8 +2396,32 @@ function audio(){
   return actx;
 }
 // iOS only lets sound start inside a tap, so every tap makes sure audio is awake (this is cheap once it's running)
-['touchend','pointerup','click'].forEach(ev=>document.addEventListener(ev,()=>{if(soundOn||musicOn)audio()},{passive:true,capture:true}));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&actx&&actx.state!=='running')actx.resume().catch(()=>{})});
+['touchend','pointerup','click'].forEach(ev=>document.addEventListener(ev,()=>{needTap=false;if(audioStale)rebuildAudio();else if(soundOn||musicOn)audio()},{passive:true,capture:true}));
+/* Safari bug: after you switch to another app and come back (and when screen mirroring starts and the sound moves to the TV),
+   the audio engine can freeze. It says "running" but its clock has stopped, or it stays "interrupted", and nothing plays
+   until the page is reloaded. A watchdog checks twice a second; if the engine is frozen it throws it away and builds a fresh
+   one (and restarts the music). If iOS wants a tap before the new one may start, the next tap starts it. */
+let audioStale=false,needTap=false,wdLast=-1,wdSame=0,wdOff=0;
+function rebuildAudio(){
+  const old=actx;audioStale=false;wdLast=-1;wdSame=0;wdOff=0;
+  if(mus){const m=mus;mus=null;try{m.stopGen&&m.stopGen()}catch(e){}try{m.out.disconnect()}catch(e){}}
+  if(mediaOut){try{mediaOut.pause()}catch(e){}mediaOut=null}
+  actx=null;sfxBus=null;musicBus=null;try{old&&old.close()}catch(e){}
+  audio(); // the new engine; the music starts again if it was on
+  if(!actx||actx.state!=='running')needTap=true;
+}
+function audioWatch(){
+  if(!actx||document.hidden||needTap){wdLast=-1;wdSame=0;wdOff=0;return}
+  if(actx.state!=='running'){actx.resume().catch(()=>{});if(++wdOff>=4)audioStale=true}       // two seconds that won't start
+  else{wdOff=0;const ct=actx.currentTime;if(ct===wdLast){if(++wdSame>=3)audioStale=true}else wdSame=0;wdLast=ct} // clock stuck for 1.5 s
+  if(audioStale)rebuildAudio();
+}
+setInterval(audioWatch,500);
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden||!actx)return;wdLast=-1;wdSame=0;wdOff=0;
+  // coming back: a suspend-and-resume is often enough to wake it; the watchdog rebuilds it if not
+  if(actx.state==='running')actx.suspend().then(()=>actx&&actx.resume()).catch(()=>{});else actx.resume().catch(()=>{});
+});
 // every sound effect fades all the way to silence before it stops: a smooth decay, then a short glide to exactly 0%.
 // Returns the time it's safe to stop the sound (after the volume has reached zero).
 const SFX_TAIL=.02;
