@@ -358,6 +358,12 @@ header .blacklight::after{content:attr(data-tip); position:absolute; top:50%; ri
 header .blacklight:focus-visible::after{opacity:1}
 /* narrow Neon phones: the tip button drops to its own row under the controls instead of crowding column 1, which the level picker now occupies */
 @media (max-width:400px){header .blacklight{width:34px; height:34px} header .hleft{margin-right:42px} html.neon header .topspace{padding-right:84px}}
+/* Oct 12: the SMART·PULL wordmark and its credit sit centered at the top of the play area, just under the top bar
+   (the top bar itself is too narrow on phones beside the level number). Undo drops to the bottom row, level with the timer. */
+.brandbox.foot{top:6px; bottom:auto}
+.botrow{bottom:14px}
+.stuck{bottom:62px}
+.thint{top:58px}
 </style>
 
 <div class="app">
