@@ -281,6 +281,10 @@ html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .done .taps.best{color:var(--accent)}
 .done .movesline{margin-top:7px}
 /* New best / Clean clear: button-shaped badges (outlined pill, soft tint of the color); not tappable, the whole message is */
+.done .parrow{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; column-gap:12px; width:min(330px,calc(100vw - 40px))}
+.done .pr-l{text-align:right} .done .pr-r{text-align:left}
+.done .parpill{display:inline-block; padding:5px 13px; border-radius:999px; font-weight:600; color:var(--c); background:color-mix(in srgb, var(--c) 14%, transparent); box-shadow:inset 0 0 0 1.5px var(--c)}
+html.neon .done .parpill{background:transparent; box-shadow:inset 0 0 0 1.5px var(--c), 0 0 10px color-mix(in srgb, var(--c) 55%, transparent)}
 .done .badges{display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:12px}
 .done .badge{display:inline-block; padding:6px 14px; border-radius:999px; font-family:var(--display); font-weight:600; font-size:12px; letter-spacing:.06em; white-space:nowrap;
   color:var(--c); background:color-mix(in srgb, var(--c) 14%, transparent); box-shadow:inset 0 0 0 1.5px var(--c)}
@@ -3318,11 +3322,14 @@ function win(){
   const sc=statColors(),parts=[['Pulls',pulls,'pulls']];if(taps||blocks.some(b=>b.dotFace))parts.push(['Taps',taps,'taps']);parts.push(['Bumps',oopsCount(),'bumps']);
   // two lines with a little breathing room between them: the counts, then the total moves and best
   const l1=document.createElement('div');parts.forEach(([w,n,k],i)=>{if(i)l1.append('  ·  ');const lb=document.createElement('span');lb.textContent=w;lb.style.color=sc[k];l1.append(lb,' '+n)});
-  const l2=document.createElement('div');l2.className='movesline';const mv=document.createElement('span');{const ml=document.createElement('span');ml.textContent='Moves';ml.style.color=movesColor();mv.append(ml,' '+moves)} // the word in color, the number plain like the counts above
-  if(curPar!=null){const pl=document.createElement('span');pl.textContent='Par';pl.style.color=movesColor();mv.append('  ·  ',pl,' '+curPar)}
-  // an older best stays on the Moves line as plain text; a new best gets a badge on the line below
-  if(prev!==undefined&&!isBest){const bl=document.createElement('span');bl.textContent='Best';bl.style.color=movesColor();mv.append('  ·  ',bl,' '+prev)}
-  l2.append(mv);
+  // Moves · [Par] · Best: Par is a button-shaped pill pinned to the center, Moves to its left and Best to its right (a 3-column grid,
+  // so Par stays centered whatever the numbers are). Best is the fewest moves on this level so far, this clear included.
+  const l2=document.createElement('div');l2.className='movesline parrow';l2.style.setProperty('--c',movesColor());
+  const word=(w,n)=>{const d=document.createElement('span');const l=document.createElement('span');l.textContent=w;l.style.color=movesColor();d.append(l,' '+n);return d};
+  const mL=word('Moves',moves);mL.className='pr-l';
+  const mC=document.createElement('span');mC.className='pr-c';if(curPar!=null){mC.className='pr-c parpill';mC.textContent='Par '+curPar}
+  const mR=word('Best',isBest?moves:prev);mR.className='pr-r';
+  l2.append(mL,mC,mR);
   const lines=[l1,l2];
   // New best and Clean clear sit together on their own line, as button-shaped badges in the theme's spare color
   const badges=document.createElement('div');badges.className='badges';badges.style.setProperty('--c',bestColor());
