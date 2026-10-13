@@ -2263,7 +2263,7 @@ const STAT_COLORS={
 function statColors(){const t=STAT_COLORS[theme]||STAT_COLORS.plain;
   let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
   return (dark&&t.dark)||t.light}
-/* Left: how many pulls the board still needs. A linked pair or fused piece is one pull, echo twins leave on one pull,
+/* Pulls (in play): counts down how many pulls the board still needs. A linked pair or fused piece is one pull, echo twins leave on one pull,
    and glass isn't pulled (it cracks and shatters) unless glass is all that's left, when each pane takes a tap to break */
 function pullsLeft(){const al=blocks.filter(b=>b.alive),solid=al.filter(b=>!b.glass);if(!solid.length)return al.length;
   const seen=new Set();let n=0;
@@ -2274,7 +2274,7 @@ function updateLeft(){const n=occ.size;
   const el=document.getElementById('left');el.textContent='';
   const line=(txt,cls)=>{const d=document.createElement('div');d.textContent=txt;if(cls)d.className=cls;el.appendChild(d);return d};
   const sc=statColors(),col=(d,k)=>{d.style.color=sc[k];return d};
-  col(line('Left '+pullsLeft(),'tapc'),'pulls'); // counts down to 0, reads like Taps 2 / Bumps 1
+  col(line('Pulls '+pullsLeft(),'tapc'),'pulls'); // counts down to 0 while playing; the end-of-level stats show total pulls made
   // taps show on levels with dots; bumps show once there's been one
   if(taps||blocks.some(b=>b.dotFace))col(line(stat(taps,'Tap')),'taps');
   if(oopsCount())col(line(stat(oopsCount(),'Bump')),'bumps');
