@@ -2192,7 +2192,9 @@ function cheerPalette(){let dark=false;try{dark=matchMedia('(prefers-color-schem
 // the "Moves" total on the level-complete message has its own theme color (different from the "Best" note)
 function movesColor(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
   return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#54BED0':'#007C92'):(dark?'#FD9357':'#E45900')}
-const BEST_COLOR={plain:'#007C92',brand:'#FF6C10',neon:'#39FF14'};
+/* Best and Clean clear take the theme's spare color: Neon's purple (unused on the win screen), and in Classic/SmartPull the Taps color,
+   which is free on levels without dots; it uses the stat palette, so it softens in dark mode like the counts */
+const bestColor=()=>theme==='neon'?'#B026FF':statColors().taps;
 const TAP_COLORS={plain:['var(--ink)'],brand:['#FF6C10','#007C92','#B2BB1E'],
   neon:['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF']};
 /* master tap counter: every tap on every level, kept on this device */
@@ -3295,7 +3297,7 @@ function win(){
   const tl=document.getElementById('tapsLine');
   // the "Best" part stands out in a color from the current theme's palette
   const bestBit=(main,extra)=>{const f=document.createDocumentFragment();f.append(main);
-    if(extra){const sp=document.createElement('span');sp.textContent=extra;sp.style.color=BEST_COLOR[theme]||BEST_COLOR.plain;f.append(sp)}return f};
+    if(extra){const sp=document.createElement('span');sp.textContent=extra;sp.style.color=bestColor();f.append(sp)}return f};
   // each count's word takes the same color as that count in the corner (per theme); the numbers stay the plain text color
   const sc=statColors(),parts=[['Pulls',pulls,'pulls']];if(taps||blocks.some(b=>b.dotFace))parts.push(['Taps',taps,'taps']);parts.push(['Bumps',oopsCount(),'bumps']);
   // two lines with a little breathing room between them: the counts, then the total moves and best
@@ -3306,7 +3308,7 @@ function win(){
   const lines=[l1,l2];
   // a clean clear: no bumps, in par or fewer (no bumps is enough on a level without a par). It marks the level's pill in the menu.
   if(oopsCount()===0&&(curPar==null||moves<=curPar)){const first=!cleanSet[levelIdx];cleanSet[levelIdx]=1;try{localStorage.setItem('pa4_clean',JSON.stringify(cleanSet))}catch(e){}
-    const l3=document.createElement('div');l3.className='movesline';const c=document.createElement('span');c.textContent=first?'Clean clear!':'Clean clear';c.style.color=BEST_COLOR[theme]||BEST_COLOR.plain;l3.append(c);lines.push(l3)}
+    const l3=document.createElement('div');l3.className='movesline';const c=document.createElement('span');c.textContent=first?'Clean clear!':'Clean clear';c.style.color=bestColor();l3.append(c);lines.push(l3)}
   // Today's level keeps a daily streak going
   if(previewMode&&previewKey===dailyKey){streakClear();const l4=document.createElement('div');l4.className='movesline';l4.textContent='Daily Streak '+plural(streak.n,'day');lines.push(l4)}
   tl.replaceChildren(...lines);
