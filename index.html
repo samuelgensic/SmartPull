@@ -941,17 +941,33 @@ const _wv=new THREE.Vector3();
 function warmShards(){recordGlassSounds();const th=theme;
   if(!SHARD.meshes.length)while(SHARD.meshes.length<84){const me=new THREE.Mesh(),ed=new THREE.LineSegments();me.add(ed);me.renderOrder=5;ed.renderOrder=6;SHARD.meshes.push(me)}
   if(SHARD.warm===th)return;SHARD.warm=th;const pool=shardPool(),g=new THREE.Group(),neon=th==='neon',[m,e]=shardMats(th);
-  const me=new THREE.Mesh(pool[0].geo,m);me.add(new THREE.LineSegments(pool[0].edges,e));g.add(me);
+  pool.forEach(sh=>{const me=new THREE.Mesh(sh.geo,m);me.add(new THREE.LineSegments(sh.edges,e));g.add(me)}); // all 16 shard shapes, so none is new at the break
   g.add(crackMesh([0,0,1],12345)); // crack lines
   g.add(new THREE.Mesh(pool[0].geo,crackedMat(neon)),new THREE.Mesh(pool[0].geo,glassMat(neon)),new THREE.LineSegments(pool[0].edges,edgeMat(neon))); // cracked and whole glass
   g.traverse(o=>{o.frustumCulled=false;if(o.isMesh||o.isLine)o.renderOrder=5});
   camera.getWorldDirection(_wv);g.position.copy(camera.position).addScaledVector(_wv,-3); // behind the camera: drawn, but never seen
   scene.add(g);try{renderer.compile(scene,camera)}catch(err){}
   requestAnimationFrame(()=>requestAnimationFrame(()=>scene.remove(g)))}
+/* When a pane cracks, its break is got ready right away (the second hit is coming): the 38 pieces it will use are picked,
+   given their shapes and looks, and drawn once out of sight behind the camera, and the break sound is loaded into the audio engine.
+   The break itself then only has to move ready pieces into place, so it doesn't hitch. */
+const SHATTER_N=24,SPARK_N=14;
+function prepShatter(o){if(o.prep||!o.alive||!o.glass)return;warmShards();
+  try{if(actx)GLASS_SND.shatter.forEach(r=>sndBuf(actx,r))}catch(e){}
+  const pool=shardPool(),[m,e]=shardMats(),list=[],g=new THREE.Group();
+  for(let i=0;i<SHATTER_N+SPARK_N;i++){const sh=i<SHATTER_N?pool[i%pool.length]:pool[((i-SHATTER_N)*5+3)%pool.length],me=shardMesh(),ed=me.children[0];
+    me.geometry=sh.geo;me.material=m;ed.geometry=sh.edges;ed.material=e;me.scale.setScalar(.1);me.frustumCulled=false;ed.frustumCulled=false;g.add(me);list.push(me)}
+  camera.getWorldDirection(_wv);g.position.copy(camera.position).addScaledVector(_wv,-3); // behind the camera: drawn, never seen
+  scene.add(g);o.prep={list,g,th:theme};
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(g.parent)scene.remove(g);list.forEach(me=>{if(me.parent===g)g.remove(me)})}))}
+// pieces readied at the crack (when they still match the current mode), or fresh ones
+function prepTake(o){const P=o.prep;o.prep=null;if(!P)return null;if(P.g.parent)scene.remove(P.g);
+  P.list.forEach(me=>{if(me.parent===P.g)P.g.remove(me);me.frustumCulled=true;me.children[0].frustumCulled=true});
+  if(P.th!==theme){P.list.forEach(me=>{me.userData.taken=false});return null}return P.list}
 function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.getWorldPosition(p);body.remove(o.mesh);shatterSound();warmShards();
-  const sc=pivot.scale.x,V=THREE.Vector3,pool=shardPool(),[m,e]=shardMats();
-  for(let i=0;i<24;i++){const sh=pool[i%pool.length],k=(.11+Math.random()*.13)*sc/.85; // 24 shards from the pool, a touch larger so the burst looks as full
-    const mesh=shardMesh(),edges=mesh.children[0];mesh.geometry=sh.geo;mesh.material=m;edges.geometry=sh.edges;edges.material=e;mesh.scale.setScalar(k);
+  const sc=pivot.scale.x,V=THREE.Vector3,pool=shardPool(),[m,e]=shardMats(),ready=prepTake(o);
+  for(let i=0;i<SHATTER_N;i++){const sh=pool[i%pool.length],k=(.11+Math.random()*.13)*sc/.85; // 24 shards from the pool, a touch larger so the burst looks as full
+    const mesh=ready?ready[i]:shardMesh(),edges=mesh.children[0];mesh.geometry=sh.geo;mesh.material=m;edges.geometry=sh.edges;edges.material=e;mesh.scale.setScalar(k);
     const off=new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(.8*sc),pos=p.clone().add(off);
     const vel=off.clone().normalize().multiplyScalar((2.6+Math.random()*2)*sc).addScaledVector(SH_UP,(1.6+Math.random())*sc);
     const R=sh.R*k,s={mesh,pts:sh.pts,k,p:pos,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random()*6.3,Math.random()*6.3,Math.random()*6.3)),
@@ -959,7 +975,7 @@ function shatterGlass(o){lifeAdd('glass');const p=new THREE.Vector3();o.mesh.get
       ex:.32+Math.random()*.18,pitch:2600+(1-Math.min(R/(.3*sc),1))*3200+Math.random()*500,age:0,rest:0,sleep:false,shrink:-1,sc};
     mesh.position.copy(pos);mesh.quaternion.copy(s.q);scene.add(mesh);mesh.userData.taken=false;shardsLive.push(mesh);SHARD.list.push(s)}
   // a quick glint of tiny chips where it broke (drawn exactly like the shards, so nothing new for the graphics chip)
-  for(let i=0;i<14;i++){const sh=pool[(i*5+3)%pool.length],k=(.022+Math.random()*.028)*sc/.85,mesh=shardMesh(),edges=mesh.children[0];
+  for(let i=0;i<SPARK_N;i++){const sh=pool[(i*5+3)%pool.length],k=(.022+Math.random()*.028)*sc/.85,mesh=ready?ready[SHATTER_N+i]:shardMesh(),edges=mesh.children[0];
     mesh.geometry=sh.geo;mesh.material=m;edges.geometry=sh.edges;edges.material=e;mesh.scale.setScalar(k);mesh.position.copy(p);
     mesh.quaternion.setFromEuler(new THREE.Euler(Math.random()*6.3,Math.random()*6.3,Math.random()*6.3));scene.add(mesh);mesh.userData.taken=false;shardsLive.push(mesh);
     SHARD.sparks.push({mesh,k,p:p.clone(),v:new V(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(7*sc).addScaledVector(SH_UP,2*sc),
@@ -1199,7 +1215,7 @@ function setCrackLook(b){const old=b.mesh.userData.crack;if(old){b.mesh.remove(o
 // a cube bumped glass: the first hit cracks it; the same side again just tinks; a different side shatters it. Returns true when it shatters.
 function crackGlass(o,d,delay){const side=d.join(','),ms=delay*1000;
   if(o.crack===side){setTimeout(()=>smudgeSound(),ms);return false}
-  if(!o.crack){o.crack=side;setTimeout(()=>{if(o.alive&&o.crack===side){setCrackLook(o);crackSound()}},ms);return false}
+  if(!o.crack){o.crack=side;setTimeout(()=>{if(o.alive&&o.crack===side){setCrackLook(o);crackSound();setTimeout(()=>prepShatter(o),60)}},ms);return false}
   o.alive=false;occ.delete(K(...o.c));setTimeout(()=>shatterGlass(o),ms);return true}
 // the glass cracking: a soft knock as the cube meets it, a dry crack, a few splintering ticks and a faint ring
 function crackSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
@@ -2203,7 +2219,8 @@ function load(i){
   levelIdx=Math.max(0,i);clearing=false;waiting=false;taps=0;pulls=0;bumps=0;resetTimer();
   try{localStorage.setItem('pa2_lvl',levelIdx)}catch(e){}
   if(silWall){body.remove(silWall);silWall=null}{const st=document.getElementById('stuck');st.textContent='No moves left. Tap ↺ to try again.'}
-  clearShards();for(const b of blocks)body.remove(b.mesh);blocks=[];occ.clear();tweens=[];centerTween=null;body.position.set(0,0,0);
+  clearShards();SHARD.meshes.forEach(me=>{if(!me.parent)me.userData.taken=false}); // (pieces readied for a pane that never broke go back in the pool)
+  for(const b of blocks)body.remove(b.mesh);blocks=[];occ.clear();tweens=[];centerTween=null;body.position.set(0,0,0);
   const lv=buildLevel(levelIdx);
   span=lv.span;camDist=Math.max(5,lv.ext*2.6+2.5);
   const {mn,mx}=bounds(lv.blocks.map(b=>b.c));const ctr=[0,1,2].map(i=>(mn[i]+mx[i])/2);
@@ -4650,7 +4667,7 @@ function frame(now){
   renderer.render(scene,camera);if(cb.on)cbRender(dt);requestAnimationFrame(frame);
 }
 window.__test={cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
-  blocks:()=>blocks,slide,spin,pivotTurn,glassTap,S4,solveTest,liveSpec,solverFor,settle,rayBlocked,levelSig,pullsLeft,par:()=>curPar,grav:()=>gravity,counts:()=>({pulls,taps,bumps}),src:()=>curLv&&curLv.src,state:()=>({levelIdx,clearing,best,busy:blocks.some(b=>b.busy)})};
+  blocks:()=>blocks,slide,spin,pivotTurn,glassTap,prepShatter,shards:()=>shardsLive,S4,solveTest,liveSpec,solverFor,settle,rayBlocked,levelSig,pullsLeft,par:()=>curPar,grav:()=>gravity,counts:()=>({pulls,taps,bumps}),src:()=>curLv&&curLv.src,state:()=>({levelIdx,clearing,best,busy:blocks.some(b=>b.busy)})};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
