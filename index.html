@@ -388,8 +388,8 @@ html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
 /* Continue and Replay sit at the bottom of the screen, in thumb reach, just above the SMART·PULL wordmark (Samuel, Oct 14); 20px apart.
    On a computer the wordmark is in the top bar, so they sit lower. A short window (landscape) keeps them under the stats instead. */
 .done small,.done .replay{position:absolute; left:50%; transform:translateX(-50%); margin:0}
-.done small{bottom:122px} .done .replay{bottom:69px}
-html.logotop .done small{bottom:84px} html.logotop .done .replay{bottom:31px}
+.done small{bottom:130px} .done .replay{bottom:85px}
+html.logotop .done small{bottom:92px} html.logotop .done .replay{bottom:47px}
 @media (max-height:600px){.done small,.done .replay{position:static; transform:none} .done small{margin-top:6px} .done .replay{margin-top:6px}}
 .done.ready .replay{opacity:0; pointer-events:auto} /* (invisible placeholder: the Replay block is drawn over it) */
 html.neon .done .replay{box-shadow:inset 0 0 0 1.5px rgba(244,236,255,.4)} /* with the logo up top, Undo sits on the bottom row */
@@ -4371,7 +4371,7 @@ const cbPot=n=>{let p=16;while(p<n&&p<2048)p*=2;return p};
 function cbTex(w,h,draw,flat){ // a face picture drawn in CSS-pixel units, kept sharp at 3x
   const cw=flat?4:cbPot(w*4),ch=flat?4:cbPot(h*4),cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
   const g=cv.getContext('2d');g.scale(cw/w,ch/h);draw(g,w,h,cw/w);
-  const t=new THREE.CanvasTexture(cv);t.anisotropy=8;t.generateMipmaps=false;t.minFilter=THREE.LinearFilter;return t}
+  const t=new THREE.CanvasTexture(cv);t.anisotropy=8;t.generateMipmaps=!flat;t.minFilter=flat?THREE.LinearFilter:THREE.LinearMipmapLinearFilter;return t} // (mipmaps + anisotropy: the lettering stays clean while a block swivels, no shimmer)
 function cbGeo(w,h,d,r){ // the same rounded shape as the cubes (and the gravity floor), just longer; the front picture is laid out by position, right way up
   const g=roundedSlab(w,h,d,r),pos=g.attributes.position,uv=g.attributes.uv,grp=g.groups[4],seen=new Set();
   for(let i=grp.start;i<grp.start+grp.count;i++){const v=g.index.array[i];if(seen.has(v))continue;seen.add(v);uv.setXY(v,(pos.getX(v)+w/2)/w,(pos.getY(v)+h/2)/h)}
