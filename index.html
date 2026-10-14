@@ -3808,7 +3808,7 @@ function addFillets(){
   }
 }
 // small visual touches: a landing squash and a gentle pulse
-function squash(b){if(isPiece(b))return;tweens.push({t:0,dur:.16,step:k=>{if(!b.busy)b.mesh.scale.setScalar(1-.05*Math.sin(k*Math.PI))},end:()=>b.mesh.scale.setScalar(1)})}
+function squash(b){if(isPiece(b))return;tweens.push({t:0,dur:.16,step:k=>{if(!b.busy)b.mesh.scale.setScalar(1-.0175*Math.sin(k*Math.PI))},end:()=>b.mesh.scale.setScalar(1)})} // landing squash 1.75% (was 5%, Samuel Oct 13)
 function pulse(b,amt,dur){tweens.push({t:0,dur,step:k=>b.mesh.scale.setScalar(1+amt*Math.sin(k*Math.PI)),end:()=>b.mesh.scale.setScalar(1)})}
 // on gravity levels a wrong order can leave nothing that can move; say so gently
 function checkStuck(){
@@ -4231,6 +4231,21 @@ el.addEventListener('pointermove',e=>{
   }
   last={x:e.clientX,y:e.clientY};
 });
+/* Coast after you let go (Oct 13, Samuel picked "Light"): flick the puzzle and it keeps turning a moment, easing out in about .15 s.
+   A touch stops it at once, and if your finger rested before lifting there is no coast. */
+const COAST={tau:.15,cap:10,vx:0,vy:0,hist:[]};
+el.addEventListener('pointerdown',e=>{COAST.vx=COAST.vy=0;COAST.hist=[{t:e.timeStamp,x:e.clientX,y:e.clientY}]});
+el.addEventListener('pointermove',e=>{if(touches.size!==1)return;COAST.hist.push({t:e.timeStamp,x:e.clientX,y:e.clientY});while(COAST.hist.length>2&&e.timeStamp-COAST.hist[0].t>130)COAST.hist.shift()});
+el.addEventListener('pointerup',e=>{if(touches.size!==1||!dragging)return; // (this runs before the main handler lets go of the finger)
+  const h=COAST.hist;if(h.length<2||e.timeStamp-h[h.length-1].t>100)return;
+  const a=h[0],b=h[h.length-1],dt=Math.max(.04,(b.t-a.t)/1000),cl=v=>Math.max(-COAST.cap,Math.min(COAST.cap,v));
+  COAST.vy=cl((b.x-a.x)*.009/dt);COAST.vx=cl((b.y-a.y)*.009/dt)});
+const _qy=new THREE.Quaternion(),_qx=new THREE.Quaternion(),_ay=new THREE.Vector3(0,1,0),_ax=new THREE.Vector3(1,0,0);
+function coastStep(dt){if(!COAST.vx&&!COAST.vy)return;
+  if(touches.size){COAST.vx=COAST.vy=0;return}
+  pivot.quaternion.premultiply(_qy.setFromAxisAngle(_ay,COAST.vy*dt)).premultiply(_qx.setFromAxisAngle(_ax,COAST.vx*dt)).normalize();
+  glow=Math.min(1,glow+Math.hypot(COAST.vx,COAST.vy)*dt*.1);
+  const f=Math.exp(-dt/COAST.tau);COAST.vx*=f;COAST.vy*=f;if(Math.hypot(COAST.vx,COAST.vy)<.05)COAST.vx=COAST.vy=0}
 function liftFinger(e){
   touches.delete(e.pointerId);
   if(pinched){
@@ -4727,9 +4742,9 @@ function frame(now){
     if(!blOn()&&m.specular.getHex())m.specular.setHex(0)} // materials made after switching off stay matte too
   // (animations started while these run, e.g. a landing squash begun when a fall ends, are kept for the next frame)
   {const cur=tweens;tweens=[];const keep=cur.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});tweens=keep.concat(tweens)}
-  renderer.render(scene,camera);if(cb.on)cbRender(dt);requestAnimationFrame(frame);
+  coastStep(dt);renderer.render(scene,camera);if(cb.on)cbRender(dt);requestAnimationFrame(frame);
 }
-window.__test={cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
+window.__test={pivot:()=>pivot,COAST:()=>COAST,cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
   blocks:()=>blocks,slide,spin,pivotTurn,glassTap,prepShatter,shards:()=>shardsLive,S4,solveTest,liveSpec,solverFor,settle,rayBlocked,levelSig,pullsLeft,par:()=>curPar,grav:()=>gravity,counts:()=>({pulls,taps,bumps}),src:()=>curLv&&curLv.src,state:()=>({levelIdx,clearing,best,busy:blocks.some(b=>b.busy)})};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
