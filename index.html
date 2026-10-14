@@ -319,13 +319,17 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
 @keyframes pullInBtn{0%{opacity:0;transform:perspective(500px) translateZ(330px)} 30%{opacity:1} 78%{transform:perspective(500px) translateZ(-12px)} 100%{opacity:1;transform:perspective(500px) translateZ(0)}}
 .done:not(.ready) small{animation:none; opacity:0}
 .done.ready small{opacity:0; animation:none}
-/* Continue is a 3D block now (script: cb...). This HTML button stays as an invisible placeholder: it keeps the layout (so Replay does not move),
-   the colors and the label. The block lands the same way (from close up, a tiny overshoot), gives the same small wobble about every 4 s,
-   and turns when dragged. Its soft shadow below is .cbsh. */
-.cbsh{position:absolute; height:0; box-shadow:0 5px 9px 2px rgba(0,0,0,.2); opacity:0; pointer-events:none}
-.done.ready .cbsh{opacity:1; animation:pullInBtn .6s cubic-bezier(.2,.8,.3,1) both}
+/* Continue and Replay are 3D blocks now (script: cb...). The HTML buttons stay as invisible placeholders: they keep the layout (nothing moves),
+   the colors, the labels and the tap areas. The blocks land the same way (from close up, a tiny overshoot), swivel in a slight figure 8, turn when
+   dragged and slide off when tapped. Their soft shadows are .cbsh, in .cbfx (so they can travel with a block as it leaves). */
+.cbfx{position:absolute; inset:0; pointer-events:none}
+.cbsh{position:absolute; height:0; box-shadow:0 4px 8px 0 rgba(0,0,0,.2); opacity:0}
+.cbfx.on .cbsh{opacity:1; animation:pullInBtn .6s cubic-bezier(.2,.8,.3,1) both}
+.cbfx.on #cbsh2{animation-delay:.14s}
+@media (prefers-reduced-motion: reduce){.cbfx.on .cbsh{animation:none}}
 html.neon .cbsh{display:none}
-@media (prefers-reduced-motion: reduce){.done.ready .replay,.done.ready .cbsh{animation:none; opacity:1; transform:none}}
+.done.leaving{opacity:0; pointer-events:none}
+.done.ready .replay:focus-visible{opacity:1; background:transparent; color:transparent; box-shadow:none; outline:2px solid var(--accent); outline-offset:3px}
 .done b{max-width:18ch; padding-inline:16px; text-align:center; text-wrap:balance; line-height:1.2; font-family:var(--display); font-weight:500; font-size:clamp(26px,6.4vw,40px); letter-spacing:.04em; color:var(--ink)} /* the cheeky line: white on dark screens (ink on light), a bit larger so it stands out (Oct 12) */
 @media (prefers-reduced-motion: reduce){.hint,.done{transition:none}}
 /* Text buttons and badges share the cubes' rounded corners instead of a full round pill (Samuel, Oct 12).
@@ -374,7 +378,7 @@ html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
 /* Replay: a quieter outlined button under Continue on the win screen; it appears with Continue (Oct 13) */
 .done .replay{width:auto; height:auto; margin-top:-4px; padding:9px 22px; border-radius:var(--cubeR,8px); background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--muted);
   font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:0; pointer-events:none}
-.done.ready .replay{opacity:1; pointer-events:auto; animation:pullInBtn .6s cubic-bezier(.2,.8,.3,1) .14s both}
+.done.ready .replay{opacity:0; pointer-events:auto} /* (invisible placeholder: the Replay block is drawn over it) */
 html.neon .done .replay{box-shadow:inset 0 0 0 1.5px rgba(244,236,255,.4)} /* with the logo up top, Undo sits on the bottom row */
 
 /* Perfect Pull sticker: a round badge tilted over the upper right of the win line (the Glide in landing; no bounce, and the last
@@ -480,7 +484,7 @@ html.neon .done .parpill{background:var(--chip); color:var(--c); box-shadow:inse
   <div class="panel levels" id="levels" hidden>
     <div class="lvcol" id="lvcol"></div>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="done" id="done"><span class="cbsh" id="cbsh" aria-hidden="true"></span><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small><button class="replay" id="replayBtn" type="button">Replay</button></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="cbfx" id="cbfx" aria-hidden="true"><span class="cbsh" id="cbsh"></span><span class="cbsh" id="cbsh2"></span></div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small><button class="replay" id="replayBtn" type="button">Replay</button></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -2274,7 +2278,7 @@ function load(i){
   }
   lvLabel(levelIdx);setTip();
   refreshNav();
-  document.getElementById('done').classList.remove('show','ready');cbHide();clearTimeout(readyTimer);
+  document.getElementById('done').classList.remove('show','ready','leaving');cbHide();clearTimeout(readyTimer);
   updateLeft();resize();
 }
 /* three counts per level:
@@ -3907,7 +3911,7 @@ const SASS=['Took the scenic route, huh?','Bump. Bump. Bump. Done!','Those cubes
   'You won! The cubes are a little bruised.','Efficiency was optional, apparently.','Bumper cars champion.','Well, that’s one way to do it.'];
 /* switching modes (or light/dark) while the win screen is up recolors it, so it never keeps the old mode's colors */
 function recolorWin(){const box=document.getElementById('done');if(!box||!box.classList.contains('show'))return; // only while the win screen is up (setTheme also runs at startup)
-  if(cb.on)cbPaint(); // the Continue block takes the new mode's colors too
+  if(cb.on)cb.items.forEach(cbPaint); // the blocks take the new mode's colors too
   const sc=statColors(),q=sel=>box.querySelectorAll(sel);
   q('[data-stat]').forEach(e=>e.style.color=sc[e.dataset.stat]);
   q('[data-role="moves"]').forEach(e=>e.style.color=movesColor());
@@ -4008,27 +4012,38 @@ function win(){
 }
 let waiting=false,readyTimer=0;
 // Replay: play the level you just cleared again from the start (a daily or sampler stays a preview)
-document.getElementById('replayBtn').addEventListener('click',e=>{e.stopPropagation();if(!waiting)return;waiting=false;
-  const pm=previewMode,pk=previewKey,pr=previewReturn;rewind();resetZoom=true;load(levelIdx);previewMode=pm;previewKey=pk;previewReturn=pr});
-function advance(){
-  if(!waiting)return;waiting=false;pageTurn();
-  if(previewMode){const back=previewReturn,wasSamp=previewKey!==dailyKey;load(back);if(wasSamp&&!devMode&&tier!=='full')openUpgrade();return} // after a preview, back to where you were
-  if(levelIdx+1>=(devMode?NLEV:maxLevel())){load(levelIdx);if(tier==='full')openLevels();else openUpgrade();return} // end of this version
-  load(levelIdx+1);
+document.getElementById('replayBtn').addEventListener('click',e=>{e.stopPropagation();if(cb.suppress||!waiting)return;waiting=false;
+  cbLeave('re',()=>{const pm=previewMode,pk=previewKey,pr=previewReturn;rewind();resetZoom=true;load(levelIdx);previewMode=pm;previewKey=pk;previewReturn=pr})}); // the Replay block slides off to the left, then the level starts again
+function advance(){ // the Continue block slides off to the right, then the next thing begins
+  if(!waiting)return;waiting=false;
+  cbLeave('go',()=>{pageTurn();
+    if(previewMode){const back=previewReturn,wasSamp=previewKey!==dailyKey;load(back);if(wasSamp&&!devMode&&tier!=='full')openUpgrade();return} // after a preview, back to where you were
+    if(levelIdx+1>=(devMode?NLEV:maxLevel())){load(levelIdx);if(tier==='full')openLevels();else openUpgrade();return} // end of this version
+    load(levelIdx+1)});
 }
-/* ---------- Continue as a 3D block (Oct 13) ----------
-   Continue is a real 3D block, drawn in the game's own view with the same kind of material and the same lights the cubes use
-   (so the phone has no new graphics setup to build). The HTML button stays underneath, invisible: it holds the layout (so Replay
-   does not move), the colors, and the label. The block is fitted over it so its resting silhouette fills the old button's footprint.
-   Drag anywhere on the win screen to turn it, just like the puzzle; it eases back to face you. A drag never counts as a tap. */
-const CB_REST=new THREE.Euler(.17,-.24,0),CB_DEPTH=1,CB_D=30,CB_FOV=35; // resting turn (then rolled a touch so the label sits level); depth as a share of height (a cube's square end); block camera
+/* ---------- Continue and Replay as 3D blocks (Oct 13) ----------
+   Both buttons are real 3D blocks, drawn in the game's own view with the same kind of material and the same lights the cubes use
+   (so the phone has no new graphics setup to build). The HTML buttons stay underneath, invisible: they hold the layout (so nothing moves),
+   the colors, the labels and the tap areas. Each block is fitted over its button so its resting silhouette fills the old button's footprint,
+   and carries the game's own arrow: Continue's on the right (it leaves that way), Replay's on the left.
+   After landing they swivel in place in a slight, slow figure 8, so you can see both sides. Drag anywhere on the win screen to turn them
+   like the puzzle; on release they snap straight back (no pause). Tap one and it slides off the screen the way a pulled cube does
+   (Continue to the right, Replay to the left), then the next level (or the replay) begins. A drag never counts as a tap. */
+const CB_DEPTH=1,CB_D=30,CB_FOV=35; // depth as a share of height (a cube's square end); block camera
+const CB_AY=.23,CB_CY=0,CB_P0=.13,CB_AP=.05,CB_PERIOD=5.4,CB_LAND_YAW=-.2; // the swivel: side to side by +-AY, tipping up and down twice as fast (a figure 8); it starts from the pose the block lands in
 function cbBez(x1,y1,x2,y2){ // a CSS cubic-bezier, so the landing matches the old button's pull-in exactly
   const cx=3*x1,bx=3*(x2-x1)-cx,ax=1-cx-bx,cy=3*y1,by=3*(y2-y1)-cy,ay=1-cy-by;
   const X=t=>((ax*t+bx)*t+cx)*t,Y=t=>((ay*t+by)*t+cy)*t;
   return x=>{if(x<=0)return 0;if(x>=1)return 1;let lo=0,hi=1,t=x;for(let i=0;i<24;i++){const v=X(t);if(Math.abs(v-x)<1e-5)break;v<x?lo=t:hi=t;t=(lo+hi)/2}return Y(t)}}
 const cbPull=cbBez(.2,.8,.3,1),cbIO=cbBez(.42,0,.58,1);
-// the small wobble every ~4.2 s (the old nudge keyframes): [share of the cycle, roll in degrees, scale]
-const CB_NUDGE=[[0,0,1],[.03,-2.4,1.035],[.06,2,1.035],[.09,-1.1,1.02],[.12,.4,1.005],[.15,0,1]];
+const cbE=new THREE.Euler(),cbM=new THREE.Matrix4(),cbQ1=new THREE.Quaternion(),cbQ2=new THREE.Quaternion(),cbQ3=new THREE.Quaternion(),cbQI=new THREE.Quaternion();
+const cbAxX=new THREE.Vector3(1,0,0),cbAxY=new THREE.Vector3(0,1,0),cbAxZ=new THREE.Vector3(0,0,1);
+function cbPose(th,out){ // the block's turn at one moment of the swivel, rolled a touch so the word always sits level
+  cbE.set(CB_P0-CB_AP*Math.sin(2*th),CB_CY+CB_AY*Math.sin(th),0);out.setFromEuler(cbE);
+  const e=cbM.makeRotationFromQuaternion(out).elements;return out.premultiply(cbQ2.setFromAxisAngle(cbAxZ,-Math.atan2(e[1],e[0])))}
+function cbItem(id,sel,dir,delay,shId){ // one block: its HTML button (sel), the way it leaves (dir), when it lands (delay) and its soft shadow
+  const it={id,sel,dir,delay,sh:document.getElementById(shId),key:'',mats:[],mesh:null,geo:null,lastO:-1,grp:new THREE.Group(),blk:new THREE.Group(),px:0,py:0,base:1};
+  it.grp.add(it.blk);cb.scene.add(it.grp);it.grp.visible=false;return it}
 function cbSetup(){
   if(cb.scene)return;
   cb.scene=new THREE.Scene();
@@ -4036,11 +4051,10 @@ function cbSetup(){
   const sn=new THREE.DirectionalLight(0xffffff,.26);sn.position.set(4,9,6);cb.scene.add(sn);
   const fl=new THREE.DirectionalLight(0xffffff,.12);fl.position.set(-6,-2,-4);cb.scene.add(fl);
   cb.cam=new THREE.PerspectiveCamera(CB_FOV,1,.1,500);
-  cb.grp=new THREE.Group();cb.scene.add(cb.grp);   // place, size, wobble
-  cb.blk=new THREE.Group();cb.grp.add(cb.blk);     // the turn (your finger)
-  {const q=new THREE.Quaternion().setFromEuler(CB_REST),e=new THREE.Matrix4().makeRotationFromQuaternion(q).elements; // roll so the front's top edge runs level (a level label reads best)
-   cb.restQ=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),-Math.atan2(e[1],e[0])).multiply(q)}
-  cb.mats=[];cb.mesh=null;cb.key='';cb.t=0;cb.back=null;cb.dragging=false;
+  cb.th0=Math.asin(CB_LAND_YAW/CB_AY);cb.restQ=cbPose(cb.th0,new THREE.Quaternion()); // the landing pose
+  cb.dq=new THREE.Quaternion(); // the turn from your finger, shared by both blocks (eases back to nothing)
+  cb.items=[cbItem('go','#done small',1,0,'cbsh'),cbItem('re','#replayBtn',-1,.14,'cbsh2')];
+  cb.t=0;cb.back=null;cb.dragging=false;cb.leave=null;cb.suppress=false;
   cb.still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
 const cbPot=n=>{let p=16;while(p<n&&p<2048)p*=2;return p};
@@ -4054,39 +4068,52 @@ function cbGeo(w,h,d,r){ // the same rounded shape as the cubes (and the gravity
   uv.needsUpdate=true;return g}
 function cbLayout(){
   const c=cb;if(!c.scene)return;
-  const sm=document.querySelector('#done small'),r=sm.getBoundingClientRect(),cr=renderer.domElement.getBoundingClientRect(),dn=document.getElementById('done').getBoundingClientRect();
-  if(!r.width||!cr.width)return;
-  // size: the block's resting silhouette fills the old button's footprint (solve front width and height from the turned box's width and height)
-  const e=new THREE.Matrix4().makeRotationFromQuaternion(c.restQ).elements,k=CB_DEPTH;
-  const m11=Math.abs(e[0]),m12=Math.abs(e[4])+Math.abs(e[8])*k,m21=Math.abs(e[1]),m22=Math.abs(e[5])+Math.abs(e[9])*k,det=m11*m22-m12*m21,hw=r.width/2,hh=r.height/2;
-  let a=(hw*m22-hh*m12)/det,b=(m11*hh-m21*hw)/det;if(!(a>0&&b>0)){a=hw*.92;b=hh*.78}
-  const Wf=2*a,Hf=2*b,Df=Hf*k,key=[Wf.toFixed(1),Hf.toFixed(1)].join('x');
-  c.Wf=Wf;c.Hf=Hf;c.Df=Df;
+  const cr=renderer.domElement.getBoundingClientRect(),fx=document.getElementById('cbfx').getBoundingClientRect();
+  if(!cr.width)return;
   c.cam.aspect=cr.width/cr.height;c.cam.fov=CB_FOV;c.cam.position.set(0,0,CB_D);c.cam.lookAt(0,0,0);c.cam.updateProjectionMatrix();
-  const ppu=cr.height/(2*CB_D*Math.tan(CB_FOV*Math.PI/360)); // CSS pixels per world unit at the block
-  c.base=Hf/ppu;c.grp.position.set((r.left+r.width/2-cr.left-cr.width/2)/ppu,-((r.top+r.height/2)-cr.top-cr.height/2)/ppu,0);
-  if(key!==c.key){c.key=key;if(c.geo)c.geo.dispose();c.geo=cbGeo(Wf/Hf,1,Df/Hf,.112);
-    if(c.mesh)c.blk.remove(c.mesh);c.mesh=new THREE.Mesh(c.geo,[]);c.blk.add(c.mesh);cbPaint()}
-  const sh=document.getElementById('cbsh');if(sh){sh.style.left=(r.left-dn.left+r.width*.08)+'px';sh.style.width=(r.width*.84)+'px';sh.style.top=(r.bottom-dn.top-2)+'px'}
+  const ppu=cr.height/(2*CB_D*Math.tan(CB_FOV*Math.PI/360)); // CSS pixels per world unit at the blocks
+  c.ppu=ppu;c.halfW=cr.width/2/ppu;
+  const e=new THREE.Matrix4().makeRotationFromQuaternion(c.restQ).elements,k=CB_DEPTH;
+  const m11=Math.abs(e[0]),m12=Math.abs(e[4])+Math.abs(e[8])*k,m21=Math.abs(e[1]),m22=Math.abs(e[5])+Math.abs(e[9])*k,det=m11*m22-m12*m21;
+  for(const it of c.items){
+    const el=document.querySelector(it.sel),r=el.getBoundingClientRect();if(!r.width)continue;
+    // size: the block's landing silhouette fills the old button's footprint (solve front width and height from the turned box's width and height)
+    const hw=r.width/2,hh=r.height/2;
+    let a=(hw*m22-hh*m12)/det,b=(m11*hh-m21*hw)/det;if(!(a>0&&b>0)){a=hw*.92;b=hh*.78}
+    const Wf=2*a,Hf=2*b,Df=Hf*k,key=[Wf.toFixed(1),Hf.toFixed(1)].join('x');
+    it.Wf=Wf;it.Hf=Hf;it.Df=Df;it.base=Hf/ppu;
+    it.px=(r.left+r.width/2-cr.left-cr.width/2)/ppu;it.py=-((r.top+r.height/2)-cr.top-cr.height/2)/ppu;
+    if(key!==it.key){it.key=key;if(it.geo)it.geo.dispose();it.geo=cbGeo(Wf/Hf,1,Df/Hf,.112);
+      if(it.mesh)it.blk.remove(it.mesh);it.mesh=new THREE.Mesh(it.geo,[]);it.blk.add(it.mesh);cbPaint(it)}
+    const sh=it.sh;if(sh){sh.style.left=(r.left-fx.left+r.width*.08)+'px';sh.style.width=(r.width*.84)+'px';sh.style.top=(r.bottom-fx.top-2)+'px';sh.style.transformOrigin='50% '+(-(r.height/2-2))+'px'}
+  }
 }
-function cbPaint(){ // colors and label come from the HTML button, so every mode and light/dark already agrees with it
-  const c=cb;if(!c.mesh)return;
-  const sm=document.querySelector('#done small'),cs=getComputedStyle(sm),neon=theme==='neon',fill=cs.backgroundColor,ink=cs.color,fam=cs.fontFamily;
-  const label=(sm.textContent||'').trim().toUpperCase(),Wf=c.Wf,Hf=c.Hf,Df=c.Df,sp=.08; // letter-spacing .08em, as the button had
+function cbPaint(it){ // colors and label come from the HTML button (Replay: the page's chip color), so every mode and light/dark already agrees with it
+  const c=cb;if(!it.mesh)return;
+  const el=document.querySelector(it.sel),cs=getComputedStyle(el),neon=theme==='neon',go=it.id==='go';
+  const ink=cs.color,fam=cs.fontFamily,fill=go?cs.backgroundColor:(getComputedStyle(document.documentElement).getPropertyValue('--chip').trim()||'#F4F3EE');
+  const rgb=ink.match(/[\d.]+/g)||[244,236,255],soft=a=>`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+  const lineC=go||!neon?ink:soft(.5),glowC=go?ink:soft(.55);
+  const label=(el.textContent||'').trim().toUpperCase(),Wf=it.Wf,Hf=it.Hf,Df=it.Df,sp=.08; // letter-spacing .08em, as the button had
+  // the game's own arrow (the chunky rounded chevron on every cube), sized to the block: Continue's on the right, Replay's on the left
+  const A=Hf*.0034,aw=84*A,gap=Hf*.22,mg=Math.max(9,Hf*.3);
   const probe=document.createElement('canvas').getContext('2d');
-  // the label: 12px like the button, wrapped to the face (a long label like "Unlock more levels" takes two lines), shrinking only if it must
+  // the label: 12px like the button, wrapped to the room beside the arrow (a long label like "Unlock more levels" takes two lines), shrinking only if it must
   let fs=12,lines=[label],lh=0;
-  const width=(t,f)=>{probe.font=`500 ${f}px ${fam}`;let s=0;for(const ch of t)s+=probe.measureText(ch).width+f*sp;return s-f*sp};
+  const avail=Wf-2*mg-aw-gap,width=(t,f)=>{probe.font=`500 ${f}px ${fam}`;let s=0;for(const ch of t)s+=probe.measureText(ch).width+f*sp;return s-f*sp};
   for(;fs>=8;fs-=.5){const words=label.split(' '),ls=[];let cur='';
-    for(const w of words){const t=cur?cur+' '+w:w;if(cur&&width(t,fs)>Wf-22){ls.push(cur);cur=w}else cur=t}
-    ls.push(cur);lines=ls;lh=fs*1.35;if(Math.max(...ls.map(t=>width(t,fs)))<=Wf-22&&ls.length*lh<=Hf-8)break}
+    for(const w of words){const t=cur?cur+' '+w:w;if(cur&&width(t,fs)>avail){ls.push(cur);cur=w}else cur=t}
+    ls.push(cur);lines=ls;lh=fs*1.35;if(Math.max(...ls.map(t=>width(t,fs)))<=avail&&ls.length*lh<=Hf-8)break}
   const text=(g,w,h,s)=>{g.font=`500 ${fs}px ${fam}`;g.fillStyle=ink;g.textBaseline='alphabetic';
-    const cap=g.measureText('H').actualBoundingBoxAscent||fs*.72;
-    lines.forEach((ln,i)=>{const y=h/2+(i-(lines.length-1)/2)*lh+cap/2;let x=w/2-width(ln,fs)/2;
-      if(neon){g.shadowColor=ink;g.shadowBlur=7*s}
-      const run=()=>{let xx=x;for(const ch of ln){g.fillText(ch,xx,y);xx+=g.measureText(ch).width+fs*sp}};run();if(neon){g.shadowBlur=0;run()}})};
+    const cap=g.measureText('H').actualBoundingBoxAscent||fs*.72,tw=Math.max(...lines.map(t=>width(t,fs))),x0=w/2-(tw+gap+aw)/2;
+    const tx=go?x0:x0+aw+gap,ax=go?x0+tw+gap+aw/2:x0+aw/2;
+    const ar=()=>{g.save();g.translate(ax,h/2);g.scale(A,A);if(!go)g.rotate(Math.PI);g.translate(-2,0);g.strokeStyle=ink;g.lineWidth=28;g.lineCap='round';g.lineJoin='round';arrowGlyph(g,false,0);g.restore()};
+    lines.forEach((ln,i)=>{const y=h/2+(i-(lines.length-1)/2)*lh+cap/2;let x=tx+(tw-width(ln,fs))/2;
+      if(neon){g.shadowColor=glowC;g.shadowBlur=7*s}
+      const run=()=>{let xx=x;for(const ch of ln){g.fillText(ch,xx,y);xx+=g.measureText(ch).width+fs*sp}};run();if(neon){g.shadowBlur=0;run()}});
+    if(neon){g.shadowColor=glowC;g.shadowBlur=7*s;ar();g.shadowBlur=0}ar()};
   const outline=(g,w,h,s)=>{const m=Math.min(w,h),p=Math.max(1.2,m*.05),rr=m*.14;g.fillStyle='#000';g.fillRect(0,0,w,h);
-    g.lineWidth=1.6;g.strokeStyle=ink;g.shadowColor=ink;g.shadowBlur=8*s;
+    g.lineWidth=1.6;g.strokeStyle=lineC;g.shadowColor=glowC;g.shadowBlur=(go?8:5)*s;
     const path=()=>{g.beginPath();g.moveTo(p+rr,p);g.arcTo(w-p,p,w-p,h-p,rr);g.arcTo(w-p,h-p,p,h-p,rr);g.arcTo(p,h-p,p,p,rr);g.arcTo(p,p,w-p,p,rr);g.closePath()};
     path();g.stroke();g.shadowBlur=0;path();g.stroke()};
   const solid=(g,w,h)=>{g.fillStyle=fill;g.fillRect(0,0,w,h)};
@@ -4099,36 +4126,59 @@ function cbPaint(){ // colors and label come from the HTML button, so every mode
     if(i===4){mats.push(mk(front));return}
     if(!neon){if(!flatM)flatM=mk(cbTex(8,8,solid,true));mats.push(flatM);return}
     mats.push(mk(cbTex(f[0],f[1],outline)))});
-  c.mats.forEach(m=>{if(m.map)m.map.dispose();m.dispose()});
-  c.mats=[...new Set(mats)];c.mesh.material=mats;c.lastO=-1;
+  it.mats.forEach(m=>{if(m.map)m.map.dispose();m.dispose()});
+  it.mats=[...new Set(mats)];it.mesh.material=mats;it.lastO=-1;
 }
 function cbShow(){
-  cbSetup();cb.t=0;cb.back=null;cb.dragging=false;cb.blk.quaternion.copy(cb.restQ);cb.key='';cb.on=true;cbLayout();
-  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(cb.on)cbPaint()});
+  cbSetup();const c=cb;c.t=0;c.back=null;c.dragging=false;c.leave=null;c.dq.identity();
+  for(const it of c.items){it.key='';it.lastO=-1;it.grp.visible=false;it.blk.quaternion.copy(c.restQ);if(it.sh){it.sh.style.animation='';it.sh.style.transform='';it.sh.style.opacity=''}}
+  c.on=true;cbLayout();document.getElementById('cbfx').classList.add('on');
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(cb.on)cb.items.forEach(cbPaint)});
 }
-function cbHide(){cb.on=false;cb.back=null;cb.dragging=false}
-const cbQ1=new THREE.Quaternion(),cbAxY=new THREE.Vector3(0,1,0),cbAxX=new THREE.Vector3(1,0,0);
-function cbRender(dt){ // once per frame while Continue is up: animate, then draw the block over the puzzle
-  const c=cb;c.t+=dt;let sIn=1,oIn=1,roll=0,wS=1;
-  if(!c.still&&c.t<.6){const k=c.t/.6;oIn=k<.3?cbPull(k/.3):1;const z=k<.78?330+(-12-330)*cbPull(k/.78):-12+12*cbPull((k-.78)/.22);sIn=500/(500-z)} // lands like the old button: from close up, a tiny overshoot
-  if(!c.still&&!c.dragging&&!c.back&&c.t>=2.4){const p=((c.t-2.4)%4.2)/4.2;
-    for(let i=0;i<CB_NUDGE.length-1;i++){const A=CB_NUDGE[i],B=CB_NUDGE[i+1];if(p>=A[0]&&p<B[0]){const u=cbIO((p-A[0])/(B[0]-A[0]));roll=-(A[1]+(B[1]-A[1])*u)*Math.PI/180;wS=A[2]+(B[2]-A[2])*u;break}}}
-  if(c.back){c.back.t+=dt;const k=Math.min(1,Math.max(0,(c.back.t-.35)/.8)); // a short pause so you can see the side you turned to, then it eases back to face you
-    cb.blk.quaternion.copy(c.back.q0).slerp(c.restQ,cbIO(k));if(k>=1)c.back=null}
-  c.grp.scale.setScalar(c.base*sIn*wS);c.grp.rotation.z=roll;
-  if(oIn!==c.lastO){c.lastO=oIn;for(const m of c.mats){m.opacity=oIn;m.transparent=oIn<1}}
+function cbHide(){
+  const c=cb;c.on=false;c.back=null;c.dragging=false;c.leave=null;
+  const fx=document.getElementById('cbfx');if(fx){fx.classList.remove('on');for(const s of fx.children){s.style.animation='';s.style.transform='';s.style.opacity=''}}
+}
+// tapping a block: it slides off the screen the way a pulled cube does (the same push, the same time, the same shrinking
+// at the end, the same pull sound), Continue to the right and Replay to the left; the other block fades; then done() runs
+function cbLeave(id,done){
+  const c=cb,it=c.on&&c.items&&c.items.find(i=>i.id===id);
+  if(!it||!it.mesh||c.still){done();return}
+  woosh(0);document.getElementById('done').classList.add('leaving'); // (the words fade out with it)
+  c.leave={id,t:0,dur:.75,done,dist:(it.dir>0?c.halfW-it.px:it.px+c.halfW)+it.Wf/c.ppu}; // far enough to be fully off the screen, even shrunk
+}
+function cbRender(dt){ // once per frame while the blocks are up: animate them, then draw them over the puzzle
+  const c=cb;c.t+=dt;
+  if(c.back){c.back.t+=dt;const k=Math.min(1,c.back.t/.6);c.dq.copy(c.back.q0).slerp(cbQI,1-Math.pow(1-k,3));if(k>=1)c.back=null} // snaps straight back: fastest at first, no pause
+  const L=c.leave;let lk=0;if(L){L.t+=dt;lk=Math.min(1,L.t/L.dur)}
+  for(const it of c.items){
+    const lt=c.t-it.delay;let sIn=1,oIn=1;
+    if(lt<=0&&!c.still){it.grp.visible=false;continue}
+    it.grp.visible=true;
+    if(!c.still&&lt<.6){const k=lt/.6;oIn=k<.3?cbPull(k/.3):1;const z=k<.78?330+(-12-330)*cbPull(k/.78):-12+12*cbPull((k-.78)/.22);sIn=500/(500-z)} // lands like the old button: from close up, a tiny overshoot
+    // the swivel (a slight figure 8) begins once it has landed, easing in so there is no jolt; reduced motion keeps it still
+    let th=c.th0;if(!c.still){const s=lt-.6;if(s>0){const T=1.4;th+=(2*Math.PI/CB_PERIOD)*(s<T?s*s/(2*T):s-T/2)}}
+    cbPose(th,cbQ3);it.blk.quaternion.copy(c.dq).multiply(cbQ3);
+    let sOut=1,oOut=1,off=0;
+    if(L){if(L.id===it.id){off=it.dir*L.dist*lk*lk;sOut=1-.6*Math.max(0,lk-.5)*2}else{const u=Math.min(1,lk/.5);oOut=1-u*u*(3-2*u)}} // the pulled one slides (like a cube); the other fades
+    it.grp.position.set(it.px+off,it.py,0);it.grp.scale.setScalar(it.base*sIn*sOut);
+    const o=oIn*oOut;if(o!==it.lastO){it.lastO=o;for(const m of it.mats){m.opacity=o;m.transparent=o<1}}
+    if(L&&it.sh){if(L.id===it.id){it.sh.style.animation='none';it.sh.style.opacity='1';it.sh.style.transform=`translateX(${(off*c.ppu).toFixed(1)}px) scale(${sOut.toFixed(3)})`}else{it.sh.style.animation='none';it.sh.style.opacity=String(oOut)}}
+  }
   renderer.autoClear=false;renderer.clearDepth();renderer.render(c.scene,c.cam);renderer.autoClear=true;
+  if(L&&L.t>=L.dur&&c.leave===L){c.leave=null;L.done()}
 }
-// turning the block with a finger, just like the puzzle (same feel); a drag never counts as a tap, and a plain tap still continues
+// turning the blocks with a finger, just like the puzzle (same feel); a drag never counts as a tap, and a plain tap still works
 (function(){const dn=document.getElementById('done');let st=null;dn.style.touchAction='none';
-  dn.addEventListener('pointerdown',e=>{if(!cb.on||!e.isPrimary||e.target.closest('button'))return;
-    st={id:e.pointerId,x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,drag:false};try{dn.setPointerCapture(e.pointerId)}catch(_){}});
+  dn.addEventListener('pointerdown',e=>{cb.suppress=false;if(!cb.on||cb.leave||!e.isPrimary)return;
+    st={id:e.pointerId,x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,drag:false,cap:false};
+    if(!e.target.closest('button')){try{dn.setPointerCapture(e.pointerId);st.cap=true}catch(_){}}}); // (a press that starts on Replay is only captured once it becomes a drag, so a plain tap still reaches the button)
   dn.addEventListener('pointermove',e=>{if(!st||e.pointerId!==st.id)return;
-    if(!st.drag&&Math.hypot(e.clientX-st.x,e.clientY-st.y)>6){st.drag=true;cb.dragging=true;cb.back=null}
-    if(st.drag){cb.blk.quaternion.premultiply(cbQ1.setFromAxisAngle(cbAxY,(e.clientX-st.lx)*.009)).premultiply(cbQ1.setFromAxisAngle(cbAxX,(e.clientY-st.ly)*.009))}
+    if(!st.drag&&Math.hypot(e.clientX-st.x,e.clientY-st.y)>6){st.drag=true;cb.dragging=true;cb.back=null;if(!st.cap){try{dn.setPointerCapture(e.pointerId);st.cap=true}catch(_){}}}
+    if(st.drag){cb.dq.premultiply(cbQ1.setFromAxisAngle(cbAxY,(e.clientX-st.lx)*.009)).premultiply(cbQ1.setFromAxisAngle(cbAxX,(e.clientY-st.ly)*.009))}
     st.lx=e.clientX;st.ly=e.clientY});
   const end=e=>{if(!st||e.pointerId!==st.id)return;const was=st.drag;st=null;cb.dragging=false;
-    if(was){e.stopPropagation();if(cb.on)cb.back={t:0,q0:cb.blk.quaternion.clone()}}};
+    if(was){e.stopPropagation();cb.suppress=true;if(cb.on)cb.back={t:0,q0:cb.dq.clone()}}}; // let go: it snaps back right away, and the click that follows a drag is ignored
   dn.addEventListener('pointerup',end);dn.addEventListener('pointercancel',end)})();
 
 // next arrow: on to an unlocked level, or, at the end of the free or $0.99 levels, the upgrade screen
