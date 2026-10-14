@@ -1846,7 +1846,7 @@ function neonTex(kind,color,halo,deco,fill,edgeC){
   // cube outlines only show with Blacklight on; with it off the cubes vanish into the dark and only the symbols glow
   if(fill||!halo||(deco&&deco.includes('outline|'))){}
   else if(edgeC){g.lineWidth=4.4;g.strokeStyle=edgeC;g.shadowColor=edgeC;g.shadowBlur=14;edge();g.shadowBlur=0;edge()}
-  else{g.lineWidth=3.75;g.strokeStyle='rgba(255,255,255,.85)';g.shadowColor='rgba(255,255,255,.9)';g.shadowBlur=16;edge();g.shadowBlur=5;edge();g.shadowBlur=0}
+  else{g.lineWidth=3.75;g.strokeStyle='rgba(255,255,255,1)';g.shadowColor='rgba(255,255,255,.9)';g.shadowBlur=16;edge();g.shadowBlur=5;edge();g.shadowBlur=0}
   drawDeco(g,s,deco,'#000000',halo);
   if(kind==='blank')return new THREE.CanvasTexture(cv);
   g.translate(s/2,s/2);
@@ -1858,7 +1858,9 @@ function neonTex(kind,color,halo,deco,fill,edgeC){
     arrowGlyph(g,glideK,ordN);g.restore();
   };
   // with Blacklight on: a soft neon halo first, then the crisp glyph on top. Off: just the flat color.
-  if(halo&&!fill){g.shadowColor=color;g.shadowBlur=26;draw();g.shadowBlur=12;draw();g.shadowBlur=0} // (fused pieces: crisp, no halo)
+  // (the pivot gear's color string holds two colors, "gear,dot": an invalid single color, so its halo used to fall back to the white outline glow; now it glows in the gear's own neon, or the dot's neon when the gear itself is white)
+  const hc=kind==='pivot'?(()=>{const [gc,mc]=String(color).split(',');return /^#f{3}(f{3})?$/i.test(gc)&&mc?mc:gc})():color;
+  if(halo&&!fill){g.shadowColor=hc;g.shadowBlur=26;draw();g.shadowBlur=12;draw();g.shadowBlur=0} // (fused pieces: crisp, no halo)
   draw();
   const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
 }
@@ -2140,8 +2142,15 @@ function buildFloor(){
     side=L('#E9E9E6');top=new THREE.MeshLambertMaterial({color:'#FFFFFF'});
   }else if(st==='B'){
     // black slab with a white outline around the top
-    side=new THREE.MeshBasicMaterial({color:'#0B0B0B'});
-    top=new THREE.MeshBasicMaterial({map:floorTex(w,dz,(g,W,H,px)=>{g.fillStyle='#0B0B0B';g.fillRect(0,0,W,H);rim(g,W,H,'#FFFFFF',px*.07,px*.07)})});
+    // (Samuel, Oct 14) the white outline wraps around the edges: every face carries it along its border, so it runs over the rounded edges
+    // from the top onto the sides; and the underneath glows white
+    const edge=(W0,H0,glow)=>new THREE.MeshBasicMaterial({map:floorTex(W0,H0,(g,W,H,px)=>{
+      g.fillStyle='#FFFFFF';g.fillRect(0,0,W,H); // all white first, so the corners and edges are solid white with no dark spots
+      if(glow)return; // the underside: pure white
+      // then the black face, inset by a border wide enough to cover the whole rounded edge
+      const lw=Math.max(FLOOR_R*px*1.7,px*.12);g.fillStyle='#0B0B0B';g.fillRect(lw,lw,W-2*lw,H-2*lw)})});
+    top=edge(w,dz,true);const bottom=edge(w,dz,true),sx=edge(dz,h,true),sz=edge(w,h,true); // (Samuel, Oct 14) Neon only: the whole board is pure white, top, sides and underneath; // the sides and underneath are solid white, so the outline wraps right around the edge
+    faces=[sx,sx,top,bottom,sz,sz];side=sx;
   }else if(theme==='plain'){
     // Classic: always a plain gray slab, no outline
     const c='#ABABA8';top=side=new THREE.MeshPhongMaterial({color:c,specular:0x000000,shininess:1}); // one material all over, so no edge shows
@@ -2165,7 +2174,7 @@ function buildFloor(){
   }
   // box faces in order: right, left, top, bottom, front, back
   floorMesh=new THREE.Mesh(roundedSlab(w,h,dz,Math.min(FLOOR_R,h*.48)),faces||[side,side,top,side,side,side]);
-  if(faces&&theme==='neon')floorGlowMats=[...new Set(faces)];
+  if(faces&&theme==='neon'&&st!=='B')floorGlowMats=[...new Set(faces)]; // (the black-and-white floor stays pure white, never dimmed)
   floorMesh.position.set(x,y-(h-.12)/2,z);body.add(floorMesh);
 }
 let blocks=[],occ=new Map(),span=40,tweens=[],levelIdx=0,best=0,camDist=10,clearing=false;
@@ -4124,7 +4133,25 @@ function spin(b){
   unit.forEach(u=>{u.busy=true;const q0=u.mesh.quaternion.clone(),q1=qa.clone().multiply(q0);u.d=turn(u.d,ax);
     tweens.push({t:0,dur:.28,step:k=>THREE.Quaternion.slerp(q0,q1,u.mesh.quaternion,ease(k)),end:()=>{u.mesh.quaternion.copy(q1);u.busy=false}})});
 }
-const CHEERS={"tiny": ["One pull. Huge talent.", "Warm-up complete. Stretch those thumbs.", "Arrows: understood.", "Easy start. Don't get cocky.", "Baby steps, big brain.", "The cubes went quietly.", "Tutorial? You ate it.", "Off to a flying start."], "twist": ["You turned that around nicely.", "Twist and shout.", "Dot. Turn. Pull. Done.", "Spin doctor.", "A quarter turn of genius.", "That dot never stood a chance.", "Round and round, then gone.", "Turning heads. And cubes.", "Plot twist: you won.", "You saw that turn coming.", "Dizzy? The cubes are.", "Rotation station."], "big": ["That was a lot of cubes. Was.", "Big pile, bigger brain.", "Demolition crew of one.", "Order matters. You knew that.", "So many cubes. Now none.", "You untangled a whole block party.", "Layer by layer. Chef's kiss.", "Who ordered the big one? You did.", "Peeled like an onion.", "Heavy lifting, light touch.", "The cube count blinked first.", "Bigger shape, same result."], "link": ["Partners in crime, pulled apart.", "Two cubes, one exit.", "Breaking up is easy for you.", "Buddy system: dismantled.", "Those pairs had nowhere to hide.", "Double trouble, handled.", "Linked up. Pulled out.", "Teamwork makes the cubes leave.", "Both paths clear. Both cubes gone.", "Couples therapy: complete.", "Joined at the hip. Gone at the hip.", "Two for one. Nice deal."], "drop": ["Gravity tried. You tried harder.", "What goes up, you pull out.", "Thud. Thud. Victory.", "Down they came. Out they went.", "Newton would be proud.", "You let gravity do the chores.", "Falling for you, those cubes.", "Floor's clear. Mic drop.", "Stacked, dropped, handled.", "Nothing left standing. Literally.", "Sir Isaac is taking notes.", "Even the floor is relieved.", "Tumbled and handled.", "Timber! And done.", "Landing: stuck.", "The tower fell. You won."], "lock": ["Keys first. Obviously.", "Unlocked like a locksmith.", "Who needs a key ring? You do.", "Padlocks: zero. You: all.", "Cracked it.", "The vault is empty.", "Click. Clink. Clear.", "You had the key all along.", "Security breach: successful.", "Locked out? Not you.", "Master of keys.", "Lock, stock, and pulled."], "mix": ["Juggling rules like a pro.", "All the rules. All the wins.", "Rule after rule. Easy.", "That was a whole rule salad.", "Multitasking legend.", "A few rules walk into a bar. You win.", "Combo breaker.", "Rules stacked. Brain unbothered.", "You read the fine print.", "Every rule, one result.", "Chaos, organized.", "The rulebook surrenders."], "fuse": ["Matchmaker, matchmaker.", "Same colors, same fate.", "You fused it and used it.", "Color theory: mastered.", "Stuck together. Pulled together.", "Orange met orange. You won.", "Fusion cuisine, served.", "Best friends forever. Then gone.", "You planned every pairing.", "Teal and teal? Big deal.", "Melted into victory.", "That fusion had a plan. Yours."], "hard": ["That one had teeth. You pulled them.", "Okay, that was legitimately tough.", "Professional cube wrangler.", "The hard ones bow to you.", "Brain fully warmed up now.", "You don't play. You dismantle.", "That level wanted a rematch. Denied.", "Expert mode: you."], "glide": ["Glide, stop, pull. Smooth.", "Chevron champion.", "You parked those perfectly.", "Slid in. Pulled out.", "Smooth operator.", "Glided right into victory.", "Parallel parking: nailed.", "Those cubes went skating.", "Sliding into first place.", "Every glide had a plan.", "Zamboni-level smooth.", "Bumper-to-bumper genius.", "Stopped right where you wanted.", "Glide game: strong."], "order": ["One, two, three, gone.", "Counted like a pro.", "Easy as one, two, three.", "Wait your turn, cubes.", "In order. Out of here.", "First come, first pulled.", "Pips, pips, hooray.", "Roll call: everyone's gone.", "Lined up and pulled out.", "The dice were in your favor.", "Countdown complete.", "Numbers don't lie. You won.", "Order up!", "You did the math."], "relay": ["Pass the baton. Pull the cube.", "Relay team of one.", "Glide, count, finish line.", "Smooth hand-offs all around.", "First leg to last. Clean.", "You ran the whole relay.", "Gold medal pulling.", "Slide in line, leave on time.", "The anchor leg was yours.", "Gliding by the numbers."], "meld": ["Glide, touch, meld. Done.", "Slid them together. Perfect.", "Matchmaking on ice.", "Colors met. Cubes left.", "Smooth merge.", "Glided into a perfect match.", "Orange found orange. Nice steering.", "Slow dance, then fuse.", "Melded like you meant it.", "Every meld right on target."]};
+const CHEERS={
+ tiny:["One pull. Huge talent.", "Warm-up complete. Stretch those thumbs.", "Arrows: understood.", "Easy start. Don't get too cocky.", "Baby steps, big brain.", "The cubes went quietly.", "Who needs a tutorial, anyway?", "Off to a flying start.", "Two cubes. Zero problems.", "Gentle start. Gentle win.", "Cubes in, cubes out.", "Follow the arrow. You did.", "Not even a sweat.", "Practice round: aced.", "That was a freebie.", "Look at you, pulling.", "Arrow said go. Cube went.", "Small shape, small victory.", "A cube a day.", "Starter level, starter swagger."],
+ twist:["You turned that around nicely.", "Twist and shout.", "Dot. Turn. Pull. Done.", "Spin doctor.", "A quarter turn of genius.", "That dot never stood a chance.", "Round and round, then gone.", "Turning heads. And cubes.", "Plot twist: you won.", "You saw that turn coming.", "Dizzy? The cubes are.", "Rotation station.", "Tap, turn, pull. Easy.", "You pointed it right.", "Dots do what you say.", "Quarter turns, full marks.", "Pointed in the right direction.", "A little turn goes a long way.", "Turn it, then pull it.", "The dot was a decoy.", "Directions? You make them.", "Turned the cube, not the page.", "Spinning your way to success.", "That arrow follows orders now."],
+ big:["That was a lot of cubes. Was.", "Big pile, bigger brain.", "Demolition crew of one.", "Order matters. You knew that.", "So many cubes. Now none.", "You untangled a whole block party.", "Layer by layer. Chef's kiss.", "Who ordered the big one? You did.", "Peeled like an onion.", "Heavy lifting, light touch.", "The cube count blinked first.", "Bigger shape, same result.", "Big stack, small problem.", "Top to bottom. Nicely done.", "A mountain of cubes. A molehill of you.", "You found the loose thread.", "That pile never saw it coming.", "Dig in, dig out.", "Patience beats piles.", "Big shapes, bigger plans.", "Every layer got its turn.", "Tower of cubes, tower of you.", "The pile has left the building.", "Start anywhere? You started right."],
+ pivot:["Gears turned. Cubes gone.", "A quarter turn of genius, times nine.", "You put a spin on it.", "Round and round, then out.", "Cogs in the machine: dismissed.", "Every turn counted.", "Pivot, pull, perfect.", "Turned the tables. And the cubes.", "Hinge on, you did.", "One gear, nine turns.", "Pivotal performance.", "You oiled the right gear.", "Gear up. Gear down. Gone.", "The 3x3 spun for you.", "Spinning the whole neighborhood.", "Crank, clear, cheer.", "That gear earned its keep.", "Smooth rotation, smoother finish."],
+ link:["Partners in crime, pulled apart.", "Two cubes, one exit.", "Breaking up is easy for you.", "Buddy system: dismantled.", "Those pairs had nowhere to hide.", "Double trouble, handled.", "Linked up. Pulled out.", "Teamwork makes the cubes leave.", "Both paths clear. Both cubes gone.", "Couples therapy: complete.", "Joined at the hip. Gone at the hip.", "Two for one. Nice deal.", "Held hands, then let go.", "Matching frames, matching exits.", "Two cubes walk into an exit.", "Tied up neatly.", "Inseparable until you said so.", "Paired up, pulled out.", "Frame by frame, they left.", "Twice the cubes, one decision.", "Two-step, one move.", "Cleared the path for two."],
+ echo:["Twins, gone together.", "They left as a pair. Lovely.", "Echo... echo... done.", "Double exit, single tap.", "Same ripple, same goodbye.", "You heard them both.", "Two paths, both clear.", "Twice as nice.", "Echo of a win.", "Pull one, lose two.", "Ripples gone quiet.", "Seen one twin, seen them both.", "Mirror, mirror, gone.", "Say it once. Heard twice.", "The ripple effect works.", "Same wave, same exit.", "Twin cubes, twin cheers.", "Doubles match: won."],
+ glide:["Glide, stop, pull. Smooth.", "Chevron champion.", "You parked those perfectly.", "Slid in. Pulled out.", "Smooth operator.", "Glided right into victory.", "Parallel parking: nailed.", "Those cubes went skating.", "Sliding into first place.", "Every glide had a plan.", "Zamboni-level smooth.", "Bumper-to-bumper genius.", "Stopped right where you wanted.", "Glide game: strong.", "Chevrons obeyed.", "Rolled right up to the wall.", "Coasted. Parked. Pulled.", "Smooth sailing, firm stop.", "Cubes love a good brake.", "Stopped on a dime.", "You know when to hit the brakes.", "Ice-skating cubes, you were the coach.", "Glide path: cleared.", "Rolling stops, rolling credits.", "Everyone stopped where you asked."],
+ drop:["Gravity tried. You tried harder.", "What goes up, you pull out.", "Thud. Thud. Victory.", "Down they came. Out they went.", "Newton would be proud.", "You let gravity do the chores.", "Falling for you, those cubes.", "Floor's clear. Mic drop.", "Stacked, dropped, handled.", "Nothing left standing. Literally.", "Sir Isaac is taking notes.", "Even the floor is relieved.", "Tumbled and handled.", "Timber! And done.", "Landing: stuck.", "The tower fell. You won.", "Down goes the stack.", "Things fell into place. Literally.", "Gravity: assisted.", "Drop and done.", "Cubes took the express elevator.", "Upper floors, evacuated.", "Clean fall, clean finish.", "Gravity is on your team.", "Pull one, the rest come down.", "Plummeting success.", "Everything came down to you.", "Dominoes would be jealous."],
+ lock:["Keys first. Obviously.", "Unlocked like a locksmith.", "Who needs a key ring? You do.", "Padlocks: zero. You: all.", "Cracked it.", "The vault is empty.", "Click. Clink. Clear.", "You had the key all along.", "Security breach: successful.", "Locked out? Not you.", "Master of keys.", "Lock, stock, and pulled.", "Key found. Door opened.", "Padlock picked, politely.", "Click. Gone.", "You held every key.", "Open sesame, in order.", "Unlocked the good stuff.", "Keys first. Locks next.", "The padlocks lost their grip.", "Sorted the key ring.", "Locksmith of the year."],
+ glass:["Cracked under pressure. Not you, the glass.", "Glass half full. Of shards.", "Nothing like a clean break.", "Shattering performance.", "You broke it. On purpose. Beautifully.", "That was a see-through plan.", "Crystal clear strategy.", "Handle with care. You did not.", "Sharp thinking. Sharper shards.", "Bump once to crack, twice to win.", "A real window of opportunity.", "Smashing work. Literally.", "Clink! Clear.", "Delicate touch, dramatic finish.", "Cracks showed. You didn't.", "Shards of evidence.", "Pane-less victory.", "Gentle nudge, grand finale.", "Clean as a whistle. Clear as glass.", "Fragile plans, solid result.", "Bumped it, cracked it, cleared it.", "No glass ceiling for you."],
+ order:["One, two, three, gone.", "Counted like a pro.", "Easy as one, two, three.", "Wait your turn, cubes.", "In order. Out of here.", "First come, first pulled.", "Pips, pips, hooray.", "Roll call: everyone's gone.", "Lined up and pulled out.", "The dice were in your favor.", "Countdown complete.", "Numbers don't lie. You won.", "Order up!", "You did the math.", "Pips in a row.", "Number one first. Always.", "Dent by dent, you did it.", "Sequence: solved.", "Counting sheep? Counting cubes.", "Right on the numbers.", "The pips fell in line.", "You waited your turn.", "Perfect attendance. In order.", "Next in line: nobody.", "Math class would be proud.", "No cutting in line."],
+ mix:["Juggling rules like a pro.", "All the rules. All the wins.", "Rule after rule. Easy.", "That was a whole rule salad.", "Multitasking legend.", "A few rules walk into a bar. You win.", "Combo breaker.", "Rules stacked. Brain unbothered.", "You read the fine print.", "Every rule, one result.", "Chaos, organized.", "The rulebook surrenders.", "Many rules, one grin.", "Everything at once. Handled.", "A bit of everything, all done.", "Rules piled up. You piled out.", "Mixed bag? Emptied.", "It don't matter what's thrown at you.", "Stirred, not shaken.", "And this just feels like...spinning plates.", "Layers of rules, peeled.", "Full house of rules."],
+ relay:["Pass the baton. Pull the cube.", "Relay team of one.", "Glide, count, finish line.", "Smooth hand-offs all around.", "First leg to last. Clean.", "You ran the whole relay.", "Gold medal pulling.", "Slide in line, leave on time.", "The anchor leg was yours.", "Gliding by the numbers.", "Glide, count, repeat.", "Passed in perfect order.", "Baton dropped? Never.", "Roll, number, go.", "One lane, in numeric order.", "Stopped, counted, left.", "Team of cubes, coach of one.", "Hand-offs by the numbers."],
+ meld:["Glide, touch, meld. Done.", "Slid them together. Perfect.", "Matchmaking on ice.", "Colors met. Cubes left.", "Smooth merge.", "Glided into a perfect match.", "Orange found orange. Nice steering.", "Slow dance, then fuse.", "Melded like you meant it.", "Every meld right on target.", "Coasted into a color match.", "Stop, match, merge.", "Colors collided kindly.", "Glide to the match.", "Two shades, one cube.", "Rolled together, left together.", "A merge made in heaven.", "Perfect color pileup."],
+ fuse:["Matchmaker, matchmaker.", "Same colors, same fate.", "You fused it and used it.", "Color theory: mastered.", "Stuck together. Pulled together.", "Orange met orange. You won.", "Fusion cuisine, served.", "Best friends forever. Then gone.", "You planned every pairing.", "Teal and teal? Big deal.", "Melted into victory.", "That fusion had a plan. Yours.", "Dropped in, fused up.", "Same color, one piece.", "Gravity played matchmaker.", "Merged on the way down.", "Landed as one.", "Two became one.", "Fell together, stayed together.", "Colors collide, you decide.", "Welded by gravity.", "Fuse lit. Fuse done."],
+ hard:["That one had teeth. You pulled them.", "Okay, that was legitimately tough.", "Professional cube wrangler.", "The hard ones bow to you.", "Brain fully warmed up now.", "You don't play. You dismantle.", "That level wanted a rematch. Denied.", "Expert mode: you.", "Genuinely impressive.", "A real brain-bender, bent back.", "Few get that far. You did.", "Take a moment. You earned it.", "That was no small feat.", "Master level unlocked, apparently.", "Hats off.", "Hard? Not for you.", "Remarkable. Truly.", "You outsmarted a monster.", "Textbook pulls.", "Respect."],
+ tease:["Nice work, you dirty dog.", "Look who figured it out.", "Okay, show-off.", "Easy there, champ.", "Somebody's been practicing.", "Don't let it go to your head.", "Fine. You're good.", "Smug looks good on you. Briefly.", "You sneaky thing. Nicely done.", "Who let you be this good?", "Alright, alright, we saw.", "Nice. Now do it again.", "Pretty pleased with yourself, huh?", "Careful, your halo is showing.", "That wasn't luck. Probably.", "Cute. Now the next one.", "You're a beast.", "Proud of you. Mostly.", "Okay, that was smooth.", "Someone's feeling clever.", "Take a bow. A small one.", "Nobody likes a gloater. Great job though.", "You little overachiever.", "Hold your applause. Okay, a little.", "Not bad.", "Almost like you planned it.", "Cool story, hero. Nice.", "Your thumbs deserve a snack.", "Fancy pulling, fancy pants.", "Sure, make it look easy.", "Rascal. That was lovely.", "Don't look now, you're good.", "You cheeky genius. Carry on.", "Gold star. Do not frame it.", "Take the win. Skip the victory lap.", "Mmhm. Nicely played, trouble."],
+ any:["Nicely done.", "Cleared!", "Pulled it off.", "Cubes: defeated gently.", "Another one, gone.", "Zen achieved.", "That felt good.", "Exhale. You did it.", "Clean pull.", "All clear.", "Smooth as butter.", "Nothing left but calm.", "Mind unpuzzled.", "Satisfying, isn't it?", "Tidy work.", "Cube-free and carefree.", "Well pulled.", "Peace restored.", "On to the next.", "Spotless."]};
 // which kind of level this was: its rules, its size and how late it sits, so the line fits what you just did
 function cheerPool(){
   const has=f=>blocks.some(f),gl=has(b=>b.glide),od=has(b=>b.num),fc=has(b=>b.fuseColor),
@@ -4145,23 +4172,27 @@ function cheerPool(){
   if(startBlocks>=24||levelIdx>=79)p.push('hard');
   return p.flatMap(k=>CHEERS[k]);
 }
-// Pivot, Echo and Glass levels have their own lines
-CHEERS.pivot=["Gears turned. Cubes gone.","A quarter turn of genius, times nine.","You put a spin on it.","Round and round, then out.","Cogs in the machine: dismissed.","Every turn counted.","Pivot, pull, perfect.","Turned the tables. And the cubes."];
-CHEERS.echo=["Twins, gone together.","They left as a pair. Lovely.","Echo... echo... done.","Double exit, single tap.","Same ripple, same goodbye.","You heard them both.","Two paths, both clear.","Twice as nice."];
-CHEERS.glass=["Cracked under pressure. Not you, the glass.", "Glass half full. Of shards.", "Nothing like a clean break.", "Shattering performance.", "You broke it. On purpose. Beautifully.", "That was a see-through plan.", "Crystal clear strategy.", "Handle with care. You did not.", "Sharp thinking. Sharper shards.", "Bump once to crack, twice to win.", "A real window of opportunity.", "Smashing work. Literally."];
-// a random line from that pool, skipping the last 20 shown so repeats are rare
+// Samuel's review (the Tagline Review page) lives in these two lists:
+//  CHEER_OFF = lines he turned off, never shown;  CHEER_PIN = level number -> line (or list of lines) that level always shows
+const CHEER_OFF=["Start anywhere? You started right.", "Messy? Yes. Beaten? No.", "Fine. You're good.", "Smug looks good on you. Briefly.", "You sneaky thing. Nicely done.", "Careful, your halo is showing.", "Nobody likes a gloater. Great job though.", "You little overachiever.", "Hold your applause. Okay, a little.", "Cool story, hero. Nice.", "Gold star. Do not frame it.", "Mmhm. Nicely played, trouble.", "You outsmarted a monster."];
+const CHEER_PIN={};
+// a random line: about 60% from the pools that fit this level, about 40% from the teasing and general pools,
+// skipping the last 30 shown so repeats are rare. Turned-off lines are never picked.
 let cheerRecent=[];try{cheerRecent=JSON.parse(localStorage.getItem('pa3_cheers')||'[]')}catch(e){}
-function pickLine(pool){
-  let fresh=pool.filter(x=>!cheerRecent.includes(x));if(!fresh.length)fresh=pool;
+const cheerOn=a=>{const f=a.filter(x=>!CHEER_OFF.includes(x));return f.length?f:a};
+function pickLine(pool,extras){
+  const mine=cheerOn(pool),ex=extras?cheerOn(extras):[];
+  const src=ex.length&&Math.random()<.4?ex:mine;
+  let fresh=src.filter(x=>!cheerRecent.includes(x));if(!fresh.length)fresh=src;
   const t=fresh[Math.floor(Math.random()*fresh.length)];
-  cheerRecent=[t,...cheerRecent.filter(x=>x!==t)].slice(0,20);try{localStorage.setItem('pa3_cheers',JSON.stringify(cheerRecent))}catch(e){}
+  cheerRecent=[t,...cheerRecent.filter(x=>x!==t)].slice(0,30);try{localStorage.setItem('pa3_cheers',JSON.stringify(cheerRecent))}catch(e){}
   return t;
 }
+const cheerExtras=()=>[...CHEERS.tease,...CHEERS.any];
+function pinnedLine(n){const p=CHEER_PIN[n];return p?(Array.isArray(p)?p[Math.floor(Math.random()*p.length)]:p):null}
 let lastCheer=-1,bumps=0,startBlocks=1;
 // shown instead when a level took a lot of bumps: teasing, never mean
-const SASS=['Took the scenic route, huh?','Bump. Bump. Bump. Done!','Those cubes will need a nap.','Subtle. Very subtle.',
-  'Bonk count: impressive.','Who needs a plan anyway?','Brute force is still a strategy.','The cubes felt every one of those.',
-  'You won! The cubes are a little bruised.','Efficiency was optional, apparently.','Bumper cars champion.','Well, that’s one way to do it.'];
+const SASS=["Took the scenic route, huh?","Bump. Bump. Bump. Done!","Blocking some recovery time for those blocks? How thoughtful.","Subtle. Very subtle.","Impressive. Bonk count, that is.","Who needs a plan anyway?","Brute force is still a strategy.","The cubes felt every one of those.","You won! The cubes are a little bruised.","Efficiency was optional, apparently.","Bumper cars champion.","Well, that’s one way to do it.","Rough road, but you arrived.","Bonks happen. You still won.","Messy? Yes. Beaten? No.","Ugly win. Still a win, though.","Every bump was research.","You did it. Eventually.","The blocks forgive you. Mostly.","Plan B worked. And C. And D."];
 /* switching modes (or light/dark) while the win screen is up recolors it, so it never keeps the old mode's colors */
 function recolorWin(){const box=document.getElementById('done');if(!box||!box.classList.contains('show'))return; // only while the win screen is up (setTheme also runs at startup)
   if(cb.on)cb.items.forEach(cbPaint); // the blocks take the new mode's colors too
@@ -4220,7 +4251,7 @@ function win(){
   // 3 bumps earns a sarcastic line on smaller levels; bigger levels allow about 1 bump per 8 cubes
   const bumpy=bumps>=Math.max(3,Math.ceil(startBlocks/8));
   // level 1 always gets the same friendly line; every other level gets a random line that fits its rules and size
-  document.querySelector('#done b').textContent=levelIdx===0?'Ooo, nice one.':pickLine(bumpy?SASS:cheerPool());
+  document.querySelector('#done b').textContent=levelIdx===0?'Ooo, nice one.':pinnedLine(levelIdx+1)||(bumpy?pickLine(SASS):pickLine(cheerPool(),cheerExtras()));
   // the cheer takes a different color each time, from the current theme's palette (never the same twice in a row)
   document.querySelector('#done b').style.color=''; // the line is always the plain text color now (it used to rotate through the palette)
   // tap count for this clear, compared with the best so far on this level
@@ -4653,7 +4684,9 @@ try{document.fonts.ready.then(fitCredit);document.fonts.addEventListener('loadin
 /* ---------- scorecard ---------- */
 const SC_VERSIONS=[['free','Free','Levels 1–10',0,10],['plus','SmartPull Pack · $0.99','Levels 11–25',10,25],['full','Complete · $2.99','Levels 26–100',25,100]];
 function openScorecard(){
-  [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
+  [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});
+  if(stageEl)stageEl.classList.remove('dim'); // the menus it closes had dimmed the puzzle (and hidden the win screen); lift that, or closing this sheet leaves a blank screen (Oct 14)
+  ['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   bankPlay(elapsed());if(timeStart!==null)timeStart=performance.now();timeMs=0; // count the time on the current level so far
   const sc=statColors();let pal={plain:['#007C92','#E45900','#82881A'],brand:['#FF6C10','#007C92','#B2BB1E'],neon:['#39FF14','#1FB8FF','#FF2E97']}[theme]||['#007C92','#E45900','#82881A'];
   if(theme!=='neon')pal=pal.map(uiCol);
@@ -4954,6 +4987,7 @@ document.addEventListener('pointerdown',e=>{if(scrubAt!=null&&!drag&&!e.target.c
 const upPanel=document.getElementById('upgrade');
 function openUpgrade(){
   [panel,themesPanel,lvPanel,document.getElementById('soundp')].forEach(p=>{if(p)p.hidden=true});
+  if(stageEl)stageEl.classList.remove('dim'); // the menus it closes had dimmed the puzzle (and hidden the win screen); lift that, or closing this sheet leaves a blank screen (Oct 14)
   ['tune','paint','lvl','sound'].forEach(id=>document.getElementById(id).setAttribute('aria-expanded','false'));
   document.getElementById('up-plus').hidden=tier!=='free';
   document.getElementById('up-full-note').hidden=tier!=='plus';
@@ -5104,7 +5138,7 @@ function frame(now){
   {const cur=tweens;tweens=[];const keep=cur.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});tweens=keep.concat(tweens)}
   coastStep(dt);renderer.render(scene,camera);if(cb.on)cbRender(dt);requestAnimationFrame(frame);
 }
-window.__test={TV,tvNode,pivot:()=>pivot,COAST:()=>COAST,cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
+window.__test={cheerExtras,pinnedLine,CHEERS,SASS,TV,tvNode,pivot:()=>pivot,COAST:()=>COAST,cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
   blocks:()=>blocks,slide,spin,pivotTurn,glassTap,prepShatter,shards:()=>shardsLive,S4,solveTest,liveSpec,solverFor,settle,rayBlocked,levelSig,pullsLeft,par:()=>curPar,grav:()=>gravity,counts:()=>({pulls,taps,bumps}),src:()=>curLv&&curLv.src,state:()=>({levelIdx,clearing,best,busy:blocks.some(b=>b.busy)})};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
