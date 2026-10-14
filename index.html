@@ -2491,12 +2491,13 @@ let actx=null,noiseBuf=null,softBuf=null,soundOn=true,mus=null,musicOn=false,sfx
 try{musicOn=localStorage.getItem('pa2_music')==='1'}catch(e){}
 // volume sliders run 0–100; 70 is the original loudness, so there's room to go up as well as down
 let sfxVol=70,musicVol=70;
-try{const s=localStorage.getItem('pa2_sfxvol'),m=localStorage.getItem('pa2_musvol');if(s!==null)sfxVol=+s;if(m!==null)musicVol=+m}catch(e){}
+// saved under new names since Oct 14 (Samuel): an older saved 100% is left behind, so every copy starts once more at the normal 70%
+try{const s=localStorage.getItem('pa5_sfxvol'),m=localStorage.getItem('pa5_musvol');if(s!==null)sfxVol=+s;if(m!==null)musicVol=+m;localStorage.removeItem('pa2_sfxvol');localStorage.removeItem('pa2_musvol')}catch(e){}
 const volGain=v=>Math.pow(v/70,2); // squared so the slider feels even to the ear
 function setVol(which,v){
   if(which==='sfx'){sfxVol=v;if(sfxBus&&actx)sfxBus.gain.setTargetAtTime(volGain(v),actx.currentTime,.05)}
   else{musicVol=v;if(musicBus&&actx)musicBus.gain.setTargetAtTime(volGain(v),actx.currentTime,.05);if(TV.on)TV.musicVol()}
-  try{localStorage.setItem(which==='sfx'?'pa2_sfxvol':'pa2_musvol',v)}catch(e){}
+  try{localStorage.setItem(which==='sfx'?'pa5_sfxvol':'pa5_musvol',v)}catch(e){}
 }
 try{soundOn=localStorage.getItem('pa2_sound')!=='0'}catch(e){}
 const soundBtn=document.getElementById('sound');
