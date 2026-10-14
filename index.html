@@ -2448,11 +2448,11 @@ function audio(){
     softBuf=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate);{const sd=softBuf.getChannelData(0);let last=0;for(let i=0;i<sd.length;i++){const w=Math.random()*2-1;last=(last+.04*w)/1.04;sd[i]=w*.45+last*5}} // a rounder, lower noise for the soft sounds
     sfxBus=actx.createGain();sfxBus.gain.value=volGain(sfxVol);
     musicBus=actx.createGain();musicBus.gain.value=volGain(musicVol);
-    // the overall level, underneath the sliders (Oct 13): sound effects 40% louder, music 35% louder than before.
+    // the overall level, underneath the sliders (Oct 13): sound effects 20% louder, music 35% louder than before.
     // Both then pass through a gentle limiter, so when many sounds stack up the peaks are smoothed instead of crackling.
-    const sfxLift=actx.createGain();sfxLift.gain.value=1.4;const musLift=actx.createGain();musLift.gain.value=1.35;
+    const sfxLift=actx.createGain();sfxLift.gain.value=1.2;const musLift=actx.createGain();musLift.gain.value=1.35;
     const lim=actx.createDynamicsCompressor();lim.threshold.value=-6;lim.knee.value=6;lim.ratio.value=8;lim.attack.value=.003;lim.release.value=.25;
-    // (the limiter adds about 2 dB of its own "makeup" volume; this takes it back out, so the lift is exactly 40% and 35%)
+    // (the limiter adds about 2 dB of its own "makeup" volume; this takes it back out, so the lift is exactly 20% and 35%)
     outBus=actx.createGain();outBus.gain.value=.8;lim.connect(outBus);
     sfxBus.connect(sfxLift).connect(lim);musicBus.connect(musLift).connect(lim);
     routeOut(); // sound goes out through a media element, which AirPlay and screen mirroring follow
