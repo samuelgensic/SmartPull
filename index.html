@@ -381,19 +381,19 @@ html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
 .done.ready .replay{opacity:0; pointer-events:auto} /* (invisible placeholder: the Replay block is drawn over it) */
 html.neon .done .replay{box-shadow:inset 0 0 0 1.5px rgba(244,236,255,.4)} /* with the logo up top, Undo sits on the bottom row */
 
-/* Perfect Pull sticker: a round badge tilted over the upper right of the win line (the Glide in landing; no bounce, and the last
+/* Perfect Pull badge: a round badge tilted a little, centered above the win line (the Glide in landing; no bounce, and the last
    frame matches the resting transform so the words don't shimmer when it stops) */
 .done b{position:relative}
-.pstick{--pc:var(--ink); position:absolute; top:-30px; right:-38px; width:66px; height:66px; display:grid; place-content:center; text-align:center; pointer-events:none;
+.pstick{--pc:var(--ink); --pt:var(--bg); position:absolute; left:50%; margin-left:-33px; bottom:calc(100% + 6px); width:66px; height:66px; display:grid; place-content:center; text-align:center; pointer-events:none;
   transform:scale(1) rotate(14deg); will-change:transform; backface-visibility:hidden; filter:drop-shadow(0 3px 3px rgba(0,0,0,.28)); opacity:0}
 html.neon .pstick{filter:drop-shadow(0 0 7px rgba(57,255,20,.5))}
 .done.show .pstick{animation:pstickIn .75s cubic-bezier(.16,.8,.24,1) .3s both}
 @keyframes pstickIn{0%{transform:scale(3.6) rotate(-8deg); opacity:0} 30%{opacity:1} 100%{transform:scale(1) rotate(14deg); opacity:1}}
 @media (prefers-reduced-motion: reduce){.done.show .pstick{animation:none; opacity:1}}
 .pstick svg{position:absolute; inset:0; width:100%; height:100%}
-.pst{position:relative; display:grid; gap:1px; transform:translateY(-2px); color:var(--bg)} /* nudged up so PULL reads as centered on the disc */
-.pp1{font:700 7.4px/1 "Quicksand", var(--body); letter-spacing:.07em; text-transform:uppercase; padding-left:.07em}
-.pp2{font:400 13px/.95 var(--display); letter-spacing:.04em; text-transform:uppercase}
+.pst{position:relative; display:grid; gap:2px; transform:translateY(-1px); color:var(--pt)} /* nudged so the two words read as centered on the disc */
+.pp1{font:700 11px/1 "Quicksand", var(--body); letter-spacing:.02em} /* Perfect: friendly Quicksand, only the P capital */
+.pp2{font:400 14.5px/.95 var(--display); letter-spacing:.04em; text-transform:uppercase} /* PULL: Krona One, the wordmark font, the bigger word */
 /* Par: a solid, button-style pill (light text), with its words on the same line as Moves and Best */
 .done .parrow{align-items:baseline}
 .done .parpill{background:var(--c); color:#fff; box-shadow:none; padding:6px 13px}
@@ -2307,7 +2307,8 @@ function movesColor(){let dark=false;try{dark=matchMedia('(prefers-color-scheme:
    which is free on levels without dots; it uses the stat palette, so it softens in dark mode like the counts */
 /* Perfect Pull gets its own color, never the Continue button's, New best's or Par's: Classic ink (its three colors are all taken on that screen),
    SmartPull olive, Neon green (Oct 12) */
-const perfectColor=()=>theme==='neon'?'#39FF14':theme==='brand'?statColors().bumps:'var(--ink)';
+const perfectColor=()=>theme==='neon'?'#39FF14':theme==='brand'?statColors().bumps:'#34363A'; // Classic: the brand's soft charcoal (the black cubes), in light and dark, so the disc never turns white in dark mode
+const perfectInk=()=>theme==='neon'||theme==='brand'?'var(--bg)':'#fff';
 const bestColor=()=>theme==='neon'?'#B026FF':statColors().taps;
 const TAP_COLORS={plain:['var(--ink)'],brand:['#FF6C10','#007C92','#B2BB1E'],
   neon:['#FF2E97','#FF7A1A','#F4FF3A','#39FF14','#1FB8FF','#B026FF']};
@@ -3919,19 +3920,17 @@ function recolorWin(){const box=document.getElementById('done');if(!box||!box.cl
   q('[data-role="best"]').forEach(e=>e.style.color=bestColor());
   q('[data-role="bestc"]').forEach(e=>e.style.setProperty('--c',bestColor()));
   q('[data-role="perfectc"]').forEach(e=>e.style.setProperty('--c',perfectColor()));
-  q('[data-role="perfectstk"]').forEach(e=>e.style.setProperty('--pc',perfectColor()))}
+  q('[data-role="perfectstk"]').forEach(e=>{e.style.setProperty('--pc',perfectColor());e.style.setProperty('--pt',perfectInk())})}
 // the phone switching between light and dark while playing: recolor the cubes (dark-mode orange), the corner counts and any win screen
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{for(const b of blocks)if(b.mesh)b.mesh.material=materialsFor(b);updateLeft();recolorWin()})}catch(e){}
 
-/* Perfect Pull: a round sticker (a colored disc with a white sticker margin) tilted over the upper right of the win line.
+/* Perfect Pull: a round badge (a colored disc with a white sticker margin), tilted a little, centered above the win line.
    It flies in from close to the screen and glides back to rest, slowing all the way down (no bounce), with a faint papery whoosh
    and three bright bell notes climbing as it settles (picked Oct 13). */
 function stickPerfect(on){const line=document.querySelector('#done b');if(!line)return;const old=line.querySelector('.pstick');if(old)old.remove();if(!on)return;
-  const st=document.createElement('span');st.className='pstick';st.dataset.role='perfectstk';st.style.setProperty('--pc',perfectColor());st.setAttribute('role','img');st.setAttribute('aria-label','Perfect Pull');
+  const st=document.createElement('span');st.className='pstick';st.dataset.role='perfectstk';st.style.setProperty('--pc',perfectColor());st.style.setProperty('--pt',perfectInk());st.setAttribute('role','img');st.setAttribute('aria-label','Perfect Pull');
   st.innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="#fff"/><circle cx="50" cy="50" r="44" fill="var(--pc)"/></svg><span class="pst"><span class="pp1">Perfect</span><span class="pp2">Pull</span></span>';
   line.append(st);
-  // keep it on screen: on a narrow phone the line can reach the edge, so the sticker tucks in over the line a little more
-  requestAnimationFrame(()=>{const r=line.getBoundingClientRect(),room=innerWidth-8-r.right;st.style.right=(-Math.max(4,Math.min(38,room)))+'px'});
   perfectSound(.75)}
 function perfectSound(d){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+d;
   const env=(g,s,att,pk,tau)=>{g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(pk,s+att);g.gain.setTargetAtTime(0,s+att,tau)}; // smooth fade to silence, no click
@@ -3986,7 +3985,7 @@ function win(){
   // Today's level keeps a daily streak going
   if(previewMode&&previewKey===dailyKey){streakClear();const l4=document.createElement('div');l4.className='movesline';l4.textContent='Daily Streak '+plural(streak.n,'day');lines.push(l4)}
   tl.replaceChildren(...lines);
-  stickPerfect(perfect); // Perfect Pull: a round sticker over the upper right of the win line
+  stickPerfect(perfect); // Perfect Pull: a round badge centered above the win line
   tl.classList.remove('best');
   // time is always recorded, but only shown when the player has turned the timer on
   pauseTimer();const ms=timeMs,pt=bestTimes[levelIdx],tBest=pt===undefined||ms<pt;
