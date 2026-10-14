@@ -174,7 +174,7 @@ html.neon .med .ring circle:not(.on):not(.samp){stroke:rgba(244,236,255,.16)}
 html.neon .med .ring circle.on{filter:drop-shadow(0 0 3px var(--c))}
 .med .ring circle.on{stroke:var(--c)}
 .med .ring circle.samp{stroke:var(--c); stroke-opacity:.5}
-.med.cur .disc{box-shadow:0 0 0 2px var(--c)}
+.med.cur .disc{inset:6px; box-shadow:0 0 0 2px var(--ink)} /* the current chapter: a quiet ink outline set inside the progress ring, so it never blends into the colored segments (Samuel, Oct 14) */
 .med.locked{filter:saturate(.3); opacity:.8}
 .med .lockBadge{position:absolute; right:-1px; bottom:-1px; width:16px; height:16px; border-radius:50%; background:var(--chip); color:var(--muted); display:grid; place-items:center; box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .med .lockBadge svg{width:9px; height:9px}
@@ -416,6 +416,9 @@ html.neon .done .parpill{background:var(--chip); color:var(--c); box-shadow:inse
 .done .parpill{display:inline-grid; place-items:center; box-sizing:border-box; height:37px; padding:0 16px; font-size:12px; white-space:nowrap} /* the Par block: as tall as Continue, but only as wide as "Par" and its number need (Samuel, Oct 13) */
 /* while the win screen is up, the game's view (where the blocks are drawn) sits above the words, so a dragged block passes over them */
 .app:has(#done.show) #stage>canvas{position:relative; z-index:1; pointer-events:none}
+/* a menu opening over the win screen (levels, sound, settings): the whole win screen, blocks and words together, fades away and comes back when the menu closes (Samuel, Oct 14) */
+.done{transition:opacity .35s} .app:has(#stage.dim) #done.show{opacity:0; pointer-events:none}
+.app:has(#done.show) #stage.dim>canvas{opacity:0; transform:none}
 
 /* Perfect Pull, "Clean sweep" (Samuel, Oct 14; replaces the round badge): a beat after the stats, two fine lines of light start beside
    Moves and Best (level with the middle of their capitals), run out and up both sides together and meet PERFECT PULL from both ends,
