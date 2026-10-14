@@ -10,7 +10,7 @@ import sys, json, asyncio, os
 from playwright.async_api import async_playwright
 HTML = sys.argv[1]; DIR = sys.argv[2]
 only = [int(x) for x in sys.argv[3].split(',')] if len(sys.argv) > 3 else None
-THREE = open('/home/claude/three/src/build/three.min.js').read()
+THREE = open(next(p for p in [os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','tests','vendor','three.min.js'),'/home/claude/three/src/build/three.min.js'] if os.path.exists(p))).read()
 JS = '''async ([lv, path, trace]) => {
  const T = window.__test, sleep = ms => new Promise(r => setTimeout(r, ms));
  T.load(lv - 1); await sleep(400);

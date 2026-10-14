@@ -1,7 +1,8 @@
+import os
 import sys, json, asyncio
 from playwright.async_api import async_playwright
 HTML=sys.argv[1]; JS=sys.argv[2]
-THREE=open('/home/claude/three/src/build/three.min.js').read()
+THREE=open(next(p for p in [os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','tests','vendor','three.min.js'),'/home/claude/three/src/build/three.min.js'] if os.path.exists(p))).read()
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(args=['--use-gl=swiftshader','--enable-unsafe-swiftshader'])

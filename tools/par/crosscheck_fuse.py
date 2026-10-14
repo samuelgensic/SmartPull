@@ -12,7 +12,7 @@ from playwright.async_api import async_playwright
 HTML = sys.argv[1]; LEVELS = [int(x) for x in sys.argv[2].split(',')]; STEPS = int(sys.argv[3])
 SEED = int(sys.argv[4]) if len(sys.argv) > 4 else 1; BT = int(sys.argv[5]) if len(sys.argv) > 5 else 3
 BIAS = float(sys.argv[6]) if len(sys.argv) > 6 else 0
-THREE = open('/home/claude/three/src/build/three.min.js').read()
+THREE = open(next(p for p in [os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','tests','vendor','three.min.js'),'/home/claude/three/src/build/three.min.js'] if os.path.exists(p))).read()
 SRC = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'par_fuse.js')).read()
 if SRC.startswith('#!'): SRC = SRC.split('\n', 1)[1]  # (a shebang line isn't valid inside new Function)
 JS = '''async ([lv, src, steps, seed, bt, bias]) => {
