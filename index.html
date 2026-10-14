@@ -68,6 +68,7 @@ html:root.neon{--bg:#000000; --bg2:#000000; --ink:#F4ECFF; --muted:#9A8FB0; --ac
 .prow{display:flex; flex-direction:column; gap:8px}
 .plab{font-family:var(--display); font-weight:500; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
 .opts{display:flex; flex-wrap:wrap; gap:6px}
+.pnote{font-size:12px; line-height:1.35; color:var(--muted)}
 button.opt{width:auto; height:32px; padding:0 12px; font-size:13px; font-weight:600; background:var(--bg2); box-shadow:none}
 button.opt[aria-pressed="true"]{background:var(--accent); color:var(--chip)}
 .panel{max-height:calc(100% - 80px); overflow-y:auto}
@@ -230,6 +231,11 @@ canvas{display:block; width:100%; height:100%}
 .left .clock{opacity:.55; font-weight:300}
 .left{transition:opacity .4s}
 .app:has(#done.show) .left{opacity:0} /* the corner counts fade out while the win screen shows; they come back with the next level */
+button.tipbtn{transition:opacity .4s} .app:has(#done.show) #tipBtn{opacity:0; pointer-events:none} /* the tip button goes away with them while the win screen shows (Oct 13) */
+.timebox,.undo{transition:opacity .4s} .app:has(#done.show) .timebox,.app:has(#done.show) .undo{opacity:0; pointer-events:none} /* so do the timer (clock icon) and Undo (Oct 13) */
+#blBtn{transition:opacity .4s} .app:has(#done.show) #blBtn{opacity:0; pointer-events:none} /* and Neon's Black Light bulb */
+/* the cheeky line shows first, on its own; the stats (and the Perfect Pull badge) arrive 2 s later (class .stats), then Continue and Replay */
+.done .taps{transition:opacity .6s ease} .done:not(.stats) .taps{opacity:0}
 /* the level timer: bottom right, quiet gray, with its own small show/hide button beside it
    (in Neon it sits just above the Blacklight switch) */
 .timebox{position:absolute; right:16px; bottom:12px; z-index:4; display:flex; flex-direction:row-reverse; align-items:center; gap:8px}
@@ -325,7 +331,8 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
 .cbfx{position:absolute; inset:0; pointer-events:none}
 .cbsh{position:absolute; height:0; box-shadow:0 4px 8px 0 rgba(0,0,0,.2); opacity:0}
 .cbfx.on .cbsh{opacity:1; animation:pullInBtn .6s cubic-bezier(.2,.8,.3,1) both}
-.cbfx.on #cbsh2{animation-delay:.14s}
+.cbfx.on #cbsh,.cbfx.on #cbsh2{animation-name:riseIn; animation-timing-function:cubic-bezier(.22,1,.36,1)} /* Continue's and Replay's shadows rise with them */
+@keyframes riseIn{0%{opacity:0; transform:translateY(34px)} 45%{opacity:1} 100%{opacity:1; transform:none}}
 @media (prefers-reduced-motion: reduce){.cbfx.on .cbsh{animation:none}}
 html.neon .cbsh{display:none}
 .done.leaving{opacity:0; pointer-events:none}
@@ -378,6 +385,12 @@ html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
 /* Replay: a quieter outlined button under Continue on the win screen; it appears with Continue (Oct 13) */
 .done .replay{width:auto; height:auto; margin-top:-4px; padding:9px 22px; border-radius:var(--cubeR,8px); background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--muted);
   font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:0; pointer-events:none}
+/* Continue and Replay sit at the bottom of the screen, in thumb reach, just above the SMART·PULL wordmark (Samuel, Oct 14); 20px apart.
+   On a computer the wordmark is in the top bar, so they sit lower. A short window (landscape) keeps them under the stats instead. */
+.done small,.done .replay{position:absolute; left:50%; transform:translateX(-50%); margin:0}
+.done small{bottom:122px} .done .replay{bottom:69px}
+html.logotop .done small{bottom:84px} html.logotop .done .replay{bottom:31px}
+@media (max-height:600px){.done small,.done .replay{position:static; transform:none} .done small{margin-top:6px} .done .replay{margin-top:6px}}
 .done.ready .replay{opacity:0; pointer-events:auto} /* (invisible placeholder: the Replay block is drawn over it) */
 html.neon .done .replay{box-shadow:inset 0 0 0 1.5px rgba(244,236,255,.4)} /* with the logo up top, Undo sits on the bottom row */
 
@@ -387,9 +400,9 @@ html.neon .done .replay{box-shadow:inset 0 0 0 1.5px rgba(244,236,255,.4)} /* wi
 .pstick{--pc:var(--ink); --pt:var(--bg); position:absolute; left:50%; margin-left:-33px; bottom:calc(100% + 6px); width:66px; height:66px; display:grid; place-content:center; text-align:center; pointer-events:none;
   transform:scale(1) rotate(14deg); will-change:transform; backface-visibility:hidden; filter:drop-shadow(0 3px 3px rgba(0,0,0,.28)); opacity:0}
 html.neon .pstick{filter:drop-shadow(0 0 7px rgba(57,255,20,.5))}
-.done.show .pstick{animation:pstickIn .75s cubic-bezier(.16,.8,.24,1) .3s both}
+.done.stats .pstick{animation:pstickIn .75s cubic-bezier(.16,.8,.24,1) .3s both}
 @keyframes pstickIn{0%{transform:scale(3.6) rotate(-8deg); opacity:0} 30%{opacity:1} 100%{transform:scale(1) rotate(14deg); opacity:1}}
-@media (prefers-reduced-motion: reduce){.done.show .pstick{animation:none; opacity:1}}
+@media (prefers-reduced-motion: reduce){.done.stats .pstick{animation:none; opacity:1}}
 .pstick svg{position:absolute; inset:0; width:100%; height:100%}
 .pst{position:relative; display:grid; gap:2px; transform:translateY(-1px); color:var(--pt)} /* nudged so the two words read as centered on the disc */
 .pp1{font:700 11px/1 "Quicksand", var(--body); letter-spacing:.02em} /* Perfect: friendly Quicksand, only the P capital */
@@ -399,7 +412,35 @@ html.neon .pstick{filter:drop-shadow(0 0 7px rgba(57,255,20,.5))}
 .done .parpill{background:var(--c); color:#fff; box-shadow:none; padding:6px 13px}
 @media (prefers-color-scheme: dark){html:not(.neon) .done .parpill{color:var(--bg)}}
 html.neon .done .parpill{background:var(--chip); color:var(--c); box-shadow:inset 0 0 0 1.5px var(--c), 0 0 10px color-mix(in srgb, var(--c) 55%, transparent)}
+.done .parpill{opacity:0} /* Par is a 3D block now (Oct 13): the pill stays as its invisible placeholder (layout, colors, label) */
+.done .parpill{display:inline-grid; place-items:center; box-sizing:border-box; height:37px; padding:0 16px; font-size:12px; white-space:nowrap} /* the Par block: as tall as Continue, but only as wide as "Par" and its number need (Samuel, Oct 13) */
+/* while the win screen is up, the game's view (where the blocks are drawn) sits above the words, so a dragged block passes over them */
+.app:has(#done.show) #stage>canvas{position:relative; z-index:1; pointer-events:none}
 
+/* Perfect Pull, "Clean sweep" (Samuel, Oct 14; replaces the round badge): a beat after the stats, two fine lines of light start beside
+   Moves and Best (level with the middle of their capitals), run out and up both sides together and meet PERFECT PULL from both ends,
+   level with the middle of its letters; the words light up as the lines arrive, with a rising breath and a chime. The lines settle to a
+   faint glow. A first Perfect Pull on a level also earns a SmartPull ("+1 SmartPull", under the words). Then Continue and Replay land. */
+.ppsw{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; --pp:var(--ink)}
+.ppsw path{fill:none; stroke:var(--pp); stroke-width:2; stroke-linecap:round; opacity:0}
+.done.pp .ppsw path{animation:ppDraw 1.1s cubic-bezier(.45,0,.25,1) both,ppGlow 2.2s 1.3s ease-out forwards}
+@keyframes ppDraw{0%{stroke-dashoffset:var(--len); opacity:1} 100%{stroke-dashoffset:0; opacity:1}}
+@keyframes ppGlow{to{opacity:.3}}
+html.neon .ppsw path{filter:drop-shadow(0 0 4px #39FF14)}
+.pptype{position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 24px); font-family:var(--display); font-weight:400; font-size:11px; line-height:1; letter-spacing:.42em; color:var(--pp); white-space:nowrap; pointer-events:none}
+.pptype .ppin{display:inline-block; padding-left:.42em}
+.pptype i{font-style:normal; display:inline-block; opacity:0; transform:translateY(4px)}
+.ppbl{display:inline-block; width:0; height:0; padding:0; vertical-align:baseline}
+.done.pp .pptype i{animation:ppLetter .45s ease-out both; animation-delay:calc(1.05s - var(--k)*40ms)} /* lit from the ends inward as the lines arrive */
+@keyframes ppLetter{to{opacity:1; transform:none}}
+html.neon .pptype{text-shadow:0 0 8px rgba(57,255,20,.6)}
+.ppearn{position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 6px); font:700 10.5px/1 "Quicksand",var(--body); letter-spacing:.04em; color:var(--pp); white-space:nowrap; opacity:0; pointer-events:none}
+.done.pp .ppearn{animation:ppFade .5s 1.35s ease-out both}
+@keyframes ppFade{to{opacity:.85}}
+@media (prefers-reduced-motion: reduce){.done.pp .ppsw path{animation:none; opacity:.4; stroke-dashoffset:0!important} .done.pp .pptype i{animation:none; opacity:1; transform:none} .done.pp .ppearn{animation:none; opacity:.85}}
+/* SmartPulls per chapter on its medallion in the level menu (one per level with a Perfect Pull) */
+.med .spBadge{position:absolute; right:-7px; top:-3px; min-width:20px; height:14px; padding:0 3px; border-radius:7px; background:var(--chip); color:var(--c); font:700 8.5px/14px var(--body); font-variant-numeric:tabular-nums; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.18)}
+html.neon .med .spBadge{box-shadow:0 0 0 1px var(--c),0 0 6px var(--c)}
 /* the sound menu: a narrow column like the settings menu (it used to stretch across the screen); music choices sit two to a row */
 #soundp{width:228px; max-width:calc(100% - 82px)}
 #soundp input.vol{min-width:0}
@@ -435,6 +476,7 @@ html.neon .done .parpill{background:var(--chip); color:var(--c); box-shadow:inse
     <div class="prow"><label class="plab" for="musicVol">Music volume</label><input class="vol" id="musicVol" type="range" min="0" max="100" step="1" value="70"></div>
     <div class="prow"><div class="plab">Sound effects</div><div class="opts" id="optSfx"></div></div>
     <div class="prow"><label class="plab" for="sfxVol">SFX volume</label><input class="vol" id="sfxVol" type="range" min="0" max="100" step="1" value="70"></div>
+    <div class="prow"><div class="plab">TV mode</div><div class="opts" id="optTv"></div><div class="pnote">For AirPlay and screen mirroring. Sound plays as audio clips, so the TV stays smooth. Music volume then follows the TV.</div></div>
     
   </div>
   <div class="panel" id="panel" hidden>
@@ -447,6 +489,7 @@ html.neon .done .parpill{background:var(--chip); color:var(--c); box-shadow:inse
     <div class="prow"><div class="plab">Pulls</div><div class="stat" id="totalPulls">0</div></div>
     <div class="prow"><div class="plab">Taps</div><div class="stat" id="totalTaps">0</div></div>
     <div class="prow"><div class="plab">Bumps</div><div class="stat" id="totalOops">0</div></div>
+    <div class="prow"><div class="plab">SmartPulls</div><div class="stat" id="totalSP">0</div></div>
     <div class="prow"><div class="plab">Time</div>
       <div class="statrow"><div class="stat" id="totalTime">0m 0s</div></div></div>
     <div class="prow"><div class="opts"><button class="opt" id="scoreOpen" type="button">Scorecard</button></div></div>
@@ -484,7 +527,7 @@ html.neon .done .parpill{background:var(--chip); color:var(--c); box-shadow:inse
   <div class="panel levels" id="levels" hidden>
     <div class="lvcol" id="lvcol"></div>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="cbfx" id="cbfx" aria-hidden="true"><span class="cbsh" id="cbsh"></span><span class="cbsh" id="cbsh2"></span></div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small><button class="replay" id="replayBtn" type="button">Replay</button></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="cbfx" id="cbfx" aria-hidden="true"><span class="cbsh" id="cbsh"></span><span class="cbsh" id="cbsh2"></span><span class="cbsh" id="cbsh3"></span></div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small><button class="replay" id="replayBtn" type="button">Replay</button></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -837,12 +880,17 @@ function pivotTurn(b){const p=b.c,layer=blocks.filter(u=>u.alive&&u.c[1]===p[1]&
 // the arrow side of a cube in world terms (its arrow face is stored on the cube's own sides; the cube may have turned)
 function worldAF(b){const v=new THREE.Vector3(...b.arrowFace).applyQuaternion(b.mesh.quaternion);return [v.x,v.y,v.z].map(x=>Math.round(x)||0)}
 function localD(b){if(!b.mesh)return b.d;const v=new THREE.Vector3(...b.d).applyQuaternion(b.mesh.quaternion.clone().invert());return [v.x,v.y,v.z].map(x=>Math.round(x)||0)}
+/* A pulled cube leaves the puzzle the moment you tap (Samuel, Oct 13): it keeps its place and size on screen, then flies off in one straight line
+   along the way it was pulled, whatever you do to the puzzle afterward (turning it, zooming, re-centering). A turned puzzle never bends its path. */
+function flyOff(u,dir,delay){const dv=new THREE.Vector3(...dir).applyQuaternion(pivot.quaternion).normalize();
+  scene.attach(u.mesh); // (keeps its place, turn and size in the world)
+  const start=u.mesh.position.clone(),s0=u.mesh.scale.x,dist=(span+6)*pivot.scale.x;
+  tweens.push({t:-delay,dur:.75,step:k=>{k=Math.max(0,k);u.mesh.position.copy(start).addScaledVector(dv,dist*k*k);u.mesh.scale.setScalar(s0*(1-.6*Math.max(0,k-.5)*2))},end:()=>scene.remove(u.mesh)})}
 // Echo: twins leave together, each the way its own arrow points; both paths must be clear
 function echoSlide(b){const tw=blocks[b.echo],unit=[b,tw];if(unit.some(u=>u.busy))return;
   const hits=unit.map(u=>rayHit(u,u.d,unit));
   if(hits.every(h=>!h)){saveUndo();undoStack[undoStack.length-1].dir=null;if(!clearing){pulls++;addTotal('pulls')}woosh(0);echoSound();lifeAdd('cubes',2);lifeAdd('echoes');
-    unit.forEach((u,j)=>{u.alive=false;occ.delete(K(...u.c));const dv=new THREE.Vector3(...u.d),start=u.mesh.position.clone(),dist=span+6;
-      tweens.push({t:-j*.06,dur:.75,step:k=>{k=Math.max(0,k);u.mesh.position.copy(start).addScaledVector(dv,dist*k*k);u.mesh.scale.setScalar(1-.6*Math.max(0,k-.5)*2)},end:()=>body.remove(u.mesh)})});
+    unit.forEach((u,j)=>{u.alive=false;occ.delete(K(...u.c));flyOff(u,u.d,j*.06)});
     afterRemoval(unit.concat(shatterPath(unit)))}
   else{const gh=strikeGlass(unit,hits,null,u=>u.d);if(gh.length){saveUndo();if(!clearing){taps++;addTotal('taps')}}else{bumps++;addTotal('oops')}updateLeft();if(!gh.length)echoBumpSound();
     unit.forEach((u,j)=>{if(hits[j])bumpAnim(u,hits[j],false,u.d,false);else pulse(u,.06,.3)});
@@ -858,19 +906,19 @@ function glassTap(b){if(b.busy)return;
   b.alive=false;occ.delete(K(...b.c));shatterGlass(b);afterRemoval([b])}
 // Several panes can be struck by one move (a big piece against a cracked wall). Each would play the very same sound at the very same
 // instant, and identical sounds add up (nine tinks = nine times as loud, with a hard click at the start). So the panes take turns:
-// each extra pane comes a hair later, at its own pitch and softer, from a different stretch of noise, and no more than three are heard.
-const GLASS_TURN={t0:-1e9,n:0},GLASS_F=[1,1.19,.84],GLASS_V=[1,.62,.45];
+// each extra pane comes a hair later, at its own pitch and softer, from its own fixed stretch of noise, and no more than three are heard.
+const GLASS_TURN={t0:-1e9,n:0},GLASS_F=[1,1.19,.84],GLASS_V=[1,.62,.45],GLASS_AT=[.31,.52,.74,.12,.43,.65]; // fixed slices of the noise, never random: every strike sounds the same
 function glassTurn(){const now=performance.now();if(now-GLASS_TURN.t0>60){GLASS_TURN.t0=now;GLASS_TURN.n=0}return GLASS_TURN.n++}
 function smudgeSound(){if(!soundOn)return;const a=audio();if(!a)return;const i=glassTurn();if(i>2)return;
   const t=a.currentTime+SFX_LEAD+i*.013,f=GLASS_F[i],v=GLASS_V[i];
   // a faint glass tink: a tiny click and a short, bright ring with a slightly detuned partial
-  hiss(a,'highpass',6000,6000,1,t,.012,.012*v,.002,Math.random()*.7);tone(a,'sine',2960*f,2950*f,t,.32,.016*v,.002);tone(a,'sine',4420*f,4400*f,t,.22,.007*v,.002)}
+  hiss(a,'highpass',6000,6000,1,t,.012,.012*v,.002,GLASS_AT[i]);tone(a,'sine',2960*f,2950*f,t,.32,.016*v,.002);tone(a,'sine',4420*f,4400*f,t,.22,.007*v,.002)}
 // cracked glass struck again from the same side: a close cousin of the crack, not a copy. The same dry knock and splintering ticks,
 // but shorter, duller and softer, with a lower ring that fades quickly. (The whole break and the first crack stay their own sounds.)
 function crackedHitSound(){if(!soundOn)return;const a=audio();if(!a)return;const i=glassTurn();if(i>2)return;
-  const t=a.currentTime+SFX_LEAD+i*.013,f=GLASS_F[i],v=GLASS_V[i],r=()=>Math.random()*.7;
-  tone(a,'sine',165*f,108*f,t,.1,.04*v,.004);hiss(a,'highpass',2400,2400,.8,t,.035,.05*v,.0015,r());
-  [[3000,2600,.008,.026],[3700,3100,.03,.02]].forEach(([f0,f1,d,g])=>hiss(a,'bandpass',f0*f,f1*f,5,t+d,.03,g*v,.0015,r()));
+  const t=a.currentTime+SFX_LEAD+i*.013,f=GLASS_F[i],v=GLASS_V[i],r=k=>GLASS_AT[(i*2+k)%6];
+  tone(a,'sine',165*f,108*f,t,.1,.04*v,.004);hiss(a,'highpass',2400,2400,.8,t,.035,.05*v,.0015,r(0));
+  [[3000,2600,.008,.026],[3700,3100,.03,.02]].forEach(([f0,f1,d,g],k)=>hiss(a,'bandpass',f0*f,f1*f,5,t+d,.03,g*v,.0015,r(k+1)));
   tone(a,'sine',2090*f,2060*f,t+.01,.18,.005*v,.002)}
 function pivotSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
   // the pivot turn: the same Twist-knob clicks as a dot turn, a little lower, with a fourth detent as the turn ripples out
@@ -1236,9 +1284,9 @@ function crackGlass(o,d,delay){const side=d.join(','),ms=delay*1000;
   o.alive=false;occ.delete(K(...o.c));setTimeout(()=>shatterGlass(o),ms);return true}
 // the glass cracking: a soft knock as the cube meets it, a dry crack, a few splintering ticks and a faint ring
 function crackSound(){if(!soundOn)return;const a=audio();if(!a)return;const i=glassTurn();if(i>2)return; // panes cracking together take turns (see smudgeSound)
-  const t=a.currentTime+SFX_LEAD+i*.013,f=GLASS_F[i],v=GLASS_V[i],r=()=>Math.random()*.7;
-  tone(a,'sine',190*f,120*f,t,.12,.05*v,.004);hiss(a,'highpass',2800,2800,.8,t,.05,.075*v,.001,r());
-  [0,.02,.045,.075].forEach((d,k)=>hiss(a,'bandpass',(3600+k*800)*f,(3000+k*600)*f,6,t+.006+d,.035,.032*v*(1-k*.2),.001,r()));
+  const t=a.currentTime+SFX_LEAD+i*.013,f=GLASS_F[i],v=GLASS_V[i],r=k=>GLASS_AT[(i*2+k)%6];
+  tone(a,'sine',190*f,120*f,t,.12,.05*v,.004);hiss(a,'highpass',2800,2800,.8,t,.05,.075*v,.001,r(0));
+  [0,.02,.045,.075].forEach((d,k)=>hiss(a,'bandpass',(3600+k*800)*f,(3000+k*600)*f,6,t+.006+d,.035,.032*v*(1-k*.2),.001,r(k+1)));
   tone(a,'sine',2480*f,2440*f,t+.01,.28,.006*v,.002)}
 // glass hit by bumping cubes (the cubes in `unit` that reached distance `hit` in direction d); returns the glass that shattered
 function strikeGlass(unit,hits,hit,dirOf){const struck=[];
@@ -2238,7 +2286,7 @@ function load(i){
   try{localStorage.setItem('pa2_lvl',levelIdx)}catch(e){}
   if(silWall){body.remove(silWall);silWall=null}{const st=document.getElementById('stuck');st.textContent='No moves left. Tap ↺ to try again.'}
   clearShards();SHARD.meshes.forEach(me=>{if(!me.parent)me.userData.taken=false}); // (pieces readied for a pane that never broke go back in the pool)
-  for(const b of blocks)body.remove(b.mesh);blocks=[];occ.clear();tweens=[];centerTween=null;body.position.set(0,0,0);
+  for(const b of blocks)if(b.mesh.parent)b.mesh.parent.remove(b.mesh);blocks=[];occ.clear();tweens=[];centerTween=null;body.position.set(0,0,0);
   const lv=buildLevel(levelIdx);
   span=lv.span;camDist=Math.max(5,lv.ext*2.6+2.5);
   const {mn,mx}=bounds(lv.blocks.map(b=>b.c));const ctr=[0,1,2].map(i=>(mn[i]+mx[i])/2);
@@ -2292,7 +2340,7 @@ function load(i){
   }
   lvLabel(levelIdx);setTip();
   refreshNav();
-  document.getElementById('done').classList.remove('show','ready','leaving');cbHide();clearTimeout(readyTimer);
+  document.getElementById('done').classList.remove('show','stats','pp','ready','leaving');cbHide();clearTimeout(readyTimer);clearTimeout(statsTimer);clearTimeout(ppTimer);
   updateLeft();resize();
 }
 /* three counts per level:
@@ -2330,7 +2378,9 @@ const TAP_COLORS={plain:['var(--ink)'],brand:['#FF6C10','#007C92','#B2BB1E'],
 // running totals across every level, kept on this device (pa2_totaltaps held the old all-in count; it carries on as Pulls)
 const TOTALS={pulls:'pa2_totaltaps',taps:'pa2_totaldots',oops:'pa2_totaloops'},totals={pulls:0,taps:0,oops:0};
 try{for(const k in TOTALS)totals[k]=+localStorage.getItem(TOTALS[k])||0}catch(e){}
-function showTotal(){for(const [k,id] of [['pulls','totalPulls'],['taps','totalTaps'],['oops','totalOops']]){const t=document.getElementById(id);if(t)t.textContent=totals[k].toLocaleString()}}
+function showTotal(){for(const [k,id] of [['pulls','totalPulls'],['taps','totalTaps'],['oops','totalOops']]){const t=document.getElementById(id);if(t)t.textContent=totals[k].toLocaleString()}
+  try{const t=document.getElementById('totalSP');if(t)t.textContent=smartPulls()}catch(e){}} // SmartPulls: one per level with a Perfect Pull
+const smartPulls=()=>Object.keys(cleanSet).length;
 function addTotal(k){totals[k]++;try{localStorage.setItem(TOTALS[k],totals[k])}catch(e){}showTotal();lvAdd(levelIdx,{pulls:'p',taps:'t',oops:'b'}[k],1)}
 /* lifetime totals for the Scorecard: just for fun, never shown while playing (Undo never takes them back) */
 const LIFE_KEY='pa4_life';let life={cubes:0,dots:0,gears:0,echoes:0,fusions:0,glass:0};
@@ -2432,8 +2482,8 @@ let sfxVol=70,musicVol=70;
 try{const s=localStorage.getItem('pa2_sfxvol'),m=localStorage.getItem('pa2_musvol');if(s!==null)sfxVol=+s;if(m!==null)musicVol=+m}catch(e){}
 const volGain=v=>Math.pow(v/70,2); // squared so the slider feels even to the ear
 function setVol(which,v){
-  if(which==='sfx'){sfxVol=v;if(sfxBus)sfxBus.gain.setTargetAtTime(volGain(v),actx.currentTime,.05)}
-  else{musicVol=v;if(musicBus)musicBus.gain.setTargetAtTime(volGain(v),actx.currentTime,.05)}
+  if(which==='sfx'){sfxVol=v;if(sfxBus&&actx)sfxBus.gain.setTargetAtTime(volGain(v),actx.currentTime,.05)}
+  else{musicVol=v;if(musicBus&&actx)musicBus.gain.setTargetAtTime(volGain(v),actx.currentTime,.05);if(TV.on)TV.musicVol()}
   try{localStorage.setItem(which==='sfx'?'pa2_sfxvol':'pa2_musvol',v)}catch(e){}
 }
 try{soundOn=localStorage.getItem('pa2_sound')!=='0'}catch(e){}
@@ -2473,15 +2523,193 @@ function routeOut(){
     el.play().then(()=>{mediaOut=el}).catch(()=>{try{outBus.disconnect(md)}catch(e){}direct()});
   }catch(e){direct()}
 }
+/* ---------- TV mode (Oct 13) ----------
+   Over AirPlay and screen mirroring, Web Audio (the engine that makes every sound here) can stutter, while a plain <audio> clip
+   (like the sound of a video) never does. TV mode keeps Web Audio out of it altogether:
+   - Sound effects: the same code "plays" each sound, but into a recorder instead of the speaker. When that moment is over, the recording
+     is drawn once, offline, into a short clip, and the clip plays through a small pool of <audio> elements. The same sound again is just
+     the stored clip, so only the first time of each sound costs a moment. (New sounds work with no extra code.)
+   - Music: the 8 tracks are pre-rendered files (tv/*.mp3) that loop in an <audio> element.
+   An iPhone won't let a page change an <audio> element's volume, so the volume is baked into the clips; moving a slider simply
+   makes the clips again at the new level. Music volume then follows the phone or TV, and 0 pauses it. */
+function makeNoise(A){
+    noiseBuf=A.createBuffer(1,A.sampleRate,A.sampleRate);const ch=noiseBuf.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
+    softBuf=A.createBuffer(1,A.sampleRate*2,A.sampleRate);{const sd=softBuf.getChannelData(0);let last=0;for(let i=0;i<sd.length;i++){const w=Math.random()*2-1;last=(last+.04*w)/1.04;sd[i]=w*.45+last*5}} // a rounder, lower noise for the soft sounds
+}
+const TV={on:false,ctx:null,n:0,ops:[],queued:false,silent:false,cache:new Map(),pool:[],mels:[],mi:0,bufIds:new WeakMap(),nb:0,volOK:false,
+  ok:typeof AudioBuffer!=='undefined'&&!!(window.OfflineAudioContext||window.webkitOfflineAudioContext)&&typeof queueMicrotask==='function'};
+try{TV.on=TV.ok&&localStorage.getItem('pa4_tv')==='1'}catch(e){}
+const TV_SR=44100,TV_FILES=['music-box','open-world','lattice','moonscape','mechanism','bloom','ember','signal'];
+const TV_PAR={frequency:440,detune:0,gain:1,Q:1,playbackRate:1,pan:0,offset:1,threshold:-24,knee:30,ratio:12,attack:.003,release:.25,delayTime:0};
+let tvT;const tvNow=()=>{if(tvT===undefined){tvT=performance.now()/1000;queueMicrotask(()=>{tvT=undefined})}return tvT};
+// the recorder: stand-ins for Web Audio nodes that write down everything done to them
+function tvParam(owner,name,inert){let val=TV_PAR[name];
+  const P=new Proxy({},{get(_,p){if(typeof p!=='string')return undefined;if(p==='__par')return true;if(p==='__own')return owner;if(p==='__nm')return name;if(p==='value')return val;
+      return (...a)=>{if(!inert)TV.rec(['p',owner,name,p,a]);return P}},
+    set(_,p,v){if(p==='value'){val=v;if(!inert)TV.rec(['v',owner,name,v])}return true}});
+  return P}
+function tvNode(kind,ref,args){ // ref: 'sfx' | 'mus' | 'dest' are the fixed ends of the chain (they record nothing)
+  const id=ref||++TV.n,store={},par={};
+  if(!ref)TV.rec(['n',id,kind,args||[]]);
+  return new Proxy({},{
+    get(_,p){if(typeof p!=='string')return undefined;
+      if(p==='__id')return id;
+      if(p==='connect')return d=>{if(!ref)TV.rec(['c',id,d&&d.__par?[d.__own,d.__nm]:d.__id]);return d};
+      if(p==='disconnect')return ()=>{};
+      if(p==='start'||p==='stop'||p==='setPeriodicWave')return (...a)=>{if(!ref)TV.rec(['m',id,p,a])};
+      if(p in TV_PAR)return par[p]||(par[p]=tvParam(id,p,!!ref));
+      if(p==='context')return TV.ctx;
+      return store[p]},
+    set(_,p,v){store[p]=v;if(!ref&&p!=='onended')TV.rec(['s',id,p,v]);return true}})}
+function tvContext(){const dest=tvNode('dest','dest');
+  return new Proxy({},{get(_,p){if(typeof p!=='string')return undefined;
+    switch(p){
+      case 'currentTime':return tvNow();                                // (the same all through one moment; times are made relative to it when the clip is made)
+      case 'sampleRate':return TV_SR;
+      case 'state':return 'running';
+      case 'destination':return dest;
+      case 'resume':case 'suspend':case 'close':return ()=>Promise.resolve();
+      case 'createBuffer':return (c,l,r)=>new AudioBuffer({numberOfChannels:c,length:l,sampleRate:r});
+      case 'createPeriodicWave':return (re,im,o)=>{TV.mk=TV.mk||new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(1,1,TV_SR);return TV.mk.createPeriodicWave(re,im,o)};
+    }
+    if(p.startsWith('create'))return (...a)=>tvNode(p,null,a);
+    return undefined}})}
+TV.rec=op=>{TV.ops.push(op);if(!TV.queued){TV.queued=true;TV.qs=TV.silent;TV.qt=performance.now();TV.qb=tvNow();queueMicrotask(TV.flush)}};
+TV.init=()=>{if(TV.ctx)return;TV.ctx=tvContext();makeNoise(TV.ctx)};
+// the end of a moment: whatever sounds were started together become one clip
+TV.flush=()=>{TV.queued=false;const raw=TV.ops;TV.ops=[];if(!raw.length||!TV.on)return;
+  const silent=TV.qs,t0=TV.qt,base=TV.qb,idm=new Map(),nid=x=>{if(typeof x!=='number')return x;if(!idm.has(x))idm.set(x,idm.size+1);return idm.get(x)};
+  // times become "seconds from the start of this moment" (rounded, so the same sound always reads the same); ids count from 1 in order of use
+  const rb=x=>typeof x==='number'?Math.round((x-base)*1e6)/1e6:x,at=(a,i)=>{if(i>=a.length)return a;const b=a.slice();b[i]=rb(b[i]);return b};
+  const TI={setValueAtTime:1,linearRampToValueAtTime:1,exponentialRampToValueAtTime:1,setTargetAtTime:1,setValueCurveAtTime:1,cancelScheduledValues:0,cancelAndHoldAtTime:0};
+  const ops=raw.map(o=>{const k=o[0];
+    if(k==='n')return['n',nid(o[1]),o[2],o[3]];
+    if(k==='s'||k==='v')return[k,nid(o[1]),o[2],o[3]];
+    if(k==='p')return['p',nid(o[1]),o[2],o[3],o[3] in TI?at(o[4],TI[o[3]]):o[4]];
+    if(k==='m')return['m',nid(o[1]),o[2],o[2]==='start'||o[2]==='stop'?at(o[3],0):o[3]];
+    const d=o[2];return['c',nid(o[1]),Array.isArray(d)?[nid(d[0]),d[1]]:nid(d)]});
+  const bid=b=>{let i=TV.bufIds.get(b);if(!i){i=++TV.nb;TV.bufIds.set(b,i)}return i};
+  const key=JSON.stringify(ops,(k,v)=>(v&&typeof v==='object'&&(v instanceof AudioBuffer||(typeof PeriodicWave!=='undefined'&&v instanceof PeriodicWave)))?{b:v instanceof AudioBuffer?bid(v):'w'}:v)+'|'+sfxVol+'|'+musicVol;
+  let e=TV.cache.get(key);
+  if(!e){e={p:TV.render(ops).catch(()=>null)};TV.cache.set(key,e);
+    e.p.then(r=>{if(r){e.url=r.url;e.blob=r.blob;e.dur=r.dur;e.trim=r.trim;e.pcm=r.pcm}else TV.cache.delete(key)});
+    if(TV.cache.size>180){const k0=TV.cache.keys().next().value,o0=TV.cache.get(k0);TV.cache.delete(k0);if(o0&&o0.url)URL.revokeObjectURL(o0.url)}}
+  else{TV.cache.delete(key);TV.cache.set(key,e)} // (most recently used goes last)
+  if(silent)return;
+  if(e.url){TV.play(e.url,e.dur,e);return}
+  e.p.then(()=>{if(e.url&&performance.now()-t0<700)TV.play(e.url,e.dur,e)}); // (a sound that arrives much too late is better skipped)
+};
+// the offline drawing of one moment: the same chain the game has (sliders, lift, limiter), then trimmed to the sound itself
+TV.render=async function(ops){
+  const OC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  let end=0,first=1e9;const buf={},rate={},stopped=new Set(),starts={},loops=new Set();
+  for(const o of ops){
+    if(o[0]==='s'&&o[2]==='buffer')buf[o[1]]=o[3];
+    if(o[0]==='s'&&o[2]==='loop'&&o[3])loops.add(o[1]);
+    if(o[0]==='v'&&o[2]==='playbackRate')rate[o[1]]=o[3];
+    if(o[0]==='m'){const t=+o[3][0]||0;if(o[2]==='start'){first=Math.min(first,t);starts[o[1]]=t}else if(o[2]==='stop'){stopped.add(o[1]);end=Math.max(end,t)}}}
+  for(const id in starts){if(stopped.has(+id))continue;
+    end=Math.max(end,starts[id]+(buf[id]&&!loops.has(+id)?buf[id].duration/(rate[id]||1):.5))}
+  if(first===1e9||end<=0)return null;
+  const len=Math.min(8,end+.05),oc=new OC(2,Math.ceil(len*TV_SR),TV_SR);
+  const sfx=oc.createGain(),mus=oc.createGain(),sl=oc.createGain(),ml=oc.createGain(),lim=oc.createDynamicsCompressor(),ob=oc.createGain();
+  sfx.gain.value=volGain(sfxVol);mus.gain.value=volGain(musicVol);sl.gain.value=1.2;ml.gain.value=1.35; // (the same as the game's own chain)
+  lim.threshold.value=-6;lim.knee.value=6;lim.ratio.value=8;lim.attack.value=.003;lim.release.value=.25;ob.gain.value=.8;
+  sfx.connect(sl);sl.connect(lim);mus.connect(ml);ml.connect(lim);lim.connect(ob);ob.connect(oc.destination);
+  const M=new Map([['sfx',sfx],['mus',mus],['dest',oc.destination]]);
+  for(const o of ops){const k=o[0],r=M.get(o[1]);
+    try{
+      if(k==='n'){M.set(o[1],oc[o[2]](...o[3]));continue}
+      if(!r)continue;
+      if(k==='s')r[o[2]]=o[3];
+      else if(k==='v')r[o[2]].value=o[3];
+      else if(k==='p')r[o[2]][o[3]](...o[4]);
+      else if(k==='m')r[o[2]](...o[3]);
+      else if(k==='c'){const d=o[2];r.connect(Array.isArray(d)?M.get(d[0])[d[1]]:M.get(d))}
+    }catch(e){}}
+  const out=await oc.startRendering(),s0=Math.max(0,Math.floor((first-.003)*TV_SR)),n=out.length-s0;
+  if(n<=0)return null;
+  const L=out.getChannelData(0).subarray(s0),R=out.numberOfChannels>1?out.getChannelData(1).subarray(s0):L;
+  let mono=true;for(let i=0;i<n;i++)if(L[i]!==R[i]){mono=false;break}
+  const ch=mono?1:2,bytes=new ArrayBuffer(44+n*ch*2),v=new DataView(bytes),w=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*ch*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);
+  v.setUint32(24,TV_SR,true);v.setUint32(28,TV_SR*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*ch*2,true);
+  const q=x=>Math.max(-32768,Math.min(32767,Math.round(x*32767)));
+  for(let i=0;i<n;i++){v.setInt16(44+i*ch*2,q(L[i]),true);if(ch===2)v.setInt16(46+i*4,q(R[i]),true)}
+  const blob=new Blob([bytes],{type:'audio/wav'});
+  return{url:TV.useData?await TV.toData(blob):URL.createObjectURL(blob),blob,dur:n/TV_SR,trim:s0,pcm:TV.keepPcm?L.slice(0):null};
+};
+// If the page that hosts the game refuses sound from a blob address, clips go out as data addresses instead (found by a quiet test at the start, and again if a clip fails).
+TV.toData=blob=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(r.error);r.readAsDataURL(blob)});
+TV.silentSrc=()=>TV.silent_||(TV.silent_=(()=>{const n=2000,b=new Uint8Array(44+n),v=new DataView(b.buffer),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);b.fill(128,44);
+  let t='';for(let i=0;i<b.length;i++)t+=String.fromCharCode(b[i]);return'data:audio/wav;base64,'+btoa(t)})());
+TV.upgrade=()=>{TV.useData=true;TV.cache.forEach(e=>{if(e.blob&&e.url&&e.url.slice(0,5)==='blob:'){const old=e.url;TV.toData(e.blob).then(d=>{e.url=d;URL.revokeObjectURL(old)}).catch(()=>{})}})};
+TV.probe=()=>{if(TV.probed)return;TV.probed=1;
+  try{const a=new Audio();a.preload='auto';a.muted=true;a.addEventListener('error',()=>{if(!TV.useData)TV.upgrade()});a.src=URL.createObjectURL(new Blob([Uint8Array.from(atob(TV.silentSrc().split(',')[1]),c=>c.charCodeAt(0))],{type:'audio/wav'}))}catch(e){}};
+TV.elError=e=>{const s=e.src;if(!s)return;
+  if(s.slice(0,5)==='blob:'&&e.__ent&&e.__ent.blob){            // a clip the page would not play: send it as data, and play it now if it is still fresh
+    const ent=e.__ent;if(!TV.useData)TV.upgrade();
+    TV.toData(ent.blob).then(d=>{ent.url=d;if(e.src===s&&performance.now()-e.__t<700){e.src=d;const p=e.play();if(p&&p.catch)p.catch(()=>{})}}).catch(()=>{});return}
+  if(e.__slug&&e.__want&&(e.__fb||0)<2){                  // the music file: try it again as a blob, then as data
+    const g=e.__gen,st=e.__fb=(e.__fb||0)+1;
+    (e.__mb?Promise.resolve(e.__mb):fetch(s).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(ab=>e.__mb=new Blob([ab],{type:'audio/mpeg'})))
+      .then(b=>st===1&&!TV.useData?URL.createObjectURL(b):TV.toData(b))
+      .then(u=>{if(e.__gen!==g||!e.__want)return;if(!mus)mus={tv:()=>TV.stopEl(e),el:e};e.src=u;e.loop=true;if(musicVol>0){const p=e.play();if(p&&p.catch)p.catch(()=>{})}}).catch(()=>{})}};
+// playing a clip: a pool of <audio> elements, unlocked by the first tap (iOS only lets elements that a tap has started play later)
+TV.mkPool=()=>{if(TV.pool.length)return;
+  const mk=()=>{const e=new Audio();e.setAttribute('playsinline','');e.preload='auto';e.__until=0;e.addEventListener('error',()=>TV.elError(e));return e};
+  for(let i=0;i<10;i++)TV.pool.push(mk());TV.mels=[mk(),mk()];TV.mels.forEach(e=>e.loop=true);
+  try{const t=new Audio();t.volume=.5;TV.volOK=t.volume===.5}catch(e){}
+  TV.probe()}; // (phones keep an element's volume at 1)
+TV.unlock=()=>{if(!TV.on)return;TV.mkPool();
+  for(const e of TV.pool.concat(TV.mels)){if(e.__ok||e.__try||!e.paused)continue;e.__try=1;
+    try{e.src=TV.silentSrc();const p=e.play();if(p&&p.then)p.then(()=>{if(e.src===TV.silent_)e.pause();e.__ok=1}).catch(()=>{e.__try=0})}catch(x){e.__try=0}}};
+TV.play=(url,dur,ent)=>{TV.mkPool();const now=performance.now();let el=null,best=1e18;
+  for(const e of TV.pool){const k=e.__until+(e.__ok?0:1e6);if(e.__until<now&&e.__ok){el=e;break}if(k<best){best=k;el=e}} // (free and unlocked first, then the one that has been busy longest)
+  el.__until=now+dur*1000+60;el.__ent=ent;el.__t=now;try{el.pause();el.src=url;const p=el.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}};
+// the first time of the common sounds is made ahead, so they are ready when they are needed
+TV.prewarm=()=>{const list=[()=>woosh(0),()=>thump(0),()=>thump(.2,true),()=>clickSound(),()=>landSound(0),()=>lockSound(),()=>unlockSound(),()=>tipSound(),()=>menuSfx('level',true),()=>pageTurn()];
+  list.forEach((f,i)=>setTimeout(()=>{if(!TV.on)return;TV.silent=true;try{f()}catch(e){}TV.silent=false},400+i*60))};
+// the music: one looping file per track; two elements take turns so a track change can fade the old one out
+TV.startMusic=()=>{TV.mkPool();const slug=TV_FILES[Math.min(musicIdx,TV_FILES.length-1)],el=TV.mels[TV.mi=1-TV.mi];
+  el.__gen=(el.__gen||0)+1;el.__slug=slug;el.__fb=0;el.__mb=null;el.__ent=null;el.__want=1;el.src=new URL('tv/'+slug+'.mp3',document.baseURI).href;el.loop=true;el.volume=TV.volOK?Math.min(1,volGain(musicVol)):1;
+  const me={tv:()=>TV.stopEl(el),el};mus=me;
+  if(musicVol>0){const p=el.play();if(p&&p.catch)p.catch(()=>{if(mus===me)mus=null})} // (no tap yet: the next tap tries again)
+};
+TV.stopEl=el=>{const g=el.__gen;el.__want=0;
+  if(TV.volOK&&!el.paused){const t0=performance.now(),v0=el.volume,tm=setInterval(()=>{const k=(performance.now()-t0)/1200;
+      if(el.__gen!==g){clearInterval(tm);return}                      // (the element was started again: leave it be)
+      if(k>=1){clearInterval(tm);el.pause();return}el.volume=Math.max(0,v0*(1-k))},40)}
+  else try{el.pause()}catch(e){}};
+TV.musicVol=()=>{if(!mus||!mus.el)return;const el=mus.el;
+  if(musicVol<=0){try{el.pause()}catch(e){}return}
+  if(TV.volOK)el.volume=Math.min(1,volGain(musicVol));
+  if(el.paused){const p=el.play();if(p&&p.catch)p.catch(()=>{})}};
+TV.set=on=>{on=!!on&&TV.ok;if(on===TV.on)return;
+  try{localStorage.setItem('pa4_tv',on?'1':'0')}catch(e){}
+  if(on){
+    stopMusic();const old=actx;TV.on=true;                 // Web Audio's music fades out first; then the engine is let go
+    actx=null;sfxBus=musicBus=outBus=null;setTimeout(()=>{try{old&&old.close()}catch(e){}},2000);
+    if(mediaOut){try{mediaOut.pause()}catch(e){}mediaOut=null}
+    TV.init();sfxBus=tvNode('GainNode','sfx');musicBus=tvNode('GainNode','mus');TV.unlock();TV.prewarm();
+    if(musicOn)startMusic(TV.ctx);
+  }else{
+    if(mus)stopMusic();TV.on=false;TV.cache.forEach(e=>e.url&&URL.revokeObjectURL(e.url));TV.cache.clear();
+    TV.pool.forEach(e=>{try{e.pause()}catch(x){}});
+    audio();                                                 // a fresh Web Audio engine (the music starts again if it was on)
+  }};
+TV.enter=()=>{TV.init();sfxBus=tvNode('GainNode','sfx');musicBus=tvNode('GainNode','mus')};
 function audio(){
+  if(TV.on){if(!TV.ctx||!sfxBus)TV.enter();if(musicOn&&!mus&&!document.hidden)startMusic(TV.ctx);return TV.ctx} // TV mode: no Web Audio, only the recorder
   unlockPlayback();
   // "playback" asks for a larger, steadier audio buffer: AirPlay (HomePod, Apple TV) and mirroring stay smooth instead of crackling,
   // even under the heavier music tracks; on the phone's own speaker the extra delay is too small to notice
   if(!actx){try{const AC=window.AudioContext||window.webkitAudioContext;try{actx=new AC({latencyHint:'playback'})}catch(e){actx=new AC()}
     // when the audio route changes (AirPlay connects, a call comes in), iOS pauses the sound; pick it back up
     actx.onstatechange=()=>{if(actx.state!=='running'&&!document.hidden)actx.resume().catch(()=>{})};
-    noiseBuf=actx.createBuffer(1,actx.sampleRate,actx.sampleRate);const ch=noiseBuf.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
-    softBuf=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate);{const sd=softBuf.getChannelData(0);let last=0;for(let i=0;i<sd.length;i++){const w=Math.random()*2-1;last=(last+.04*w)/1.04;sd[i]=w*.45+last*5}} // a rounder, lower noise for the soft sounds
+    makeNoise(actx);
     sfxBus=actx.createGain();sfxBus.gain.value=volGain(sfxVol);
     musicBus=actx.createGain();musicBus.gain.value=volGain(musicVol);
     // the overall level, underneath the sliders (Oct 13): sound effects 20% louder, music 35% louder than before.
@@ -2498,7 +2726,7 @@ function audio(){
   return actx;
 }
 // iOS only lets sound start inside a tap, so every tap makes sure audio is awake (this is cheap once it's running)
-['touchend','pointerup','click'].forEach(ev=>document.addEventListener(ev,()=>{needTap=false;if(audioStale)rebuildAudio();else if(soundOn||musicOn)audio()},{passive:true,capture:true}));
+['touchend','pointerup','click'].forEach(ev=>document.addEventListener(ev,()=>{needTap=false;TV.unlock();if(audioStale)rebuildAudio();else if(soundOn||musicOn)audio()},{passive:true,capture:true}));
 /* Safari bug: after you switch to another app and come back (and when screen mirroring starts and the sound moves to the TV),
    the audio engine can freeze. It says "running" but its clock has stopped, or it stays "interrupted", and nothing plays
    until the page is reloaded. A watchdog checks twice a second; if the engine is frozen it throws it away and builds a fresh
@@ -3285,18 +3513,19 @@ const MUSICS=[
   {name:'Signal',    track:SPMusic.signal},
 ];
 function startMusic(a){
+  if(TV.on){TV.startMusic();return}
   const cfg=MUSICS[Math.min(musicIdx,MUSICS.length-1)];
   const t0=a.currentTime;
   const out=a.createGain();out.gain.setValueAtTime(0,t0);out.gain.linearRampToValueAtTime(1,t0+4);out.connect(musicBus);
   mus={a,out,srcs:[],stopGen:cfg.track(a,out)};
 }
 function stopMusic(){
-  if(!mus)return;const m=mus;mus=null;clearTimeout(m.padT);clearTimeout(m.bellT);if(m.stopGen)m.stopGen();
+  if(!mus)return;const m=mus;mus=null;if(m.tv){m.tv();return}clearTimeout(m.padT);clearTimeout(m.bellT);if(m.stopGen)m.stopGen();
   const t=m.a.currentTime;m.out.gain.cancelScheduledValues(t);m.out.gain.setValueAtTime(m.out.gain.value,t);m.out.gain.linearRampToValueAtTime(0,t+1.5);
   setTimeout(()=>{try{m.srcs.forEach(s=>s.stop());m.out.disconnect()}catch(e){}},1800);
 }
 // pause when the app is in the background, pick up again when it comes back
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMusic();else if(musicOn&&actx)startMusic(actx)});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMusic();else if(musicOn&&(actx||TV.on))startMusic(actx||TV.ctx)});
 // the speaker button in the top bar turns the ambient music on and off
 function setMusic(val){
   musicOn=val;try{localStorage.setItem('pa2_music',val?'1':'0')}catch(e){}
@@ -3328,6 +3557,13 @@ function refreshMusicOpts(){pressGroup('optMusic',musicOn?musicIdx+1:0)}
     btn.setAttribute('aria-pressed',soundOn===val?'true':'false');
     btn.onclick=()=>{if(!val)uiSfx('sfx',false);soundOn=val;if(val)uiSfx('sfx',true);try{localStorage.setItem('pa2_sound',val?'1':'0')}catch(e){}
       box.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-pressed',b===btn?'true':'false'))};
+    box.appendChild(btn)})})();
+// TV mode on/off (see the TV mode notes by audio())
+(function(){const box=document.getElementById('optTv');if(!box)return;
+  if(!TV.ok){box.closest('.prow').hidden=true;return}
+  [['On',true],['Off',false]].forEach(([label,val])=>{const btn=document.createElement('button');btn.className='opt';btn.id='optTv-'+(val?1:0);btn.textContent=label;
+    btn.setAttribute('aria-pressed',TV.on===val?'true':'false');
+    btn.onclick=()=>{if(TV.on===val)return;TV.set(val);uiSfx('dev',val);box.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-pressed',b===btn?'true':'false'))};
     box.appendChild(btn)})})();
 // Blacklight: an on-screen switch in the Neon theme (bottom right), tap to turn it on or off
 (function(){const btn=document.getElementById('blBtn');
@@ -3480,8 +3716,7 @@ function slide(b){
     lifeAdd('cubes',unit.length);
     woosh(isFused(b)?b.group.members.filter(m=>m.alive).length:0); // fused pieces sound heavier: Heavy for 2-3 cubes, Heaviest for 4+
     unit.forEach(u=>{u.alive=false;occ.delete(K(...u.c));
-      const dv=new THREE.Vector3(...b.d),start=u.mesh.position.clone(),dist=span+6;
-      tweens.push({t:0,dur:.75,step:k=>{u.mesh.position.copy(start).addScaledVector(dv,dist*k*k);u.mesh.scale.setScalar(1-.6*Math.max(0,k-.5)*2)},end:()=>body.remove(u.mesh)});
+      flyOff(u,b.d,0);
     });
     afterRemoval(unit.concat(shatterPath(unit)));
   }else if(b.glide&&unit.length===1&&Math.min(...hits.filter(h=>h>0))>1){
@@ -3934,26 +4169,46 @@ function recolorWin(){const box=document.getElementById('done');if(!box||!box.cl
   q('[data-role="best"]').forEach(e=>e.style.color=bestColor());
   q('[data-role="bestc"]').forEach(e=>e.style.setProperty('--c',bestColor()));
   q('[data-role="perfectc"]').forEach(e=>e.style.setProperty('--c',perfectColor()));
-  q('[data-role="perfectstk"]').forEach(e=>{e.style.setProperty('--pc',perfectColor());e.style.setProperty('--pt',perfectInk())})}
+  q('[data-role="perfectstk"]').forEach(e=>{e.style.setProperty('--pc',perfectColor());e.style.setProperty('--pt',perfectInk())});
+  q('[data-role="perfectsw"]').forEach(e=>e.style.setProperty('--pp',ppColor()))}
 // the phone switching between light and dark while playing: recolor the cubes (dark-mode orange), the corner counts and any win screen
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{for(const b of blocks)if(b.mesh)b.mesh.material=materialsFor(b);updateLeft();recolorWin()})}catch(e){}
 
 /* Perfect Pull: a round badge (a colored disc with a white sticker margin), tilted a little, centered above the win line.
    It flies in from close to the screen and glides back to rest, slowing all the way down (no bounce), with a faint papery whoosh
    and three bright bell notes climbing as it settles (picked Oct 13). */
-function stickPerfect(on){const line=document.querySelector('#done b');if(!line)return;const old=line.querySelector('.pstick');if(old)old.remove();if(!on)return;
-  const st=document.createElement('span');st.className='pstick';st.dataset.role='perfectstk';st.style.setProperty('--pc',perfectColor());st.style.setProperty('--pt',perfectInk());st.setAttribute('role','img');st.setAttribute('aria-label','Perfect Pull');
-  st.innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="#fff"/><circle cx="50" cy="50" r="44" fill="var(--pc)"/></svg><span class="pst"><span class="pp1">Perfect</span><span class="pp2">Pull</span></span>';
-  line.append(st);
-  perfectSound(.75)}
-function perfectSound(d){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+d;
-  const env=(g,s,att,pk,tau)=>{g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(pk,s+att);g.gain.setTargetAtTime(0,s+att,tau)}; // smooth fade to silence, no click
-  // a very faint, airy paper whoosh as the sticker pulls into place
-  {const n=a.createBufferSource();n.buffer=softBuf;const f=a.createBiquadFilter();f.type='bandpass';f.Q.value=.7;f.frequency.setValueAtTime(2600,t);f.frequency.exponentialRampToValueAtTime(800,t+.4);
-    const g=a.createGain();env(g,t,.14,.014,.08);n.connect(f).connect(g).connect(sfxBus);n.start(t,Math.random()*.8);n.stop(t+.9)}
-  // three bright bell notes climbing (do, mi, sol) as it settles, with a faint sparkle on top
-  [1046.5,1318.5,1568].forEach((fr,i)=>{const o=a.createOscillator();o.type='sine';o.frequency.value=fr;const g=a.createGain(),s=t+.38+i*.075;env(g,s,.004,.045,.2+i*.05);o.connect(g).connect(sfxBus);o.start(s);o.stop(s+1.6)});
-  {const o=a.createOscillator();o.type='sine';o.frequency.value=3136;const g=a.createGain(),s=t+.53;env(g,s,.004,.007,.12);o.connect(g).connect(sfxBus);o.start(s);o.stop(s+1)}}
+const ppColor=()=>theme==='neon'?'#39FF14':theme==='brand'?statColors().bumps:'var(--ink)'; // Classic: the text color (charcoal in light, near white in dark)
+function stickPerfect(on,isNew){const done=document.getElementById('done'),line=done.querySelector('b');if(!line)return;
+  for(const e of done.querySelectorAll('.ppsw,.pptype,.ppearn'))e.remove();if(!on)return;
+  const NS='http://www.w3.org/2000/svg',sv=document.createElementNS(NS,'svg');sv.setAttribute('class','ppsw');sv.dataset.role='perfectsw';sv.setAttribute('aria-hidden','true');
+  sv.innerHTML='<path/><path/>';sv.style.setProperty('--pp',ppColor());done.prepend(sv);
+  const ty=document.createElement('span');ty.className='pptype';ty.dataset.role='perfectsw';ty.style.setProperty('--pp',ppColor());ty.setAttribute('role','img');ty.setAttribute('aria-label','Perfect');
+  ty.innerHTML='<span class="ppin">'+[...'PERFECT'].map((ch,k)=>`<i style="--k:${Math.abs(k-3)}">${ch}</i>`).join('')+'<span class="ppbl"></span></span>';line.append(ty); // just PERFECT (Samuel, Oct 14)
+ 
+  if(isNew){const er=document.createElement('span');er.className='ppearn';er.dataset.role='perfectsw';er.style.setProperty('--pp',ppColor());er.textContent='+1 SmartPull  ·  '+smartPulls()+' Total';line.append(er)}}
+function ppLayout(){ // the two paths: from beside Moves and beside Best, out, up both sides, and in along the top to meet the words
+  const done=document.getElementById('done'),sv=done.querySelector('.ppsw'),ty=done.querySelector('.pptype'),row=done.querySelector('.parrow');if(!sv||!ty||!row)return;
+  const D=done.getBoundingClientRect(),X=v=>v-D.left,Y=v=>v-D.top,ml=row.querySelector('.pr-l').getBoundingClientRect(),br=row.querySelector('.pr-r').getBoundingClientRect();
+  const ln=done.querySelector('b').getBoundingClientRect(),inn=ty.querySelector('.ppin').getBoundingClientRect(),cv=document.createElement('canvas').getContext('2d');
+  // capital-letter middles: baseline minus half the cap height (the words above, and Moves and Best below)
+  const capMid=(el,font)=>{cv.font=font;const c=cv.measureText('M').actualBoundingBoxAscent||parseFloat(font)*.72;return el.getBoundingClientRect().top-c/2};
+  const cs=getComputedStyle(ty),yTop=Y(capMid(ty.querySelector('.ppbl'),`${cs.fontSize} ${cs.fontFamily}`));
+  const lEl=row.querySelector('.pr-l');let lb=lEl.querySelector('.ppbl');if(!lb){lb=document.createElement('span');lb.className='ppbl';lEl.append(lb)} // (a zero-size marker on the baseline)
+  const cl=getComputedStyle(lEl),yRow=Y(capMid(lb,`${cl.fontSize} ${cl.fontFamily}`));
+  // the words' real edges: Moves' and Best's text (their grid cells are wider than the words)
+  const txt=el=>{const r=document.createRange();r.selectNodeContents(el);return r.getBoundingClientRect()},mt=txt(row.querySelector('.pr-l')),bt=txt(row.querySelector('.pr-r'));
+  const r=18,gap=9,xL=Math.max(8,Math.min(X(ln.left),X(mt.left))-16),xR=Math.min(D.width-8,Math.max(X(ln.right),X(bt.right))+16);
+  const sL=X(mt.left)-gap,sR=X(bt.right)+gap,eL=X(inn.left)-gap,eR=X(inn.right)+gap;
+  sv.setAttribute('viewBox',`0 0 ${D.width} ${D.height}`);const [p1,p2]=sv.querySelectorAll('path');
+  p1.setAttribute('d',`M${sL} ${yRow} H${xL+r} Q${xL} ${yRow} ${xL} ${yRow-r} V${yTop+r} Q${xL} ${yTop} ${xL+r} ${yTop} H${eL}`);
+  p2.setAttribute('d',`M${sR} ${yRow} H${xR-r} Q${xR} ${yRow} ${xR} ${yRow-r} V${yTop+r} Q${xR} ${yTop} ${xR-r} ${yTop} H${eR}`);
+  for(const p of [p1,p2]){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.setProperty('--len',len);if(!done.classList.contains('pp'))p.style.strokeDashoffset=len}}
+addEventListener('resize',()=>{if(document.getElementById('done').classList.contains('pp'))ppLayout()});
+// the sound: two soft rising breaths (one for each line), then a chime exactly as they reach the words; every part fades fully to silence
+function ppSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
+  hiss(a,'lowpass',350,2600,.7,t,1.05,.08,.35);hiss(a,'lowpass',300,2200,.7,t+.02,1.05,.055,.35,.37);
+  tone(a,'sine',1175,1175,t+1.08,1,.05,.003);tone(a,'sine',1175*2.76,1175*2.76,t+1.08,.4,.012,.002);
+  tone(a,'sine',1568,1568,t+1.14,1.1,.06,.003);tone(a,'sine',1568*2.76,1568*2.76,t+1.14,.45,.014,.002)}
 function win(){
   // the gravity floor fades away as the level clears, so the message reads cleanly
   if(floorMesh){const f=floorMesh,mats=[...new Set(f.material)];mats.forEach(m=>{m.transparent=true;m.depthWrite=false});
@@ -3992,14 +4247,14 @@ function win(){
   const badge=(t,c)=>{const b=document.createElement('span');b.className='badge';b.textContent=t;if(c){b.dataset.role='perfectc';b.style.setProperty('--c',c)}badges.append(b)};
   if(prev!==undefined&&isBest)badge('New best!');
   // a Perfect Pull (called a clean clear in code): no bumps, in par or fewer (no bumps is enough on a level without a par). It marks the level's pill in the menu.
-  let perfect=false;
+  let perfect=false,ppNew=false;
   if(oopsCount()===0&&(curPar==null||moves<=curPar)){const first=!cleanSet[levelIdx];cleanSet[levelIdx]=1;try{localStorage.setItem('pa4_clean',JSON.stringify(cleanSet))}catch(e){}
-    perfect=true}
+    perfect=true;ppNew=first;showTotal()} // a first Perfect Pull on a level earns a SmartPull
   if(badges.childElementCount)lines.push(badges);
   // Today's level keeps a daily streak going
   if(previewMode&&previewKey===dailyKey){streakClear();const l4=document.createElement('div');l4.className='movesline';l4.textContent='Daily Streak '+plural(streak.n,'day');lines.push(l4)}
   tl.replaceChildren(...lines);
-  stickPerfect(perfect); // Perfect Pull: a round badge centered above the win line
+  stickPerfect(perfect,ppNew); // Perfect Pull: the clean sweep (lines of light meeting the words PERFECT PULL above the line)
   tl.classList.remove('best');
   // time is always recorded, but only shown when the player has turned the timer on
   pauseTimer();const ms=timeMs,pt=bestTimes[levelIdx],tBest=pt===undefined||ms<pt;
@@ -4020,10 +4275,15 @@ function win(){
   document.querySelector('#done small').textContent=previewMode?'Go back':!atEnd?'Continue':tier==='full'?'All 100 levels cleared! Pick any level':'Unlock more levels';
   // the message stays until the player taps or clicks anywhere
   // the message and stats appear first; the continue button joins after a pause so there's time to read them
-  setTimeout(()=>{if(clearing)document.getElementById('done').classList.add('show')},450);
-  clearTimeout(readyTimer);readyTimer=setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('ready');waiting=true;cbShow()}},2800);
+  setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('show');cbShow()}},450); // the cheeky line, alone (the blocks' clock starts here)
+  winRead=perfect?PP_AT+PP_DONE:WIN_READ; // a Perfect Pull gets its moment first: Continue and Replay land about half a second after its chime
+  clearTimeout(statsTimer);statsTimer=setTimeout(()=>{if(clearing)document.getElementById('done').classList.add('stats')},450+WIN_STATS*1000); // then the stats and the Par block
+  clearTimeout(ppTimer);if(perfect)ppTimer=setTimeout(()=>{if(clearing){ppLayout();document.getElementById('done').classList.add('pp');ppSound()}},450+(WIN_STATS+PP_AT)*1000); // then the Perfect Pull sweep
+  clearTimeout(readyTimer);readyTimer=setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('ready');waiting=true}},450+(WIN_STATS+winRead)*1000); // then Continue and Replay land and taps work
 }
-let waiting=false,readyTimer=0;
+let waiting=false,readyTimer=0,statsTimer=0,ppTimer=0,winRead=1.15;
+const PP_AT=.45,PP_DONE=1.65; // the sweep starts .45 s after the stats; Continue and Replay land 1.65 s after that (the lines take 1.1 s, the chime rings as they arrive)
+const WIN_STATS=2,WIN_READ=1.15; // the line shows alone for 2 s; the stats get 1.15 s before Continue and Replay land (Oct 13)
 // Replay: play the level you just cleared again from the start (a daily or sampler stays a preview)
 document.getElementById('replayBtn').addEventListener('click',e=>{e.stopPropagation();if(cb.suppress||!waiting)return;waiting=false;
   cbLeave('re',()=>{const pm=previewMode,pk=previewKey,pr=previewReturn;rewind();resetZoom=true;load(levelIdx);previewMode=pm;previewKey=pk;previewReturn=pr})}); // the Replay block slides off to the left, then the level starts again
@@ -4039,11 +4299,11 @@ function advance(){ // the Continue block slides off to the right, then the next
    (so the phone has no new graphics setup to build). The HTML buttons stay underneath, invisible: they hold the layout (so nothing moves),
    the colors, the labels and the tap areas. Each block is fitted over its button so its resting silhouette fills the old button's footprint,
    and carries the game's own arrow: Continue's on the right (it leaves that way), Replay's on the left.
-   After landing they swivel in place in a slight, slow figure 8, so you can see both sides. Drag anywhere on the win screen to turn them
-   like the puzzle; on release they snap straight back (no pause). Tap one and it slides off the screen the way a pulled cube does
+   Par is a block too (no arrow; it lands with the stats). After landing they swivel in place in a slight, slow figure 8, each in its own
+   rhythm, so you can see both sides. Drag one to turn it like the puzzle; turned blocks knock into each other like real objects (see below). Tap one and it slides off the screen the way a pulled cube does
    (Continue to the right, Replay to the left), then the next level (or the replay) begins. A drag never counts as a tap. */
 const CB_DEPTH=1,CB_D=30,CB_FOV=35; // depth as a share of height (a cube's square end); block camera
-const CB_AY=.23,CB_CY=0,CB_P0=.13,CB_AP=.05,CB_PERIOD=5.4,CB_LAND_YAW=-.2; // the swivel: side to side by +-AY, tipping up and down twice as fast (a figure 8); it starts from the pose the block lands in
+const CB_AY=.23,CB_CY=0,CB_P0=-.13,CB_AP=.05,CB_PERIOD=5.4,CB_LAND_YAW=-.2; // the swivel: side to side by +-AY, tipping up and down twice as fast (a figure 8); it starts from the pose the block lands in
 function cbBez(x1,y1,x2,y2){ // a CSS cubic-bezier, so the landing matches the old button's pull-in exactly
   const cx=3*x1,bx=3*(x2-x1)-cx,ax=1-cx-bx,cy=3*y1,by=3*(y2-y1)-cy,ay=1-cy-by;
   const X=t=>((ax*t+bx)*t+cx)*t,Y=t=>((ay*t+by)*t+cy)*t;
@@ -4054,9 +4314,12 @@ const cbAxX=new THREE.Vector3(1,0,0),cbAxY=new THREE.Vector3(0,1,0),cbAxZ=new TH
 function cbPose(th,out){ // the block's turn at one moment of the swivel, rolled a touch so the word always sits level
   cbE.set(CB_P0-CB_AP*Math.sin(2*th),CB_CY+CB_AY*Math.sin(th),0);out.setFromEuler(cbE);
   const e=cbM.makeRotationFromQuaternion(out).elements;return out.premultiply(cbQ2.setFromAxisAngle(cbAxZ,-Math.atan2(e[1],e[0])))}
-function cbItem(id,sel,dir,delay,shId){ // one block: its HTML button (sel), the way it leaves (dir), when it lands (delay) and its soft shadow
-  const it={id,sel,dir,delay,sh:document.getElementById(shId),key:'',mats:[],mesh:null,geo:null,lastO:-1,grp:new THREE.Group(),blk:new THREE.Group(),px:0,py:0,base:1};
-  it.grp.add(it.blk);cb.scene.add(it.grp);it.grp.visible=false;return it}
+function cbItem(id,sel,dir,delay,shId){ // one block: its HTML placeholder (sel), the way it leaves (dir; Par never leaves), when it lands (delay) and its soft shadow
+  const it={id,sel,dir,delay,sh:document.getElementById(shId),key:'',mats:[],mesh:null,geo:null,lastO:-1,grp:new THREE.Group(),blk:new THREE.Group(),px:0,py:0,base:1,pose:null};
+  it.grp.add(it.blk);cb.scene.add(it.grp);it.grp.visible=false;cbRest(it);return it}
+function cbRest(it){ // back home, straight, at rest, nothing held
+  if(!it.p){it.p=new THREE.Vector3();it.v=new THREE.Vector3();it.w=new THREE.Vector3();it.wd=new THREE.Vector3();it.q=new THREE.Quaternion()}
+  it.p.set(0,0,0);it.v.set(0,0,0);it.w.set(0,0,0);it.wd.set(0,0,0);it.q.identity();it.held=false;it.live=false;it.shFree=false}
 function cbSetup(){
   if(cb.scene)return;
   cb.scene=new THREE.Scene();
@@ -4065,16 +4328,16 @@ function cbSetup(){
   const fl=new THREE.DirectionalLight(0xffffff,.12);fl.position.set(-6,-2,-4);cb.scene.add(fl);
   cb.cam=new THREE.PerspectiveCamera(CB_FOV,1,.1,500);
   cb.th0=Math.asin(CB_LAND_YAW/CB_AY);cb.restQ=cbPose(cb.th0,new THREE.Quaternion()); // the landing pose
-  cb.dq=new THREE.Quaternion(); // the turn from your finger, shared by both blocks (eases back to nothing)
-  cb.items=[cbItem('go','#done small',1,0,'cbsh'),cbItem('re','#replayBtn',-1,.14,'cbsh2')];
-  cb.t=0;cb.back=null;cb.dragging=false;cb.leave=null;cb.suppress=false;
+  // the clock starts when the win screen fades in (the cheeky line alone): Par lands with the stats 2 s later, Continue and Replay when tapping starts to work
+  cb.items=[cbItem('par','#done .parpill',0,WIN_STATS+.05,'cbsh3'),cbItem('go','#done small',1,WIN_STATS+WIN_READ,'cbsh'),cbItem('re','#replayBtn',-1,WIN_STATS+WIN_READ+.14,'cbsh2')];
+  cb.t=0;cb.leave=null;cb.suppress=false;cb.calm=true;
   cb.still=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
 const cbPot=n=>{let p=16;while(p<n&&p<2048)p*=2;return p};
 function cbTex(w,h,draw,flat){ // a face picture drawn in CSS-pixel units, kept sharp at 3x
-  const cw=flat?4:cbPot(w*3),ch=flat?4:cbPot(h*3),cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
+  const cw=flat?4:cbPot(w*4),ch=flat?4:cbPot(h*4),cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
   const g=cv.getContext('2d');g.scale(cw/w,ch/h);draw(g,w,h,cw/w);
-  const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t}
+  const t=new THREE.CanvasTexture(cv);t.anisotropy=8;t.generateMipmaps=false;t.minFilter=THREE.LinearFilter;return t}
 function cbGeo(w,h,d,r){ // the same rounded shape as the cubes (and the gravity floor), just longer; the front picture is laid out by position, right way up
   const g=roundedSlab(w,h,d,r),pos=g.attributes.position,uv=g.attributes.uv,grp=g.groups[4],seen=new Set();
   for(let i=grp.start;i<grp.start+grp.count;i++){const v=g.index.array[i];if(seen.has(v))continue;seen.add(v);uv.setXY(v,(pos.getX(v)+w/2)/w,(pos.getY(v)+h/2)/h)}
@@ -4085,120 +4348,214 @@ function cbLayout(){
   if(!cr.width)return;
   c.cam.aspect=cr.width/cr.height;c.cam.fov=CB_FOV;c.cam.position.set(0,0,CB_D);c.cam.lookAt(0,0,0);c.cam.updateProjectionMatrix();
   const ppu=cr.height/(2*CB_D*Math.tan(CB_FOV*Math.PI/360)); // CSS pixels per world unit at the blocks
-  c.ppu=ppu;c.halfW=cr.width/2/ppu;
+  c.ppu=ppu;c.halfW=cr.width/2/ppu;c.bounds={l:cr.left+2,t:cr.top+2,r:cr.right-2,b:cr.bottom-2};c.cx=cr.left+cr.width/2;c.cy=cr.top+cr.height/2;
   const e=new THREE.Matrix4().makeRotationFromQuaternion(c.restQ).elements,k=CB_DEPTH;
   const m11=Math.abs(e[0]),m12=Math.abs(e[4])+Math.abs(e[8])*k,m21=Math.abs(e[1]),m22=Math.abs(e[5])+Math.abs(e[9])*k,det=m11*m22-m12*m21;
   for(const it of c.items){
-    const el=document.querySelector(it.sel),r=el.getBoundingClientRect();if(!r.width)continue;
+    const el=document.querySelector(it.sel),r=el&&el.getBoundingClientRect();
+    it.absent=!r||!r.width;if(it.absent){it.grp.visible=false;continue} // (a level with no par has no Par block)
     // size: the block's landing silhouette fills the old button's footprint (solve front width and height from the turned box's width and height)
     const hw=r.width/2,hh=r.height/2;
     let a=(hw*m22-hh*m12)/det,b=(m11*hh-m21*hw)/det;if(!(a>0&&b>0)){a=hw*.92;b=hh*.78}
-    const Wf=2*a,Hf=2*b,Df=Hf*k,key=[Wf.toFixed(1),Hf.toFixed(1)].join('x');
+    const Wf=2*a,Hf=2*b,Df=Hf*k,key=[Wf.toFixed(1),Hf.toFixed(1),el.textContent].join('x');
     it.Wf=Wf;it.Hf=Hf;it.Df=Df;it.base=Hf/ppu;
-    it.px=(r.left+r.width/2-cr.left-cr.width/2)/ppu;it.py=-((r.top+r.height/2)-cr.top-cr.height/2)/ppu;
+    it.px=(r.left+r.width/2-c.cx)/ppu;it.py=-((r.top+r.height/2)-c.cy)/ppu;
+    // its body for the physics, in screen pixels: home (the placeholder's center), size, weight (by area) and how hard it is to spin
+    it.hx=r.left+r.width/2;it.hy=r.top+r.height/2;it.bw=r.width;it.bh=r.height;it.m=r.width*r.height/2000;{const W=Wf/ppu,H=Hf/ppu,D=Df/ppu;it.I=it.m*(W*W+H*H+D*D)/12}
     if(key!==it.key){it.key=key;if(it.geo)it.geo.dispose();it.geo=cbGeo(Wf/Hf,1,Df/Hf,.112);
       if(it.mesh)it.blk.remove(it.mesh);it.mesh=new THREE.Mesh(it.geo,[]);it.blk.add(it.mesh);cbPaint(it)}
     const sh=it.sh;if(sh){sh.style.left=(r.left-fx.left+r.width*.08)+'px';sh.style.width=(r.width*.84)+'px';sh.style.top=(r.bottom-fx.top-2)+'px';sh.style.transformOrigin='50% '+(-(r.height/2-2))+'px'}
   }
 }
-function cbPaint(it){ // colors and label come from the HTML button (Replay: the page's chip color), so every mode and light/dark already agrees with it
+function cbPaint(it){ // colors and label come from the HTML placeholder (Replay: the page's chip color), so every mode and light/dark already agrees with it
   const c=cb;if(!it.mesh)return;
-  const el=document.querySelector(it.sel),cs=getComputedStyle(el),neon=theme==='neon',go=it.id==='go';
-  const ink=cs.color,fam=cs.fontFamily,fill=go?cs.backgroundColor:(getComputedStyle(document.documentElement).getPropertyValue('--chip').trim()||'#F4F3EE');
-  const rgb=ink.match(/[\d.]+/g)||[244,236,255],soft=a=>`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
-  const lineC=go||!neon?ink:soft(.5),glowC=go?ink:soft(.55);
-  const label=(el.textContent||'').trim().toUpperCase(),Wf=it.Wf,Hf=it.Hf,Df=it.Df,sp=.08; // letter-spacing .08em, as the button had
-  // the game's own arrow (the chunky rounded chevron on every cube), sized to the block: Continue's on the right, Replay's on the left
-  const A=Hf*.0034,aw=84*A,gap=Hf*.22,mg=Math.max(9,Hf*.3);
+  const el=document.querySelector(it.sel);if(!el)return;
+  const cs=getComputedStyle(el),neon=theme==='neon',go=it.id==='go',par=it.id==='par',bold=go||par;
+  // Neon (Samuel, Oct 13): solid filled blocks, not outlines: Continue pink, Par its blue, Replay the soft lavender gray, all with black words
+  const rs=getComputedStyle(document.documentElement),fam=cs.fontFamily;
+  // Replay is the brand gray (Samuel, Oct 13: gray, not charcoal), softened in dark mode, with dark words in every mode
+  const ink=neon||(!bold)?(neon?'#000':'#25302A'):cs.color,fill=neon?(bold?cs.color:(rs.getPropertyValue('--muted').trim()||'#9A8FB0')):bold?cs.backgroundColor:uiCol('#ABABA8');
+  // Par keeps the pill's own type (its size, weight, spacing and \"Par 8\" in mixed case); Continue and Replay keep the buttons' (12px, .08em, capitals)
+  const fs0=parseFloat(cs.fontSize)||12,fw=par?(cs.fontWeight||500):500,sp=par?(parseFloat(cs.letterSpacing)||0)/fs0:.08;
+  let label=(el.textContent||'').trim();if(!par)label=label.toUpperCase();
+  const Wf=it.Wf,Hf=it.Hf,Df=it.Df;
+  // the game's own arrow (the chunky rounded chevron on every cube), sized to the block: Continue's on the right, Replay's on the left; Par has none
+  const A=Hf*.0034,aw=par?0:84*A,gap=par?0:Hf*.22,mg=par?6:Math.max(9,Hf*.3);
   const probe=document.createElement('canvas').getContext('2d');
-  // the label: 12px like the button, wrapped to the room beside the arrow (a long label like "Unlock more levels" takes two lines), shrinking only if it must
-  let fs=12,lines=[label],lh=0;
-  const avail=Wf-2*mg-aw-gap,width=(t,f)=>{probe.font=`500 ${f}px ${fam}`;let s=0;for(const ch of t)s+=probe.measureText(ch).width+f*sp;return s-f*sp};
+  // the label, wrapped to the room beside the arrow (a long label like "Unlock more levels" takes two lines), shrinking only if it must
+  let fs=par?fs0:12,lines=[label],lh=0;
+  const avail=Wf-2*mg-aw-gap,width=(t,f)=>{probe.font=`${fw} ${f}px ${fam}`;let s=0;for(const ch of t)s+=probe.measureText(ch).width+f*sp;return s-f*sp};
   for(;fs>=8;fs-=.5){const words=label.split(' '),ls=[];let cur='';
-    for(const w of words){const t=cur?cur+' '+w:w;if(cur&&width(t,fs)>avail){ls.push(cur);cur=w}else cur=t}
+    for(const w of words){const t=cur?cur+' '+w:w;if(cur&&!par&&width(t,fs)>avail){ls.push(cur);cur=w}else cur=t}
     ls.push(cur);lines=ls;lh=fs*1.35;if(Math.max(...ls.map(t=>width(t,fs)))<=avail&&ls.length*lh<=Hf-8)break}
-  const text=(g,w,h,s)=>{g.font=`500 ${fs}px ${fam}`;g.fillStyle=ink;g.textBaseline='alphabetic';
+  const text=(g,w,h,s)=>{g.font=`${fw} ${fs}px ${fam}`;g.fillStyle=ink;g.textBaseline='alphabetic';
     const cap=g.measureText('H').actualBoundingBoxAscent||fs*.72,tw=Math.max(...lines.map(t=>width(t,fs))),x0=w/2-(tw+gap+aw)/2;
     const tx=go?x0:x0+aw+gap,ax=go?x0+tw+gap+aw/2:x0+aw/2;
-    const ar=()=>{g.save();g.translate(ax,h/2);g.scale(A,A);if(!go)g.rotate(Math.PI);g.translate(-2,0);g.strokeStyle=ink;g.lineWidth=28;g.lineCap='round';g.lineJoin='round';arrowGlyph(g,false,0);g.restore()};
+    const ar=()=>{if(par)return;g.save();g.translate(ax,h/2);g.scale(A,A);if(!go)g.rotate(Math.PI);g.translate(-2,0);g.strokeStyle=ink;g.lineWidth=28;g.lineCap='round';g.lineJoin='round';arrowGlyph(g,false,0);g.restore()};
     lines.forEach((ln,i)=>{const y=h/2+(i-(lines.length-1)/2)*lh+cap/2;let x=tx+(tw-width(ln,fs))/2;
-      if(neon){g.shadowColor=glowC;g.shadowBlur=7*s}
-      const run=()=>{let xx=x;for(const ch of ln){g.fillText(ch,xx,y);xx+=g.measureText(ch).width+fs*sp}};run();if(neon){g.shadowBlur=0;run()}});
-    if(neon){g.shadowColor=glowC;g.shadowBlur=7*s;ar();g.shadowBlur=0}ar()};
-  const outline=(g,w,h,s)=>{const m=Math.min(w,h),p=Math.max(1.2,m*.05),rr=m*.14;g.fillStyle='#000';g.fillRect(0,0,w,h);
-    g.lineWidth=1.6;g.strokeStyle=lineC;g.shadowColor=glowC;g.shadowBlur=(go?8:5)*s;
-    const path=()=>{g.beginPath();g.moveTo(p+rr,p);g.arcTo(w-p,p,w-p,h-p,rr);g.arcTo(w-p,h-p,p,h-p,rr);g.arcTo(p,h-p,p,p,rr);g.arcTo(p,p,w-p,p,rr);g.closePath()};
-    path();g.stroke();g.shadowBlur=0;path();g.stroke()};
-  const solid=(g,w,h)=>{g.fillStyle=fill;g.fillRect(0,0,w,h)};
-  const mk=t=>{if(neon)return new THREE.MeshBasicMaterial({map:t});const m=new THREE.MeshPhongMaterial({map:t,specular:0x000000,shininess:1});m.color.setScalar(1.1);return m}; // the cubes' own kinds of material (a touch brighter, so the face that looks at you reads as the button's color)
-  const front=cbTex(Wf,Hf,neon?(g,w,h,s)=>{outline(g,w,h,s);text(g,w,h,s)}:(g,w,h,s)=>{solid(g,w,h);text(g,w,h,s)});
-  const mats=[];
-  const faces=[[Df,Hf],[Df,Hf],[Wf,Df],[Wf,Df],null,[Wf,Hf]]; // +x, -x, +y, -y, +z (the label), -z
+      let xx=x;for(const ch of ln){g.fillText(ch,xx,y);xx+=g.measureText(ch).width+fs*sp}});
+    ar()};
+  // Neon's flat (unlit) material shows no shading, so its faces are tinted by hand like lit ones: top lighter, sides and bottom darker
+  const shade=k=>{if(!neon||k===1)return fill;const q=document.createElement('canvas').getContext('2d');q.fillStyle=fill;const f=q.fillStyle;
+    const v=(f[0]==='#'?[1,3,5].map(i=>parseInt(f.slice(i,i+2),16)):(f.match(/[\d.]+/g)||[154,143,176]).slice(0,3)).map(n=>Math.round(+n*k));return `rgb(${v[0]},${v[1]},${v[2]})`};
+  const solid=(g,w,h)=>{g.fillStyle=fill;g.fillRect(0,0,w,h)},solidK=k=>(g,w,h)=>{g.fillStyle=shade(k);g.fillRect(0,0,w,h)};
+  const mk=t=>{if(neon)return new THREE.MeshBasicMaterial({map:t});const m=new THREE.MeshPhongMaterial({map:t,specular:0x000000,shininess:1});m.color.setRGB(1.154,1.14,1.148);return m}; // measured: the lights leave the face that looks at you about 4.5% darker and a touch green, so this brings it back to the exact CSS color (Oct 14) // the cubes' own kinds of material (a touch brighter, so the face that looks at you reads as the button's color)
+  const front=cbTex(Wf,Hf,(g,w,h,s)=>{solid(g,w,h);text(g,w,h,s)});
+  const mats=[],tint=[.74,.74,.9,.6,1,.6]; // +x, -x, +y, -y, +z (the label), -z
   let flatM=null;
-  faces.forEach((f,i)=>{
+  tint.forEach((k,i)=>{
     if(i===4){mats.push(mk(front));return}
     if(!neon){if(!flatM)flatM=mk(cbTex(8,8,solid,true));mats.push(flatM);return}
-    mats.push(mk(cbTex(f[0],f[1],outline)))});
+    mats.push(mk(cbTex(8,8,solidK(k),true)))});
   it.mats.forEach(m=>{if(m.map)m.map.dispose();m.dispose()});
   it.mats=[...new Set(mats)];it.mesh.material=mats;it.lastO=-1;
 }
-function cbShow(){
-  cbSetup();const c=cb;c.t=0;c.back=null;c.dragging=false;c.leave=null;c.dq.identity();
-  for(const it of c.items){it.key='';it.lastO=-1;it.grp.visible=false;it.blk.quaternion.copy(c.restQ);if(it.sh){it.sh.style.animation='';it.sh.style.transform='';it.sh.style.opacity=''}}
+function cbShow(){ // called as the win screen fades in
+  cbSetup();const c=cb;c.t=0;c.leave=null;c.calm=true;
+  for(const it of c.items){if(it.id==='go')it.delay=WIN_STATS+winRead;if(it.id==='re')it.delay=WIN_STATS+winRead+.14} // (later after a Perfect Pull)
+  for(const it of c.items){cbRest(it);it.key='';it.lastO=-1;it.grp.visible=false;it.blk.quaternion.copy(c.restQ);
+    if(it.sh){it.sh.style.animation='';it.sh.style.transform='';it.sh.style.opacity=c.still?'0':'';it.sh.style.animationDelay=it.delay+'s'}}
   c.on=true;cbLayout();document.getElementById('cbfx').classList.add('on');
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(cb.on)cb.items.forEach(cbPaint)});
 }
 function cbHide(){
-  const c=cb;c.on=false;c.back=null;c.dragging=false;c.leave=null;
+  const c=cb;c.on=false;c.leave=null;if(c.items)for(const it of c.items)cbRest(it);
   const fx=document.getElementById('cbfx');if(fx){fx.classList.remove('on');for(const s of fx.children){s.style.animation='';s.style.transform='';s.style.opacity=''}}
 }
 // tapping a block: it slides off the screen the way a pulled cube does (the same push, the same time, the same shrinking
-// at the end, the same pull sound), Continue to the right and Replay to the left; the other block fades; then done() runs
+// at the end, the same pull sound), Continue to the right and Replay to the left; the other blocks fade; then done() runs
 function cbLeave(id,done){
   const c=cb,it=c.on&&c.items&&c.items.find(i=>i.id===id);
-  if(!it||!it.mesh||c.still){done();return}
+  if(!it||!it.mesh||it.absent||c.still){done();return}
   woosh(0);document.getElementById('done').classList.add('leaving'); // (the words fade out with it)
-  c.leave={id,t:0,dur:.75,done,dist:(it.dir>0?c.halfW-it.px:it.px+c.halfW)+it.Wf/c.ppu}; // far enough to be fully off the screen, even shrunk
+  for(const b of c.items)b.held=false;
+  const sx=it.hx+it.p.x*c.ppu-c.cx; // where it is now (it may still be settling from a bump)
+  c.leave={id,t:0,dur:.75,done,dist:(it.dir>0?c.halfW-sx/c.ppu:sx/c.ppu+c.halfW)+it.Wf/c.ppu}; // far enough to be fully off the screen, even shrunk
 }
-function cbRender(dt){ // once per frame while the blocks are up: animate them, then draw them over the puzzle
+/* ---------- the blocks are real objects (Oct 13) ----------
+   Drag a block to turn it, just like the puzzle (it stays in its place). Turned far enough, its ends swing into its neighbors, and they
+   knock like real objects: the one you are turning shoves the other (which gets pushed back and set spinning, and can knock the next
+   one), each knock sounding by how hard it hit. Let go and the block turns straight back (fastest first, no pause); a block that got
+   knocked drifts back home and turns back the short way round (one that tumbled flips back), then its figure-8 swivel carries on.
+   Simulated in 3D in small fixed steps: each block is a box; the one in your hand turns exactly with your finger and is heavy;
+   the others are free but held home by soft springs. Reduced motion turns it off. */
+const CBP={h:1/120,wHome:9,zHome:.7,wAng:8,zAng:.8,e:.35,heldMass:5};
+let cbSndT=0;
+function cbSound(str,pitch){ // a block knocking another: a short, hollow tock, louder for harder hits
+  if(!soundOn||str<.04)return;const a=audio();if(!a)return;const now=performance.now();if(now-cbSndT<220)return;cbSndT=now;
+  const t=a.currentTime+SFX_LEAD,v=Math.min(1,str);
+  tone(a,'sine',200*pitch,128*pitch,t,.12,.05+.2*v,.002);tone(a,'triangle',430*pitch,280*pitch,t,.05,.02+.07*v,.001);hiss(a,'bandpass',1500*pitch,1100*pitch,1.1,t,.03,.02+.09*v,.001)}
+const cbV=()=>new THREE.Vector3(),cbT1=cbV(),cbT2=cbV(),cbT3=cbV(),cbQa=new THREE.Quaternion(),cbMa=new THREE.Matrix4();
+function cbBox(it){ // the block as a box in the world: center, three axes (with the swivel pose), half sizes
+  const q=cbQa.copy(it.q).multiply(it.pose||cbQI),e=cbMa.makeRotationFromQuaternion(q).elements;
+  return{c:new THREE.Vector3(it.px+it.p.x,it.py+it.p.y,it.p.z),a:[new THREE.Vector3(e[0],e[1],e[2]),new THREE.Vector3(e[4],e[5],e[6]),new THREE.Vector3(e[8],e[9],e[10])],
+    h:[it.Wf/2/cb.ppu,it.Hf/2/cb.ppu,it.Df/2/cb.ppu]}}
+const cbProj=(b,n)=>b.h[0]*Math.abs(b.a[0].dot(n))+b.h[1]*Math.abs(b.a[1].dot(n))+b.h[2]*Math.abs(b.a[2].dot(n));
+function cbInside(b,p,s){const d=cbT1.subVectors(p,b.c);for(let i=0;i<3;i++)if(Math.abs(d.dot(b.a[i]))>b.h[i]*s)return false;return true}
+function cbCorners(b){const out=[];for(const i of [-1,1])for(const j of [-1,1])for(const k of [-1,1])
+  out.push(b.c.clone().addScaledVector(b.a[0],i*b.h[0]).addScaledVector(b.a[1],j*b.h[1]).addScaledVector(b.a[2],k*b.h[2]));return out}
+function cbCollide(A,B){
+  const a=cbBox(A),b=cbBox(B),d=cbV().subVectors(b.c,a.c);
+  if(d.length()>a.h[0]+a.h[1]+a.h[2]+b.h[0]+b.h[1]+b.h[2])return;
+  const axes=[...a.a,...b.a];for(const u of a.a)for(const v of b.a){const x=cbV().crossVectors(u,v);if(x.lengthSq()>1e-6)axes.push(x.normalize())}
+  let best=1e9,n=null;
+  for(const ax of axes){const ov=cbProj(a,ax)+cbProj(b,ax)-Math.abs(d.dot(ax));if(ov<=0)return;if(ov<best){best=ov;n=ax.clone();if(d.dot(n)<0)n.negate()}}
+  // where they touch: the corners of each box that are inside the other (or, edge on edge, the middle of the overlap)
+  const pts=[...cbCorners(b).filter(p=>cbInside(a,p,1.0001)),...cbCorners(a).filter(p=>cbInside(b,p,1.0001))];
+  const P=cbV();if(pts.length){for(const p of pts)P.add(p);P.divideScalar(pts.length)}else P.copy(a.c).addScaledVector(n,cbProj(a,n)-best/2);
+  // only a fresh knock makes a sound: not blocks that stay pressed together while you keep turning, and at most one per pair every .6 s
+  const key=A.id+B.id,fresh=!(cb.tprev&&cb.tprev.has(key));cb.tnow&&cb.tnow.add(key);
+  const rA=cbV().subVectors(P,a.c),rB=cbV().subVectors(P,b.c);
+  const imA=1/(A.m*(A.held?CBP.heldMass:1)),imB=1/(B.m*(B.held?CBP.heldMass:1)),iiA=A.held?0:1/A.I,iiB=B.held?0:1/B.I; // the block in your hand turns only with your finger
+  const vA=cbV().crossVectors(A.w,rA).add(A.v),vB=cbV().crossVectors(B.w,rB).add(B.v),vn=cbT2.subVectors(vB,vA).dot(n);
+  if(vn<0){
+    const xa=cbV().crossVectors(rA,n),xb=cbV().crossVectors(rB,n);
+    const j=-(1+(vn*cb.ppu<-60?CBP.e:0))*vn/(imA+imB+xa.lengthSq()*iiA+xb.lengthSq()*iiB);
+    A.v.addScaledVector(n,-j*imA);B.v.addScaledVector(n,j*imB);
+    if(!A.held)A.w.addScaledVector(xa,-j*iiA);if(!B.held)B.w.addScaledVector(xb,j*iiB);
+    const now=performance.now();cb.sndPair=cb.sndPair||{};
+    if(fresh&&vn*cb.ppu<-60&&now-(cb.sndPair[key]||0)>600){cb.sndPair[key]=now;cbSound((-vn*cb.ppu-20)/700,Math.max(.8,Math.min(1.5,1.35/Math.sqrt((A.m+B.m)/2))))}
+  }
+  const k=Math.max(0,best-.004)*.7/(imA+imB); // push apart what overlaps
+  A.p.addScaledVector(n,-k*imA);B.p.addScaledVector(n,k*imB);
+}
+function cbRotVec(q,out){ // a turn as one arrow: its axis, as long as its angle (the short way round)
+  let w=q.w,x=q.x,y=q.y,z=q.z;if(w<0){w=-w;x=-x;y=-y;z=-z}const s=Math.sqrt(x*x+y*y+z*z);if(s<1e-9)return out.set(0,0,0);
+  const ang=2*Math.atan2(s,w);return out.set(x/s*ang,y/s*ang,z/s*ang)}
+function cbStep(h){
+  const c=cb,bodies=c.items.filter(i=>i.live);
+  for(const it of bodies){
+    const W=CBP.wHome,Z=CBP.zHome; // home on a soft spring
+    it.v.addScaledVector(it.p,-W*W*h).addScaledVector(it.v,-2*Z*W*h);it.p.addScaledVector(it.v,h);
+    if(it.held){it.w.copy(it.wd);continue} // (turned by your finger; its spin is your finger's)
+    const r=cbRotVec(it.q,cbT3),Wa=CBP.wAng;it.w.addScaledVector(r,-Wa*Wa*h).addScaledVector(it.w,-2*CBP.zAng*Wa*h); // back to straight, the short way round
+    const wl=it.w.length();if(wl>30)it.w.multiplyScalar(30/wl);
+    if(wl>1e-9){cbQ1.setFromAxisAngle(cbT1.copy(it.w).divideScalar(wl),wl*h);it.q.premultiply(cbQ1).normalize()}
+  }
+  c.tnow=new Set();for(let n=0;n<2;n++)for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++)cbCollide(bodies[i],bodies[j]);c.tprev=c.tnow;
+}
+function cbSettled(it){return !it.held&&it.p.lengthSq()<1e-8&&it.v.lengthSq()<1e-6&&cbRotVec(it.q,cbT3).lengthSq()<1e-7&&it.w.lengthSq()<1e-6}
+function cbRender(dt){ // once per frame while the blocks are up: animate them, then draw them over the puzzle (and over the words)
   const c=cb;c.t+=dt;
-  if(c.back){c.back.t+=dt;const k=Math.min(1,c.back.t/.6);c.dq.copy(c.back.q0).slerp(cbQI,1-Math.pow(1-k,3));if(k>=1)c.back=null} // snaps straight back: fastest at first, no pause
   const L=c.leave;let lk=0;if(L){L.t+=dt;lk=Math.min(1,L.t/L.dur)}
+  for(const it of c.items){it.live=!it.absent&&(c.still?c.t>=it.delay:c.t-it.delay>=.6);
+    // the swivel (a slight figure 8) begins once it has landed, easing in so there is no jolt; each block in its own rhythm; reduced motion keeps it still
+    const lt=c.t-it.delay;let th=c.th0;if(!c.still){const s=lt-.6;if(s>0){const T=1.4,sw=it.id==='go'?1:it.id==='re'?-1.3:.8;th+=sw*(2*Math.PI/CB_PERIOD)*(s<T?s*s/(2*T):s-T/2)}}
+    it.pose=cbPose(th,it.pose||new THREE.Quaternion())}
+  if(!c.still&&!L&&!c.calm){const n=Math.min(8,Math.ceil(Math.min(dt,.066)/CBP.h-1e-6));for(let i=0;i<n;i++)cbStep(CBP.h);
+    for(const it of c.items)if(it.held)it.wd.multiplyScalar(Math.exp(-dt*12)); // (your finger's spin fades when it stops moving)
+    if(c.items.every(it=>!it.live||cbSettled(it))){c.calm=true;for(const it of c.items){it.p.set(0,0,0);it.v.set(0,0,0);it.w.set(0,0,0);it.q.identity()}}}
   for(const it of c.items){
+    if(it.absent)continue;
     const lt=c.t-it.delay;let sIn=1,oIn=1;
-    if(lt<=0&&!c.still){it.grp.visible=false;continue}
+    if(lt<=0){it.grp.visible=false;if(c.still&&it.sh)it.sh.style.opacity='0';continue}
+    if(c.still&&it.sh&&it.sh.style.opacity==='0')it.sh.style.opacity='';
     it.grp.visible=true;
-    if(!c.still&&lt<.6){const k=lt/.6;oIn=k<.3?cbPull(k/.3):1;const z=k<.78?330+(-12-330)*cbPull(k/.78):-12+12*cbPull((k-.78)/.22);sIn=500/(500-z)} // lands like the old button: from close up, a tiny overshoot
-    // the swivel (a slight figure 8) begins once it has landed, easing in so there is no jolt; reduced motion keeps it still
-    let th=c.th0;if(!c.still){const s=lt-.6;if(s>0){const T=1.4;th+=(2*Math.PI/CB_PERIOD)*(s<T?s*s/(2*T):s-T/2)}}
-    cbPose(th,cbQ3);it.blk.quaternion.copy(c.dq).multiply(cbQ3);
+    let rise=0,tip=0;
+    if(!c.still&&lt<.6){const k=lt/.6;
+      if(it.id==='par'){oIn=k<.3?cbPull(k/.3):1;const z=k<.78?330+(-12-330)*cbPull(k/.78):-12+12*cbPull((k-.78)/.22);sIn=500/(500-z)} // Par lands like the old button: from close up, a tiny overshoot
+      else{const e=1-Math.pow(1-k,4);oIn=Math.min(1,k/.4);rise=(1-e)*34/c.ppu;tip=(1-e)*.55} // Continue and Replay rise gently into place from just below, tipping up from lying back to face you, and settle without a bounce (Oct 14)
+    }
+    it.blk.quaternion.copy(it.q).multiply(it.pose);if(tip)it.blk.quaternion.premultiply(cbQ1.setFromAxisAngle(cbAxX,-tip));it.blk.quaternion.premultiply(cbQ1.setFromAxisAngle(cbAxX,Math.atan2(it.py,CB_D))); // seen from underneath, face on (Samuel, Oct 14: the buttons sit at the bottom, so show their undersides)
     let sOut=1,oOut=1,off=0;
-    if(L){if(L.id===it.id){off=it.dir*L.dist*lk*lk;sOut=1-.6*Math.max(0,lk-.5)*2}else{const u=Math.min(1,lk/.5);oOut=1-u*u*(3-2*u)}} // the pulled one slides (like a cube); the other fades
-    it.grp.position.set(it.px+off,it.py,0);it.grp.scale.setScalar(it.base*sIn*sOut);
+    if(L){if(L.id===it.id){off=it.dir*L.dist*lk*lk;sOut=1-.6*Math.max(0,lk-.5)*2}else{const u=Math.min(1,lk/.5);oOut=1-u*u*(3-2*u)}} // the pulled one slides (like a cube); the others fade
+    it.grp.position.set(it.px+it.p.x+off,it.py+it.p.y-rise,it.p.z);it.grp.scale.setScalar(it.base*sIn*sOut);
     const o=oIn*oOut;if(o!==it.lastO){it.lastO=o;for(const m of it.mats){m.opacity=o;m.transparent=o<1}}
-    if(L&&it.sh){if(L.id===it.id){it.sh.style.animation='none';it.sh.style.opacity='1';it.sh.style.transform=`translateX(${(off*c.ppu).toFixed(1)}px) scale(${sOut.toFixed(3)})`}else{it.sh.style.animation='none';it.sh.style.opacity=String(oOut)}}
+    // its soft shadow moves with it and fades while it is knocked out of place or turned
+    if(it.sh&&!c.still&&(lt>=.6||L)){
+      if(!it.shFree){it.shFree=true;it.sh.style.animation='none'}
+      const k=L?1:Math.max(0,1-it.p.length()*c.ppu/30-cbRotVec(it.q,cbT3).length()*1.3);
+      it.sh.style.opacity=(k*oOut).toFixed(3);
+      it.sh.style.transform=`translate(${((it.p.x+off)*c.ppu).toFixed(1)}px,${(-it.p.y*c.ppu).toFixed(1)}px) scale(${sOut.toFixed(3)})`}
   }
   renderer.autoClear=false;renderer.clearDepth();renderer.render(c.scene,c.cam);renderer.autoClear=true;
   if(L&&L.t>=L.dur&&c.leave===L){c.leave=null;L.done()}
 }
-// turning the blocks with a finger, just like the puzzle (same feel); a drag never counts as a tap, and a plain tap still works
+// which block a press belongs to: the one under (or within a fingertip of) the press; a press on none turns nothing
+function cbPick(x,y){let best=null,bd=26;for(const it of cb.items||[]){if(!it.live)continue;
+  const cx=it.hx+it.p.x*cb.ppu,cy=it.hy-it.p.y*cb.ppu,d=Math.hypot(Math.max(Math.abs(x-cx)-it.bw/2,0),Math.max(Math.abs(y-cy)-it.bh/2,0));if(d<bd){bd=d;best=it}}return best}
+// turning a block with a finger, just like the puzzle (same feel); a drag never counts as a tap, and a plain tap still works
 (function(){const dn=document.getElementById('done');let st=null;dn.style.touchAction='none';
   dn.addEventListener('pointerdown',e=>{cb.suppress=false;if(!cb.on||cb.leave||!e.isPrimary)return;
-    st={id:e.pointerId,x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,drag:false,cap:false};
+    st={id:e.pointerId,x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,lt:performance.now(),drag:false,cap:false,it:cbPick(e.clientX,e.clientY)};
     if(!e.target.closest('button')){try{dn.setPointerCapture(e.pointerId);st.cap=true}catch(_){}}}); // (a press that starts on Replay is only captured once it becomes a drag, so a plain tap still reaches the button)
   dn.addEventListener('pointermove',e=>{if(!st||e.pointerId!==st.id)return;
-    if(!st.drag&&Math.hypot(e.clientX-st.x,e.clientY-st.y)>6){st.drag=true;cb.dragging=true;cb.back=null;if(!st.cap){try{dn.setPointerCapture(e.pointerId);st.cap=true}catch(_){}}}
-    if(st.drag){cb.dq.premultiply(cbQ1.setFromAxisAngle(cbAxY,(e.clientX-st.lx)*.009)).premultiply(cbQ1.setFromAxisAngle(cbAxX,(e.clientY-st.ly)*.009))}
+    if(!st.drag&&Math.hypot(e.clientX-st.x,e.clientY-st.y)>6){st.drag=true;if(st.it&&!cb.still&&!cb.leave){st.it.held=true;st.it.wd.set(0,0,0);cb.calm=false}if(!st.cap){try{dn.setPointerCapture(e.pointerId);st.cap=true}catch(_){}}}
+    if(st.drag&&st.it&&st.it.held){const it=st.it,ay=(e.clientX-st.lx)*.009,ax=(e.clientY-st.ly)*.009,now=performance.now(),dt=Math.max(.008,(now-st.lt)/1000);
+      it.q.premultiply(cbQ1.setFromAxisAngle(cbAxY,ay)).premultiply(cbQ1.setFromAxisAngle(cbAxX,ax)).normalize();
+      it.wd.lerp(cbT1.set(ax/dt,ay/dt,0),.6);st.lt=now} // (how fast your finger is turning it, so a knock carries that speed)
     st.lx=e.clientX;st.ly=e.clientY});
-  const end=e=>{if(!st||e.pointerId!==st.id)return;const was=st.drag;st=null;cb.dragging=false;
-    if(was){e.stopPropagation();cb.suppress=true;if(cb.on)cb.back={t:0,q0:cb.dq.clone()}}}; // let go: it snaps back right away, and the click that follows a drag is ignored
+  const end=e=>{if(!st||e.pointerId!==st.id)return;const st0=st,was=st.drag;st=null;
+    if(was){e.stopPropagation();cb.suppress=true;const it=st0.it;
+      if(it&&it.held){it.held=false;cbRotVec(it.q,it.w).multiplyScalar(-CBP.wAng)}}}; // let go: it turns straight back, fastest at first (no pause); the click that follows a drag is ignored
   dn.addEventListener('pointerup',end);dn.addEventListener('pointercancel',end)})();
 
 // next arrow: on to an unlocked level, or, at the end of the free or $0.99 levels, the upgrade screen
 const nextAllowed=()=>TESTING||levelIdx<topLevel();
 const nextUpsell=()=>!devMode&&tier!=='full'&&capCleared()&&levelIdx===maxLevel()-1;
 function refreshNav(){} // (the ‹ › level buttons were removed; levels change from the menu or the scrub ruler)
-document.addEventListener('pointerup',e=>{if(waiting&&!e.target.closest('button'))advance()});
+document.addEventListener('pointerup',e=>{if(!waiting||e.target.closest('button'))return; // only the Continue block continues (Samuel, Oct 13): a tap on it, or on its spot, never anywhere else on the win screen
+  const hit=cb.on&&cbPick(e.clientX,e.clientY);if((hit&&hit.id==='go')||(e.target.closest&&e.target.closest('#done small')))advance()});
 document.addEventListener('keydown',e=>{if(waiting&&(e.key==='Enter'||e.key===' ')&&!(e.target.closest&&e.target.closest('button'))){e.preventDefault();advance()}});
 
 /* ---------- input ---------- */
@@ -4302,7 +4659,7 @@ function openScorecard(){
   const box=document.getElementById('scCards');box.innerHTML='';
   {const c=document.createElement('div');c.className='sccard';c.style.setProperty('--sc',pal[0]);
     const cell=(val,lab)=>`<div><b>${val}</b><span>${lab}</span></div>`,n=v=>(v||0).toLocaleString();
-    let g=cell(n(life.cubes),'Cubes pulled')+cell(n(Object.keys(cleanSet).length),'Perfect Pulls')+cell(streakNow(),'Daily Streak')+(streak.best?cell(streak.best,'Best Streak'):'');
+    let g=cell(n(life.cubes),'Cubes pulled')+cell(n(smartPulls()),'SmartPulls')+cell(streakNow(),'Daily Streak')+(streak.best?cell(streak.best,'Best Streak'):'');
     [['dots','Dots turned'],['gears','Gears turned'],['echoes','Echoes paired'],['fusions','Fusions made'],['glass','Glass shattered']].forEach(([k,lab])=>{if(life[k])g+=cell(n(life[k]),lab)});
     c.innerHTML=`<div class="schead"><span>Lifetime</span><small>Every level</small></div><div class="scgrid">${g}</div>`;box.appendChild(c)}
   SC_VERSIONS.forEach(([v,name,range,a,z],i)=>{
@@ -4455,7 +4812,7 @@ function openLevels(){
     let tray;
     if(locked){tray=`<button class="trlv samp${sampled.has(String(s))?' clr':''}${previewKey===String(s)?' now':''}" type="button" data-samp="${s}" aria-label="Free sampler, level ${s+1}">${s+1}</button><button class="unlockPill" type="button" data-unlock="1">${LOCK_SVG}4 more</button>`}
     else{tray='';for(let i=s;i<end;i++)tray+=`<button class="trlv${i<best?' clr':''}${cleanSet[i]?' cln':''}${i===levelIdx&&!previewMode?' now':''}" type="button" data-lv="${i}"${i>top?' disabled':''}${cleanSet[i]?` aria-label="Level ${i+1}, Perfect Pull"`:''}>${i+1}</button>`}
-    h+=`<div class="chrow" data-r="${k}"><button class="med${cur?' cur':''}${locked?' locked':''}" type="button" style="--c:${c};transition-delay:${delay}ms" aria-label="${name}, levels ${s+1} to ${end}">${ringSvg(s,locked,c)}<span class="disc">${chapterIcon(name)}</span>${locked?`<span class="lockBadge">${LOCK_SVG}</span>`:''}</button>`+
+    h+=`<div class="chrow" data-r="${k}"><button class="med${cur?' cur':''}${locked?' locked':''}" type="button" style="--c:${c};transition-delay:${delay}ms" aria-label="${name}, levels ${s+1} to ${end}">${ringSvg(s,locked,c)}<span class="disc">${chapterIcon(name)}</span>${locked?`<span class="lockBadge">${LOCK_SVG}</span>`:''}${(()=>{let n=0;for(let i=s;i<end;i++)if(cleanSet[i])n++;return !locked&&n?`<span class="spBadge" aria-label="${n} of ${end-s} SmartPulls">${n}/${end-s}</span>`:''})()}</button>`+
        `<div class="tray" style="--c:${c}"><span class="trnm">${name}</span>${tray}</div></div>`;
   });
   // chapters 21–23 (levels 101–115) aren't designed yet — shown as locked placeholders, not playable
@@ -4744,7 +5101,7 @@ function frame(now){
   {const cur=tweens;tweens=[];const keep=cur.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});tweens=keep.concat(tweens)}
   coastStep(dt);renderer.render(scene,camera);if(cb.on)cbRender(dt);requestAnimationFrame(frame);
 }
-window.__test={pivot:()=>pivot,COAST:()=>COAST,cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
+window.__test={TV,tvNode,pivot:()=>pivot,COAST:()=>COAST,cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
   blocks:()=>blocks,slide,spin,pivotTurn,glassTap,prepShatter,shards:()=>shardsLive,S4,solveTest,liveSpec,solverFor,settle,rayBlocked,levelSig,pullsLeft,par:()=>curPar,grav:()=>gravity,counts:()=>({pulls,taps,bumps}),src:()=>curLv&&curLv.src,state:()=>({levelIdx,clearing,best,busy:blocks.some(b=>b.busy)})};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
