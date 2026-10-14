@@ -4240,9 +4240,10 @@ function ppLayout(){ // the two paths: from beside Moves and beside Best, out, u
 addEventListener('resize',()=>{if(document.getElementById('done').classList.contains('pp'))ppLayout()});
 // the sound: two soft rising breaths (one for each line), then a chime exactly as they reach the words; every part fades fully to silence
 function ppSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
-  hiss(a,'lowpass',350,2600,.7,t,1.05,.08,.35);hiss(a,'lowpass',300,2200,.7,t+.02,1.05,.055,.35,.37);
-  tone(a,'sine',1175,1175,t+1.08,1,.05,.003);tone(a,'sine',1175*2.76,1175*2.76,t+1.08,.4,.012,.002);
-  tone(a,'sine',1568,1568,t+1.14,1.1,.06,.003);tone(a,'sine',1568*2.76,1568*2.76,t+1.14,.45,.014,.002)}
+  const g=.7; // 30% quieter than before (Samuel, Oct 14: still a little too loud by default)
+  hiss(a,'lowpass',350,2600,.7,t,1.05,.08*g,.35);hiss(a,'lowpass',300,2200,.7,t+.02,1.05,.055*g,.35,.37);
+  tone(a,'sine',1175,1175,t+1.08,1,.05*g,.003);tone(a,'sine',1175*2.76,1175*2.76,t+1.08,.4,.012*g,.002);
+  tone(a,'sine',1568,1568,t+1.14,1.1,.06*g,.003);tone(a,'sine',1568*2.76,1568*2.76,t+1.14,.45,.014*g,.002)}
 function win(){
   // the gravity floor fades away as the level clears, so the message reads cleanly
   if(floorMesh){const f=floorMesh,mats=[...new Set(f.material)];mats.forEach(m=>{m.transparent=true;m.depthWrite=false});
@@ -4475,10 +4476,10 @@ function cbLeave(id,done){
    the others are free but held home by soft springs. Reduced motion turns it off. */
 const CBP={h:1/120,wHome:9,zHome:.7,wAng:8,zAng:.8,e:.35,heldMass:5};
 let cbSndT=0;
-function cbSound(str,pitch){ // a block knocking another: a short, hollow tock, louder for harder hits
-  if(!soundOn||str<.04)return;const a=audio();if(!a)return;const now=performance.now();if(now-cbSndT<220)return;cbSndT=now;
+function cbSound(str,pitch){ // a block knocking another: a soft, low, padded thud, louder for harder hits (was a hollow tock with a click until Oct 14; Samuel: too harsh, more of a thud)
+  if(!soundOn||str<.02)return;const a=audio();if(!a)return;const now=performance.now();if(now-cbSndT<120)return;cbSndT=now;
   const t=a.currentTime+SFX_LEAD,v=Math.min(1,str);
-  tone(a,'sine',200*pitch,128*pitch,t,.12,.05+.2*v,.002);tone(a,'triangle',430*pitch,280*pitch,t,.05,.02+.07*v,.001);hiss(a,'bandpass',1500*pitch,1100*pitch,1.1,t,.03,.02+.09*v,.001)}
+  tone(a,'sine',150*pitch,88*pitch,t,.16,.05+.15*v,.005);hiss(a,'lowpass',700*pitch,380*pitch,.7,t,.07,.015+.045*v,.004,.31)}
 const cbV=()=>new THREE.Vector3(),cbT1=cbV(),cbT2=cbV(),cbT3=cbV(),cbQa=new THREE.Quaternion(),cbMa=new THREE.Matrix4();
 function cbBox(it){ // the block as a box in the world: center, three axes (with the swivel pose), half sizes
   const q=cbQa.copy(it.q).multiply(it.pose||cbQI),e=cbMa.makeRotationFromQuaternion(q).elements;
@@ -4508,7 +4509,7 @@ function cbCollide(A,B){
     A.v.addScaledVector(n,-j*imA);B.v.addScaledVector(n,j*imB);
     if(!A.held)A.w.addScaledVector(xa,-j*iiA);if(!B.held)B.w.addScaledVector(xb,j*iiB);
     const now=performance.now();cb.sndPair=cb.sndPair||{};
-    if(fresh&&vn*cb.ppu<-60&&now-(cb.sndPair[key]||0)>600){cb.sndPair[key]=now;cbSound((-vn*cb.ppu-20)/700,Math.max(.8,Math.min(1.5,1.35/Math.sqrt((A.m+B.m)/2))))}
+    if(fresh&&vn*cb.ppu<-6&&now-(cb.sndPair[key]||0)>250){cb.sndPair[key]=now;cbSound(.03+(-vn*cb.ppu)/700,Math.max(.8,Math.min(1.5,1.35/Math.sqrt((A.m+B.m)/2))))}
   }
   const k=Math.max(0,best-.004)*.7/(imA+imB); // push apart what overlaps
   A.p.addScaledVector(n,-k*imA);B.p.addScaledVector(n,k*imB);
