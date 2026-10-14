@@ -856,9 +856,22 @@ function glassTap(b){if(b.busy)return;
   if(blocks.some(o=>o.alive&&!o.glass)){smudgeSound();return}
   saveUndo();undoStack[undoStack.length-1].dir=[0,1,0];if(!clearing){pulls++;addTotal('pulls')}
   b.alive=false;occ.delete(K(...b.c));shatterGlass(b);afterRemoval([b])}
-function smudgeSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
+// Several panes can be struck by one move (a big piece against a cracked wall). Each would play the very same sound at the very same
+// instant, and identical sounds add up (nine tinks = nine times as loud, with a hard click at the start). So the panes take turns:
+// each extra pane comes a hair later, at its own pitch and softer, from a different stretch of noise, and no more than three are heard.
+const GLASS_TURN={t0:-1e9,n:0},GLASS_F=[1,1.19,.84],GLASS_V=[1,.62,.45];
+function glassTurn(){const now=performance.now();if(now-GLASS_TURN.t0>60){GLASS_TURN.t0=now;GLASS_TURN.n=0}return GLASS_TURN.n++}
+function smudgeSound(){if(!soundOn)return;const a=audio();if(!a)return;const i=glassTurn();if(i>2)return;
+  const t=a.currentTime+SFX_LEAD+i*.013,f=GLASS_F[i],v=GLASS_V[i];
   // a faint glass tink: a tiny click and a short, bright ring with a slightly detuned partial
-  hiss(a,'highpass',6000,6000,1,t,.012,.012,.001);tone(a,'sine',2960,2950,t,.32,.016,.002);tone(a,'sine',4420,4400,t,.22,.007,.002)}
+  hiss(a,'highpass',6000,6000,1,t,.012,.012*v,.002,Math.random()*.7);tone(a,'sine',2960*f,2950*f,t,.32,.016*v,.002);tone(a,'sine',4420*f,4400*f,t,.22,.007*v,.002)}
+// cracked glass struck again from the same side: a close cousin of the crack, not a copy. The same dry knock and splintering ticks,
+// but shorter, duller and softer, with a lower ring that fades quickly. (The whole break and the first crack stay their own sounds.)
+function crackedHitSound(){if(!soundOn)return;const a=audio();if(!a)return;const i=glassTurn();if(i>2)return;
+  const t=a.currentTime+SFX_LEAD+i*.013,f=GLASS_F[i],v=GLASS_V[i],r=()=>Math.random()*.7;
+  tone(a,'sine',165*f,108*f,t,.1,.04*v,.004);hiss(a,'highpass',2400,2400,.8,t,.035,.05*v,.0015,r());
+  [[3000,2600,.008,.026],[3700,3100,.03,.02]].forEach(([f0,f1,d,g])=>hiss(a,'bandpass',f0*f,f1*f,5,t+d,.03,g*v,.0015,r()));
+  tone(a,'sine',2090*f,2060*f,t+.01,.18,.005*v,.002)}
 function pivotSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
   // the pivot turn: the same Twist-knob clicks as a dot turn, a little lower, with a fourth detent as the turn ripples out
   const P=.85,lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1800;lp.connect(sfxBus);
@@ -1115,8 +1128,8 @@ if(/perf/.test(location.hash))setTimeout(()=>{
     while(ev.length&&ev[0][1]<n-5000)ev.shift();l=n;fr++;if(g>worst)worst=g;
     if(n-t0>=1000){d.textContent=fr+' fps · worst '+Math.round(worst)+' ms'+(hitches.length?'\n'+hitches.join('\n'):'');fr=0;worst=0;t0=n}
     requestAnimationFrame(w)})(l)},0);
-function shatterSound(){if(!soundOn)return;const a=audio();if(!a)return;
-  if(GLASS_SND.shatter.length){playBuf(GLASS_SND.shatter[Math.floor(Math.random()*GLASS_SND.shatter.length)]);return} // the recorded break (see recordGlassSounds)
+function shatterSound(){if(!soundOn)return;const a=audio();if(!a)return;const i=glassTurn();if(i>2)return; // panes breaking together take turns (see smudgeSound)
+  if(GLASS_SND.shatter.length){playBuf(GLASS_SND.shatter[(Math.floor(Math.random()*GLASS_SND.shatter.length)+i)%GLASS_SND.shatter.length],i?GLASS_V[i]:null,i?GLASS_F[i]:null);return} // the recorded break (see recordGlassSounds)
   recordGlassSounds();shatterSoundTo(a,a.currentTime+SFX_LEAD)}
 function shatterSoundTo(a,t){
   // glass breaking: a sharp crack, then a shower of tiny shards clinking, thinning out as they settle
@@ -1218,14 +1231,15 @@ function setCrackLook(b){const old=b.mesh.userData.crack;if(old){b.mesh.remove(o
   b.mesh.material=materialsFor(b)}
 // a cube bumped glass: the first hit cracks it; the same side again just tinks; a different side shatters it. Returns true when it shatters.
 function crackGlass(o,d,delay){const side=d.join(','),ms=delay*1000;
-  if(o.crack===side){setTimeout(()=>smudgeSound(),ms);return false}
+  if(o.crack===side){setTimeout(()=>crackedHitSound(),ms);return false}
   if(!o.crack){o.crack=side;setTimeout(()=>{if(o.alive&&o.crack===side){setCrackLook(o);crackSound();setTimeout(()=>prepShatter(o),60)}},ms);return false}
   o.alive=false;occ.delete(K(...o.c));setTimeout(()=>shatterGlass(o),ms);return true}
 // the glass cracking: a soft knock as the cube meets it, a dry crack, a few splintering ticks and a faint ring
-function crackSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
-  tone(a,'sine',190,120,t,.12,.05,.004);hiss(a,'highpass',2800,2800,.8,t,.05,.075,.001);
-  [0,.02,.045,.075].forEach((d,i)=>hiss(a,'bandpass',3600+i*800,3000+i*600,6,t+.006+d,.035,.032*(1-i*.2),.001));
-  tone(a,'sine',2480,2440,t+.01,.28,.006,.002)}
+function crackSound(){if(!soundOn)return;const a=audio();if(!a)return;const i=glassTurn();if(i>2)return; // panes cracking together take turns (see smudgeSound)
+  const t=a.currentTime+SFX_LEAD+i*.013,f=GLASS_F[i],v=GLASS_V[i],r=()=>Math.random()*.7;
+  tone(a,'sine',190*f,120*f,t,.12,.05*v,.004);hiss(a,'highpass',2800,2800,.8,t,.05,.075*v,.001,r());
+  [0,.02,.045,.075].forEach((d,k)=>hiss(a,'bandpass',(3600+k*800)*f,(3000+k*600)*f,6,t+.006+d,.035,.032*v*(1-k*.2),.001,r()));
+  tone(a,'sine',2480*f,2440*f,t+.01,.28,.006*v,.002)}
 // glass hit by bumping cubes (the cubes in `unit` that reached distance `hit` in direction d); returns the glass that shattered
 function strikeGlass(unit,hits,hit,dirOf){const struck=[];
   unit.forEach((u,k)=>{const h=hit==null?hits[k]:hit;if(!h||hits[k]!==h)return;const d=dirOf(u),o=occ.get(K(u.c[0]+d[0]*h,u.c[1]+d[1]*h,u.c[2]+d[2]*h));
@@ -2524,11 +2538,11 @@ function tone(a,type,f0,f1,t,dur,vol,att=.005){
   const g=a.createGain();const end=fadeEnv(g.gain,t,att,vol,t+dur);
   o.connect(g).connect(sfxBus);o.start(t);o.stop(end);
 }
-function hiss(a,type,f0,f1,q,t,dur,vol,att=.003){
+function hiss(a,type,f0,f1,q,t,dur,vol,att=.003,off=0){
   const n=a.createBufferSource();n.buffer=noiseBuf;const f=a.createBiquadFilter();f.type=type;f.Q.value=q;
   f.frequency.setValueAtTime(f0,t);if(f1!==f0)f.frequency.exponentialRampToValueAtTime(f1,t+dur*.8);
   const g=a.createGain();const end=fadeEnv(g.gain,t,att,vol,t+dur);
-  n.connect(f).connect(g).connect(sfxBus);n.start(t);n.stop(end);
+  n.connect(f).connect(g).connect(sfxBus);n.start(t,off);n.stop(end);
 }
 const BUMPS=[
   // Clay: a dull, earthy thud (the bump sound, chosen Oct 11)
