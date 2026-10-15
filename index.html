@@ -507,6 +507,9 @@ button.more .dots circle{r:1.9px} /* (1.3 originally; 1.6, then 1.9 per Samuel, 
 button.more .dots circle:nth-child(1){fill:#FF6C10} button.more .dots circle:nth-child(2){fill:#007C92} button.more .dots circle:nth-child(3){fill:#B2BB1E}
 html[data-dk]:not(.neon) button.more .dots circle:nth-child(1){fill:#FD9357} html[data-dk]:not(.neon) button.more .dots circle:nth-child(2){fill:#54BED0} html[data-dk]:not(.neon) button.more .dots circle:nth-child(3){fill:#C9D543}
 html.neon button.more .dots circle:nth-child(1){fill:#FF7A1A} html.neon button.more .dots circle:nth-child(2){fill:#1FB8FF} html.neon button.more .dots circle:nth-child(3){fill:#F4FF3A}
+/* The tool buttons that drop out of the menu are centered exactly under it at every width (they sat 2 px left), and the first one
+   starts 16 px below it (was 10) so the open menu's ring and an open tool's ring never touch (Samuel, Oct 15) */
+header .tools{left:50%!important; right:auto!important; transform:translateX(-50%); align-items:center; top:calc(100% + 16px)}
 </style>
 
 <div class="app">
