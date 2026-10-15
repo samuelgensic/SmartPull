@@ -510,6 +510,16 @@ html.neon button.more .dots circle:nth-child(1){fill:#FF7A1A} html.neon button.m
 /* The tool buttons that drop out of the menu are centered exactly under it at every width (they sat 2 px left), and the first one
    starts 16 px below it (was 10) so the open menu's ring and an open tool's ring never touch (Samuel, Oct 15) */
 header .tools{left:50%!important; right:auto!important; transform:translateX(-50%); align-items:center; top:calc(100% + 16px)}
+/* Screen edges (Samuel, Oct 15): everything that sits in a corner keeps the same 12 px margin from the screen edge (was 16 px), so the level
+   button, the menu button and their columns sit as close to the edge as comfortably possible; the bottom corners match. The chapter medallions
+   drop straight down under the level button's circle (they sat 4 px to the right). */
+:root{--edge:12px}
+header{padding-left:var(--edge)!important; padding-right:var(--edge)!important}
+.panel.levels{left:calc(var(--edge) - 2px)!important} /* the medallion column has 2 px of padding, so the circles line up with the level button */
+.blstack{left:var(--edge)!important}
+.timebox,button.fsbtn{right:var(--edge)!important}
+.app:has(#fsBtn:not([hidden])) .timebox{right:calc(var(--edge) + 48px)!important}
+.ruler{left:calc(var(--edge) - 4px)}
 </style>
 
 <div class="app">
