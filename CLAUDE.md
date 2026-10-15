@@ -6,12 +6,13 @@ The same rules live in the project doc `claude/SmartPull-house-rules.md`. If the
 
 ## Where the game lives
 - **SmartPull · Private** https://claude.ai/artifact/7J1dAkBscSHvjvr1B3Vj7x: **every change goes here first, and only here.**
-- **SmartPull · Public** https://claude.ai/artifact/5dDb6vb43DLz8RniqhceaA and **GitHub** (this repo, `index.html`, served at samuelgensic.github.io/SmartPull): updated only when Samuel says **"ship it"** (both), "ship to Public" or "push to GitHub" (just that one).
+- **GitHub** (this repo, `index.html`, served at samuelgensic.github.io/SmartPull): updated only when Samuel says **"ship it"** or "push to GitHub". It is the link to share.
+- **SmartPull · Public** https://claude.ai/artifact/5dDb6vb43DLz8RniqhceaA is **no longer updated** (Samuel, Oct 15). Don't publish to it unless he asks for it by name.
 - SmartPull Test https://claude.ai/artifact/5pBGZ55e9ENHEqbsUsSKZn: sandbox for new mechanics.
 - Full publishing rules (titles, the 8 `tv/*.mp3` files, GitHub doctype header): project doc `claude/SmartPull-publishing.md`.
 
 ## Before changing anything
-1. Several chats edit the game at once. Read the **live Private artifact** (Artifact tool, action `read`) and build on that file. Never publish from an old local copy. For "ship it", also read Public and `git pull`, and carry over anything another chat changed there.
+1. Several chats edit the game at once. Read the **live Private artifact** (Artifact tool, action `read`) and build on that file. Never publish from an old local copy. For "ship it", also `git pull` and carry over anything another chat changed there.
 2. Read the project doc for your area (below). Never assume the level layout; read `GROUPS`, `LEVEL_MAP` and `PAR` in the file.
 
 ## Testing (required before saying something is done)
