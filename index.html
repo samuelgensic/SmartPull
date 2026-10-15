@@ -1009,9 +1009,9 @@ function pivotSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.
   // each detent reads the same fixed slice of noise every time, so no tap ever pops out louder than the rest (Oct 12)
   [0,.065,.13,.195].forEach((d,i)=>{const f=(1600+i*120)*P,s=t+d;
     const n=a.createBufferSource();n.buffer=softBuf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=5;bp.frequency.setValueAtTime(f,s);bp.frequency.exponentialRampToValueAtTime(f*.9,s+.033);
-    const g=a.createGain();fadeEnv(g.gain,s,.003,.019,s+.05);n.connect(bp).connect(g).connect(sfxBus);n.start(s,DETENT_AT[i]);n.stop(s+.12);
+    const g=a.createGain();fadeEnv(g.gain,s,.003,.038,s+.05);n.connect(bp).connect(g).connect(sfxBus);n.start(s,DETENT_AT[i]);n.stop(s+.12);
     const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f*.28,s);o.frequency.exponentialRampToValueAtTime(f*.25,s+.036);
-    const g2=a.createGain();fadeEnv(g2.gain,s,.002,.0046,s+.07);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)})}
+    const g2=a.createGain();fadeEnv(g2.gain,s,.002,.0092,s+.07);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)})}
 // fixed starting points in the soft noise for the knob detents (dot turn and Pivot gear), chosen once so every turn sounds alike
 const DETENT_AT=[.31,.52,.74,.93];
 function echoSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
@@ -3723,16 +3723,16 @@ document.getElementById('tune').onclick=e=>{e.stopPropagation();closeSoundPanel(
   if(stageEl)stageEl.classList.toggle('dim',opening);uiSfx('settings',opening)};
 document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!e.target.closest('#tune')){panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');if(stageEl)stageEl.classList.remove('dim')}});
 function click(){
-  // the dot turn: Twist knob (soft clicks): three quiet knob detents over a gentle rising glide, with smooth fade-outs
+  // the dot turn: Twist knob (soft clicks): three knob detents over a gentle rising glide, with smooth fade-outs (the clicks were doubled in loudness Oct 15, Samuel: too quiet; the Pivot gear's matching clicks too)
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
   const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1800;lp.connect(sfxBus);
   [[300,360,.045],[450,540,.022]].forEach(([f0,f1,v])=>{const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+.24);
     const g=a.createGain();fadeEnv(g.gain,t,.05,v,t+.4);o.connect(g).connect(lp);o.start(t);o.stop(t+.6)});
   [0,.07,.14].forEach((d,i)=>{const f=1600+i*140,s=t+d;
     const n=a.createBufferSource();n.buffer=softBuf;const bp=a.createBiquadFilter();bp.type='bandpass';bp.Q.value=5;bp.frequency.setValueAtTime(f,s);bp.frequency.exponentialRampToValueAtTime(f*.9,s+.033);
-    const g=a.createGain();fadeEnv(g.gain,s,.003,.019,s+.05);n.connect(bp).connect(g).connect(sfxBus);n.start(s,DETENT_AT[i]);n.stop(s+.12);
+    const g=a.createGain();fadeEnv(g.gain,s,.003,.038,s+.05);n.connect(bp).connect(g).connect(sfxBus);n.start(s,DETENT_AT[i]);n.stop(s+.12);
     const o=a.createOscillator();o.type='sine';o.frequency.setValueAtTime(f*.28,s);o.frequency.exponentialRampToValueAtTime(f*.25,s+.036);
-    const g2=a.createGain();fadeEnv(g2.gain,s,.002,.0046,s+.07);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)});
+    const g2=a.createGain();fadeEnv(g2.gain,s,.002,.0092,s+.07);o.connect(g2).connect(sfxBus);o.start(s);o.stop(s+.14)});
 }
 /* switching themes: a short sound in the new theme's style
    Classic: a warm two-note chime · SmartPull: a bright, bubbly rising chord · Neon: a synth power-up sweep */
@@ -5301,4 +5301,5 @@ document.documentElement.style.touchAction='manipulation'})();</script>
 const scrolls=el=>{for(;el&&el!==document.body&&el!==document.documentElement;el=el.parentElement){if(el.matches&&el.matches('input,textarea,select'))return true;
   const st=getComputedStyle(el);if((/(auto|scroll)/.test(st.overflowY)&&el.scrollHeight>el.clientHeight+1)||(/(auto|scroll)/.test(st.overflowX)&&el.scrollWidth>el.clientWidth+1)){el.style.overscrollBehavior='contain';return true}}return false};
 document.addEventListener('touchmove',e=>{if(e.touches.length>1||!scrolls(e.target))e.preventDefault()},{passive:false})})();</script>
+
 </body></html>
