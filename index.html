@@ -1093,7 +1093,7 @@ function pivotTurn(b){const p=b.c,layer=blocks.filter(u=>u.alive&&u.c[1]===p[1]&
 // The cubes change places and their arrows turn with them; the layer moves as one piece, so cubes keep their places relative to each other
 // and only their places against the cubes above and below change. Nothing else in that layer may stand outside the 3×3 (the levels never do).
 function orbitTurn(b){const p=b.c,layer=blocks.filter(u=>u.alive&&u.c[1]===p[1]&&Math.abs(u.c[0]-p[0])<=1&&Math.abs(u.c[2]-p[2])<=1);
-  if(layer.some(u=>u.busy))return;saveUndo();orbitSound();lifeAdd('orbits');
+  if(layer.some(u=>u.busy))return;saveUndo();pivotSound();lifeAdd('orbits');
   const Yv=new THREE.Vector3(0,1,0),H=b.home.clone();
   layer.forEach(u=>occ.delete(K(...u.c)));
   layer.forEach(u=>{const ox=u.c[0]-p[0],oz=u.c[2]-p[2],o0=u.home.clone().sub(H);
@@ -1244,7 +1244,7 @@ function dotSync(b){
 // shaded ring and a shallow dent around the hole the sphere comes through. In Neon it is a glowing ring and
 // an emissive bead. Everything here is drawn in face-texture pixels (a face is 256 across).
 const ORBIT_STYLE=6;
-const BEAD_R=.2,BEAD_UP=.05;                                // the bead: radius, and how far its top stands above the face (cube units; a cube is .985)
+const BEAD_R=.25,BEAD_UP=.06;                                // the bead: radius, and how far its top stands above the face (cube units; a cube is .985)
 const BEAD_CAP=Math.sqrt(BEAD_R*BEAD_R-(BEAD_R-BEAD_UP)*(BEAD_R-BEAD_UP))*260; // radius of the circle where the sphere comes through the face, in texture pixels
 const oArc=(g,R,a0,a1,lw,ccw=true)=>{g.lineWidth=lw;g.beginPath();g.arc(0,0,R,a0,a1,ccw);g.stroke()};
 function orbitGlyph(g,col,bg,mark,neon){
@@ -5580,6 +5580,5 @@ document.documentElement.style.touchAction='manipulation'})();</script>
 const scrolls=el=>{for(;el&&el!==document.body&&el!==document.documentElement;el=el.parentElement){if(el.matches&&el.matches('input,textarea,select'))return true;
   const st=getComputedStyle(el);if((/(auto|scroll)/.test(st.overflowY)&&el.scrollHeight>el.clientHeight+1)||(/(auto|scroll)/.test(st.overflowX)&&el.scrollWidth>el.clientWidth+1)){el.style.overscrollBehavior='contain';return true}}return false};
 document.addEventListener('touchmove',e=>{if(e.touches.length>1||!scrolls(e.target))e.preventDefault()},{passive:false})})();</script>
-
 
 </body></html>
