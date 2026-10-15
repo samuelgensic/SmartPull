@@ -46,6 +46,12 @@ button.more .x{display:none}
 button.more[aria-expanded="true"] .dots{display:none}
 button.more[aria-expanded="true"] .x{display:inline}
 button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
+/* an open menu or panel button wears the same ring as the current chapter (Samuel, Oct 14): orange with a small gap in Classic,
+   orange on a wider gap in SmartPull, a glowing pink ring with a gap in Neon */
+html:not(.neon) button.more[aria-expanded="true"],html:not(.neon) #sound[aria-expanded="true"],html:not(.neon) #tune[aria-expanded="true"],html:not(.neon) #paint[aria-expanded="true"]{box-shadow:0 1px 0 rgba(0,0,0,.06)!important; outline:2px solid #FF6C10; outline-offset:2px}
+html.brandtheme button.more[aria-expanded="true"],html.brandtheme #sound[aria-expanded="true"],html.brandtheme #tune[aria-expanded="true"],html.brandtheme #paint[aria-expanded="true"]{outline-width:2.2px; outline-offset:3px}
+html.neon button.more[aria-expanded="true"],html.neon #sound[aria-expanded="true"],html.neon #tune[aria-expanded="true"],html.neon #paint[aria-expanded="true"]{box-shadow:0 0 10px rgba(255,46,151,.55)!important; outline:2px solid #FF2E97; outline-offset:2px}
+@media (prefers-color-scheme: dark){html:not(.neon) button.more[aria-expanded="true"],html:not(.neon) #sound[aria-expanded="true"],html:not(.neon) #tune[aria-expanded="true"],html:not(.neon) #paint[aria-expanded="true"]{outline-color:#FD9357}}
 .tools button{box-shadow:0 4px 12px rgba(0,0,0,.14); transition:transform .32s cubic-bezier(.3,1.3,.5,1), opacity .2s ease}
 .tools button:nth-child(1){--i:1} .tools button:nth-child(2){--i:2} .tools button:nth-child(3){--i:3} .tools button:nth-child(4){--i:4}
 .controls.open .tools button{transition-delay:calc((var(--i) - 1) * 35ms)}
@@ -485,6 +491,14 @@ html.neon .med .spBadge{box-shadow:0 0 0 1px var(--c),0 0 6px var(--c)}
 #soundp input.vol{min-width:0}
 #optMusic{display:grid; grid-template-columns:1fr 1fr; gap:6px}
 #optMusic button.opt{width:100%; padding:0 6px; white-space:nowrap}
+/* the menu button matches the level button's round medallion (46 px, same soft shadow, same icon size); the tool buttons
+   that drop out of it stay 38 px, centered under it (Samuel, Oct 14) */
+header button.more{width:46px!important; height:46px!important; box-shadow:0 1px 0 rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.06)}
+html.neon header button.more{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
+header button.more svg{width:22px; height:22px}
+.tools{right:4px}
+header .topspace{padding-right:54px} header .hleft{margin-right:54px} html.neon header .topspace{padding-right:100px}
+@media (max-width:400px){header .topspace{padding-right:54px} header .hleft{margin-right:54px} html.neon header .topspace{padding-right:96px} .tools{right:6px}}
 </style>
 
 <div class="app">
@@ -673,7 +687,7 @@ function blackLightTip(){if(tipsSeen.blacklight)return;tipsSeen.blacklight=1;try
     document.getElementById('tipBody').replaceChildren(d);tipSheet.hidden=false;tipSound()},450)}
 // the tip opening: three quiet rising notes
 function tipSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
-  [1046.5,1318.5,1568].forEach((f,i)=>tone(a,'sine',f,f,t+i*.055,.5,.022,.008))}
+  sfxScaled(.7,()=>[1046.5,1318.5,1568].forEach((f,i)=>tone(a,'sine',f,f,t+i*.055,.5,.022,.008)))} // 70% (Oct 14)
 tipBtn.addEventListener('pointerdown',e=>e.stopPropagation());tipBtn.addEventListener('pointerup',e=>e.stopPropagation());
 tipBtn.onclick=e=>{e.stopPropagation();openTip()};
 document.getElementById('tipClose').onclick=e=>{e.stopPropagation();uiSfx('dismiss');tipSheet.hidden=true};
@@ -982,7 +996,8 @@ function glassSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.
 function pivotGlyph(g,col,bg,mark){g.save();g.fillStyle=col;g.beginPath();g.arc(0,0,54,0,Math.PI*2);g.fill();
   for(let k=0;k<8;k++){g.save();g.rotate(k*Math.PI/4);g.beginPath();g.moveTo(-18,-48);g.lineTo(-14,-66);g.arc(0,-66,14,Math.PI,0);g.lineTo(18,-48);g.closePath();g.fill();g.restore()}
   g.fillStyle=bg||'#000';g.beginPath();g.arc(0,0,29,0,Math.PI*2);g.fill();
-  g.fillStyle=mark||bg||'#000';g.beginPath();g.arc(0,-65,9,0,Math.PI*2);g.fill();g.restore()}
+  // a charcoal (dark) gear never carries a marker dot; its top tooth stays solid (Samuel, Oct 14)
+  if(!(/^#[0-9a-f]{3,6}$/i.test(col)&&isDark(col))){g.fillStyle=onCharcoal(col,mark||bg||'#000');g.beginPath();g.arc(0,-65,9,0,Math.PI*2);g.fill()}g.restore()}
 const glassCache=new Map();
 function glassOf(m){if(glassCache.has(m))return glassCache.get(m);const c=m.clone();c.transparent=true;c.opacity=m.userData.neonBasic?.5:.3;c.depthWrite=false;c.userData={...m.userData};glassCache.set(m,c);return c}
 
@@ -1761,6 +1776,11 @@ const shade=(h,k)=>'#'+hexRGB(h).map(v=>Math.round(v*(1-k)).toString(16).padStar
 function contrast(a,b){const L=h=>{if(!/^#[0-9a-f]{6}$/i.test(h))return null;const [r,g,bb]=hexRGB(h).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*r+.7152*g+.0722*bb};
   const x=L(a),y=L(b);if(x===null||y===null)return 21;return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
 const isDark=h=>{const [r,g,b]=hexRGB(h);return (.299*r+.587*g+.114*b)/255<.5};
+/* Charcoal never carries teal (Samuel, Oct 14): teal on charcoal is only 2.5:1. A charcoal surface (cube, gear) swaps any teal mark to olive,
+   the brand color that stands out most on charcoal (5.8:1; orange is 4.3:1). Marks whose color must match something (a lock and its key,
+   the two cubes of a linked pair) are never swapped; their cube just isn't charcoal (see cubeColor below). */
+const CHARCOAL_RE=/^#(34363a|2c3631|000000)$/i, TEAL_RE=/^#(007c92|54bed0)$/i;
+const onCharcoal=(surface,mark)=>CHARCOAL_RE.test(String(surface))&&TEAL_RE.test(String(mark))?'#B2BB1E':mark;
 const matCache={};
 /* A dot is a button pressed into the face. The dent itself is lit by the scene's light (see dentNormals below),
    so its bright and dark sides stay put as the cube turns. Here we only paint what doesn't depend on the light:
@@ -2100,6 +2120,7 @@ function materialsFor(b){
   // off-white mode: dots always take a vivid brand color (olive, teal or orange)
   let dotC=!colorMode?b.plainDot:b.dotColor===b.cubeColor?b.altDot:b.dotColor;
   if(dotC==='#000000')dotC=INK; // "black" dots use the same soft charcoal as the arrows
+  dotC=onCharcoal(skin,dotC); // never a teal dot on a charcoal cube
   // SmartPull fused cubes drop the darker rim around each face, so the piece reads as one solid shape
   const sm=isPiece(b)?'seamless':'',join=(...x)=>x.filter(Boolean).join(';');
   const dc=join(decoFor(b,false),sm),fr=join(faceDeco(decoFor(b,false)),sm);
@@ -2388,6 +2409,10 @@ function load(i){
     const BRAND=[...DOT_COLORS,'#FFFFFF'];
     b.cubeColor=DOT_COLORS[Math.floor(cr()*DOT_COLORS.length)];
     if(b.echoN&&/^#(000000|34363a)$/i.test(b.cubeColor)){const ok=DOT_COLORS.filter(c=>!/^#(000000|34363a)$/i.test(c));b.cubeColor=ok[Math.floor(cr()*ok.length)]}
+    // a cube whose lock, key or link frame is teal is never charcoal: those teal marks must stay teal to match their partner, and teal can't be read on charcoal
+    // (the cube takes olive, gray or orange instead, chosen from its position so it doesn't touch the random color sequence)
+    if(b.cubeColor==='#000000'&&[b.lockKey&&b.lockKey.alive?b.lockColor:null,b.isKey?(b.keyColor||b.lockColor):null,b.group?(b.group.color||b.pairColor):b.pairColor].some(c=>c&&TEAL_RE.test(c))){
+      const ok=['#B2BB1E','#ABABA8','#FF6C10'];b.cubeColor=ok[Math.abs(b.c[0]*3+b.c[1]*5+b.c[2]*7)%ok.length]}
     const others=BRAND.filter(c=>c!==b.cubeColor);b.altDot=others[Math.floor(cr()*others.length)];
     b.neonColor=NEONS[Math.floor(cr()*NEONS.length)];
     const nOthers=NEONS.filter(c=>c!==b.neonColor);b.neonDot=nOthers[Math.floor(cr()*nOthers.length)];
@@ -2841,7 +2866,9 @@ const SFX_TAIL=.02;
 // every sound starts a hair (15 ms) ahead of "now": with the steadier audio buffer the engine's clock moves in bigger steps,
 // so a sound scheduled for exactly "now" can begin late and skip its fade-in, which is heard as a click or pop
 const SFX_LEAD=.015;
-function fadeEnv(p,t,att,peak,end){p.setValueAtTime(0,t);p.linearRampToValueAtTime(peak,t+att);
+// per-sound volume trims from the Sound Design Studio (Samuel, Oct 14): a sound played inside sfxScaled(g,…) comes out at g times its level
+let sfxScale=1;function sfxScaled(g,f){const o=sfxScale;sfxScale=o*g;try{return f()}finally{sfxScale=o}}
+function fadeEnv(p,t,att,peak,end){peak*=sfxScale;p.setValueAtTime(0,t);p.linearRampToValueAtTime(peak,t+att);
   if(peak>.0005)p.exponentialRampToValueAtTime(.0005,Math.max(end,t+att+.005));p.linearRampToValueAtTime(0,Math.max(end,t+att+.005)+SFX_TAIL);return Math.max(end,t+att+.005)+SFX_TAIL+.01}
 // building blocks: a gliding tone, and a filtered burst of noise
 function tone(a,type,f0,f1,t,dur,vol,att=.005){
@@ -3679,7 +3706,8 @@ function click(){
 }
 /* switching themes: a short sound in the new theme's style
    Classic: a warm two-note chime · SmartPull: a bright, bubbly rising chord · Neon: a synth power-up sweep */
-function themeSound(t){if(!soundOn)return;const a=audio();if(!a)return;const n=a.currentTime+.02;
+function themeSound(t){return sfxScaled(.75,()=>themeSound0(t))} // every mode chime at 75% (Oct 14)
+function themeSound0(t){if(!soundOn)return;const a=audio();if(!a)return;const n=a.currentTime+.02;
   if(t==='neon'){tone(a,'square',1760,1760,n,.12,.03,.01);
     [1319,1760,2637].forEach((f,i)=>tone(a,'triangle',f,f,n+.14+i*.05,.22,.03,.004));return}
   if(t==='brand'){[523,659,784,1047].forEach((f,i)=>tone(a,'triangle',f*1.02,f,n+i*.055,.26,.05,.004));return}
@@ -3695,6 +3723,7 @@ function clickSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.
   hiss(a,'bandpass',3200,2600,4,t,.035,.08,.001);tone(a,'triangle',1800,900,t,.05,.05,.001);tone(a,'triangle',2400,1600,t+.045,.04,.035,.001)}
 // a key cube leaves and its lock opens: two soft rising notes
 function unlockSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+.15;
+  if(theme!=='neon')sfxScaled(.8,()=>latch(a,a.currentTime+SFX_LEAD)); // the key turns in the lock (a soft latch), then the notes (Samuel, Oct 14)
   if(theme==='neon'){[659,988,1319].forEach((f,i)=>tone(a,'triangle',f,f,t+i*.07,.3,.035,.005));return} // a quick synth arpeggio
   tone(a,'sine',659,659,t,.35,.05,.01);tone(a,'sine',988,988,t+.1,.45,.045,.01)}
 // cubes falling onto the ones below on gravity levels: a soft, low landing thud
@@ -3712,7 +3741,8 @@ function fuseSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.c
   tone(a,'triangle',420,380,t,.08,.12,.002);hiss(a,'bandpass',2600,2600,3,t,.03,.06,.001); // the clack
   tone(a,'sine',1046,1046,t+.05,.5,.03,.01);tone(a,'sine',1568,1568,t+.09,.45,.018,.01);   // a soft shimmer
 }
-function chime(delay){
+function chime(delay){return sfxScaled(.45,()=>chime0(delay))} // the win chime at 45% (Oct 14)
+function chime0(delay){
   // four soft bell notes rising (C, E, G, high C)
   if(!soundOn)return;const a=audio();if(!a)return;const t0=a.currentTime+delay;
   [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
@@ -4302,16 +4332,22 @@ function ppLayout(){ // the two paths: from beside Moves and beside Best, out, u
   const cl=getComputedStyle(lEl),yRow=Y(capMid(lb,`${cl.fontSize} ${cl.fontFamily}`));
   // the words' real edges: Moves' and Best's text (their grid cells are wider than the words)
   const txt=el=>{const r=document.createRange();r.selectNodeContents(el);return r.getBoundingClientRect()},mt=txt(row.querySelector('.pr-l')),bt=txt(row.querySelector('.pr-r'));
-  const r=18,gap=9,xL=Math.max(8,Math.min(X(ln.left),X(mt.left))-16),xR=Math.min(D.width-8,Math.max(X(ln.right),X(bt.right))+16);
-  const sL=X(mt.left)-gap,sR=X(bt.right)+gap,eL=X(inn.left)-gap,eR=X(inn.right)+gap;
+  const gap=9,sL=X(mt.left)-gap,sR=X(bt.right)+gap,eL=X(inn.left)-gap,eR=X(inn.right)+gap;
+  // the sides sit outside both the cheeky line and the corner's curve, so the line always leaves Moves and Best heading outward
+  // (before Oct 14 the corner could start inside the gap and the line ran back into the M of Moves when Moves stuck out past the line)
+  let xL=Math.max(8,Math.min(X(ln.left)-16,sL-18-6)),xR=Math.min(D.width-8,Math.max(X(ln.right)+16,sR+18+6));
+  const r=Math.max(4,Math.min(18,sL-xL-6,xR-sR-6,(yRow-yTop)/2));
   sv.setAttribute('viewBox',`0 0 ${D.width} ${D.height}`);const [p1,p2]=sv.querySelectorAll('path');
   p1.setAttribute('d',`M${sL} ${yRow} H${xL+r} Q${xL} ${yRow} ${xL} ${yRow-r} V${yTop+r} Q${xL} ${yTop} ${xL+r} ${yTop} H${eL}`);
   p2.setAttribute('d',`M${sR} ${yRow} H${xR-r} Q${xR} ${yRow} ${xR} ${yRow-r} V${yTop+r} Q${xR} ${yTop} ${xR-r} ${yTop} H${eR}`);
   for(const p of [p1,p2]){const len=p.getTotalLength();p.style.strokeDasharray=len;p.style.setProperty('--len',len);if(!done.classList.contains('pp'))p.style.strokeDashoffset=len}}
 addEventListener('resize',()=>{if(document.getElementById('done').classList.contains('pp'))ppLayout()});
+// re-measure if the words shift after the lines are drawn (fonts finishing loading, the stats settling)
+try{document.fonts&&document.fonts.addEventListener('loadingdone',()=>{if(document.getElementById('done').classList.contains('pp'))ppLayout()})}catch(e){}
+try{const ro=new ResizeObserver(()=>{if(document.getElementById('done').classList.contains('pp'))ppLayout()});addEventListener('load',()=>{const d=document.getElementById('done');if(!d)return;ro.observe(d);for(const el of d.querySelectorAll('b,.parrow,.pr-l,.pr-r'))ro.observe(el)})}catch(e){}
 // the sound: two soft rising breaths (one for each line), then a chime exactly as they reach the words; every part fades fully to silence
 function ppSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
-  const g=.7; // 30% quieter than before (Samuel, Oct 14: still a little too loud by default)
+  const g=.4; // 40% of its first level (Samuel, Oct 14, from the Sound Design Studio; it was 70% earlier that day)
   hiss(a,'lowpass',350,2600,.7,t,1.05,.08*g,.35);hiss(a,'lowpass',300,2200,.7,t+.02,1.05,.055*g,.35,.37);
   tone(a,'sine',1175,1175,t+1.08,1,.05*g,.003);tone(a,'sine',1175*2.76,1175*2.76,t+1.08,.4,.012*g,.002);
   tone(a,'sine',1568,1568,t+1.14,1.1,.06*g,.003);tone(a,'sine',1568*2.76,1568*2.76,t+1.14,.45,.014*g,.002)}
@@ -4550,7 +4586,7 @@ let cbSndT=0;
 function cbSound(str,pitch){ // a block knocking another: a soft, low, padded thud, louder for harder hits (was a hollow tock with a click until Oct 14; Samuel: too harsh, more of a thud)
   if(!soundOn||str<.02)return;const a=audio();if(!a)return;const now=performance.now();if(now-cbSndT<120)return;cbSndT=now;
   const t=a.currentTime+SFX_LEAD,v=Math.min(1,str);
-  tone(a,'sine',150*pitch,88*pitch,t,.16,.05+.15*v,.005);hiss(a,'lowpass',700*pitch,380*pitch,.7,t,.07,.015+.045*v,.004,.31)}
+  sfxScaled(1.2,()=>{tone(a,'sine',150*pitch,88*pitch,t,.16,.05+.15*v,.005);hiss(a,'lowpass',700*pitch,380*pitch,.7,t,.07,.015+.045*v,.004,.31)})} // 120% (Oct 14)
 const cbV=()=>new THREE.Vector3(),cbT1=cbV(),cbT2=cbV(),cbT3=cbV(),cbQa=new THREE.Quaternion(),cbMa=new THREE.Matrix4();
 function cbBox(it){ // the block as a box in the world: center, three axes (with the swivel pose), half sizes
   const q=cbQa.copy(it.q).multiply(it.pose||cbQI),e=cbMa.makeRotationFromQuaternion(q).elements;
@@ -4835,7 +4871,8 @@ function tick(){ // the tiniest click as the dial passes each level
 }
 // interface sounds (chosen Oct 12): one soft, felt-like family. Every control has its own pitch and shape, so each is
 // recognizable, but they all sound like the same app. Quiet, no hiss or buzz, and every sound fades fully to silence.
-function uiSfx(kind,on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
+function uiSfx(kind,on){const g={sound:1.3,timer:1.15,musoff:1.35}[kind];if(g)return sfxScaled(g,()=>uiSfx0(kind,on));return uiSfx0(kind,on)} // (Studio trims, Oct 14)
+function uiSfx0(kind,on){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
   const panel=(f0,f1)=>{tone(a,'sine',f0,f0,t,.09,.03,.008);tone(a,'sine',f1,f1,t+.05,.11,.025,.008)};   // panels: rise to open, fall to close
   const sw=(f,v)=>on?tone(a,'sine',f*.89,f,t,.1,v,.008):tone(a,'sine',f,f*.89,t,.1,v*.85,.008);          // switches: a lift for on, a drop for off
   if(kind==='settings')return on?panel(330,440):panel(440,330);   // Felt switch
@@ -4855,7 +4892,8 @@ function musicVolNote(){const a=audio();if(!a||!musicBus||mus||musicVol<=0)retur
   const o=a.createOscillator();o.type='triangle';o.frequency.value=294;const g=a.createGain();const end=fadeEnv(g.gain,t,.01,.03,t+.5);
   o.connect(g).connect(musicBus);o.start(t);o.stop(end)}
 // open and close are literal time-reverses of each other: the frequency sweep and the attack/decay shape both flip
-function menuSfx(which,open){
+function menuSfx(which,open){if(which==='level')return sfxScaled(.75,()=>menuSfx0(which,open));return menuSfx0(which,open)} // level menu at 75% (Oct 14)
+function menuSfx0(which,open){
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
   if(which==='level'){
     // Drop: three soft glassy taps that fall like the medallions dropping out, over a faint swish;
