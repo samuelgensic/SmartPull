@@ -190,6 +190,29 @@ html.neon button.trlv.clr{background:transparent; color:var(--c); box-shadow:0 0
 button.trlv.now{border:2px solid var(--ink); color:var(--ink)}
 button.trlv:disabled{opacity:.35; cursor:default}
 button.trlv.samp{border-style:dashed}
+/* Classic: the current chapter and the current level are marked in orange (Samuel, Oct 14). The level pill gets an orange ring
+   with a small gap around it, and a cleared current level shows its number in white. */
+html:not(.neon):not(.brandtheme) .med.cur .disc{box-shadow:0 0 0 2px #FF6C10}
+html:not(.neon):not(.brandtheme) button.trlv.now{border-width:1.5px; border-color:rgba(0,0,0,.14); outline:2px solid #FF6C10; outline-offset:2px}
+html:not(.neon):not(.brandtheme) button.trlv.now.clr{border-color:var(--c,var(--accent)); color:#fff}
+@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) .med.cur .disc{box-shadow:0 0 0 2px #FD9357}
+  html:not(.neon):not(.brandtheme) button.trlv.now{border-color:rgba(255,255,255,.18); outline-color:#FD9357}
+  html:not(.neon):not(.brandtheme) button.trlv.now.clr{border-color:var(--c,var(--accent)); color:var(--bg)}} /* dark screens: the fill is light teal, so the number stays dark like the other cleared pills */
+/* SmartPull: the current chapter and level get an orange ring on a wider cream gap, so it still reads against the orange pills
+   and ring segments (option S7, Samuel, Oct 14); a cleared current pill shows its number in white */
+html.brandtheme button.trlv.now{border:1.5px solid rgba(0,0,0,.14); box-shadow:0 0 0 3px var(--chip),0 0 0 5.2px #FF6C10}
+html.brandtheme button.trlv.now.clr{border-color:var(--c,var(--accent)); color:#fff}
+html.brandtheme .med.cur .disc{inset:9px; box-shadow:0 0 0 2.5px var(--chip),0 0 0 4.5px #FF6C10}
+@media (prefers-color-scheme: dark){html.brandtheme button.trlv.now{border-color:rgba(255,255,255,.18); box-shadow:0 0 0 3px var(--chip),0 0 0 5.2px #FD9357}
+  html.brandtheme button.trlv.now.clr{border-color:var(--c,var(--accent)); color:var(--bg)}
+  html.brandtheme .med.cur .disc{box-shadow:0 0 0 2.5px var(--chip),0 0 0 4.5px #FD9357}}
+/* Neon: the current chapter and the current level are marked in that chapter's own neon color (Samuel, Oct 14). The medallion gets a glowing ring set inside its progress ring;
+   the level pill gets a ring with a small gap (like Classic's) and a slow, gentle glow breath. SmartPull keeps its ink outline. */
+html.neon .med.cur .disc{box-shadow:0 0 0 2px var(--c),0 0 10px var(--c)}
+html.neon button.trlv.now{border-width:1.5px; border-color:rgba(244,236,255,.18); outline:2px solid var(--c); outline-offset:2px; animation:nowBreath 3s ease-in-out infinite}
+html.neon button.trlv.now.clr{border-color:var(--c)}
+@keyframes nowBreath{0%,100%{box-shadow:0 0 2px var(--c)} 50%{box-shadow:0 0 12px var(--c),0 0 4px var(--c)}}
+@media (prefers-reduced-motion: reduce){html.neon button.trlv.now{animation:none; box-shadow:0 0 8px var(--c)}}
 /* a clean clear (no bumps, at par or better): a small ring tucked on the pill's top right */
 button.trlv{position:relative}
 button.trlv.cln::after{content:''; position:absolute; top:-3px; right:-3px; width:8px; height:8px; border-radius:50%; background:var(--chip); box-shadow:inset 0 0 0 2px var(--c,var(--accent))}
@@ -273,9 +296,23 @@ button.ttoggle[aria-pressed="true"]{color:var(--ink); box-shadow:0 0 0 2px var(-
 /* tips: a small round button that only appears on the level where a new rule is first seen; tapping it opens a short explanation */
 button.tipbtn{position:relative; z-index:4; pointer-events:auto; width:38px; height:38px; background:var(--chip); color:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.12)}
 button.tipbtn svg{width:20px; height:20px; stroke-width:2.2}
-button.tipbtn.new{animation:tippulse 2s ease-in-out infinite}
-@keyframes tippulse{0%,100%{box-shadow:0 0 0 0 rgba(255,108,16,.0),0 2px 8px rgba(0,0,0,.12)}50%{box-shadow:0 0 0 7px rgba(255,108,16,.22),0 2px 8px rgba(0,0,0,.12)}}
-@media (prefers-reduced-motion: reduce){button.tipbtn.new{animation:none}}
+/* The tip button's entrance (Samuel, Oct 14): each time it appears on a level it pops in with a soft overshoot and a single sparkle at its corner (class .pop, set in setTip);
+   while the tip is still unread (.new) it then settles into a slow breathing halo in the mode's color. The halo stays tight: 4px at its widest. */
+button.tipbtn{--halo:62,124,120; --sh:0 2px 8px rgba(0,0,0,.12)}
+html.brandtheme button.tipbtn{--halo:255,108,16}
+html.neon button.tipbtn{--halo:255,46,151; --sh:0 0 0 1.5px rgba(244,236,255,.28)}
+@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) button.tipbtn{--halo:127,192,185} html.brandtheme button.tipbtn{--halo:253,147,87}}
+button.tipbtn.pop{animation:tipPop .8s cubic-bezier(.34,1.5,.64,1) backwards} /* (backwards, not both: once it has landed, the win screen can still fade the button out) */
+button.tipbtn.pop.new{animation:tipPop .8s cubic-bezier(.34,1.5,.64,1) backwards,tipRing 3.4s ease-in-out 1.1s infinite}
+@keyframes tipPop{0%{opacity:0; transform:scale(.55)} 55%{opacity:1} 100%{opacity:1; transform:scale(1)}}
+@keyframes tipRing{0%,100%{box-shadow:var(--sh),0 0 0 0 rgba(var(--halo),0)} 50%{box-shadow:var(--sh),0 0 0 4px rgba(var(--halo),.3)}}
+button.tipbtn svg.spark{position:absolute; top:-7px; right:-7px; width:15px; height:15px; margin:0; stroke:none; fill:currentColor; color:#FF6C10; opacity:0; pointer-events:none}
+html:not(.neon):not(.brandtheme) button.tipbtn svg.spark{color:var(--accent)}
+html.neon button.tipbtn svg.spark{color:#F4FF3A; filter:drop-shadow(0 0 4px #F4FF3A)}
+@media (prefers-color-scheme: dark){html.brandtheme button.tipbtn svg.spark{color:#FD9357}}
+button.tipbtn.pop svg.spark{animation:tipTwinkle 1.1s ease-out .3s both}
+@keyframes tipTwinkle{0%{opacity:0; transform:scale(.2) rotate(-40deg)} 40%{opacity:1; transform:scale(1.15) rotate(0)} 100%{opacity:0; transform:scale(.6) rotate(25deg)}}
+@media (prefers-reduced-motion: reduce){button.tipbtn.pop,button.tipbtn.pop.new{animation:none} button.tipbtn svg.spark{display:none} button.tipbtn.new{box-shadow:var(--sh),0 0 0 3px rgba(var(--halo),.22)}}
 html.neon button.tipbtn{color:#FF2E97}
 html.neon .controls button,html.neon .levelnav button:not(.lvl),html.neon button.fsbtn,html.neon button.ttoggle,html.neon button.tipbtn{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
 html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
@@ -316,8 +353,7 @@ html.brandtheme #scoreOpen{background:#FF6C10}
   html.brandtheme .done small,html.brandtheme #scoreOpen{background:#FD9357}
   html:not(.neon) .done small,html:not(.neon) #scoreOpen,html:not(.neon) button.trlv.clr{color:var(--bg)}
   .tapc{color:#FD9357}
-  html:not(.neon) button.tipbtn.new{animation-name:tippulseSoft}}
-@keyframes tippulseSoft{0%,100%{box-shadow:0 0 0 0 rgba(253,147,87,0),0 2px 8px rgba(0,0,0,.12)}50%{box-shadow:0 0 0 7px rgba(253,147,87,.22),0 2px 8px rgba(0,0,0,.12)}}
+}
 html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 12px rgba(255,46,151,.4)}
 /* Continue and Replay pull into place like a cube coming the other way: from behind you, big and close, shrinking back into
    the screen and settling with a tiny overshoot. Once settled they hold still (no fading). Every ~4 s Continue gives a small
@@ -530,7 +566,7 @@ html.neon .med .spBadge{box-shadow:0 0 0 1px var(--c),0 0 6px var(--c)}
   <div class="panel levels" id="levels" hidden>
     <div class="lvcol" id="lvcol"></div>
   </div>
-  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="cbfx" id="cbfx" aria-hidden="true"><span class="cbsh" id="cbsh"></span><span class="cbsh" id="cbsh2"></span><span class="cbsh" id="cbsh3"></span></div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small><button class="replay" id="replayBtn" type="button">Replay</button></div></div></div>
+  <div id="stage"><div class="brandbox foot"><div class="mark" aria-label="SmartPull">S<small>MART</small><span>·</span>P<small>ULL</small></div><div class="credit">Designed by Samuel Gensic</div></div><div class="blstack"><button class="tipbtn" id="tipBtn" type="button" hidden aria-label="Tip: how this works"><svg viewBox="0 0 24 24"><path d="M12 3.5c.6 4.3 2.2 5.9 6.5 6.5-4.3.6-5.9 2.2-6.5 6.5-.6-4.3-2.2-5.9-6.5-6.5 4.3-.6 5.9-2.2 6.5-6.5z"/><path d="M18.5 15.5v4M16.5 17.5h4"/></svg><svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.7 6 2.5 8.3 9 9.2-6.5.9-8.3 3.2-9 9.2-.7-6-2.5-8.3-9-9.2C9.5 9.3 11.3 7 12 1z"/></svg></button><div class="left" id="left">1 block</div></div><div class="timebox" id="timebox"><button class="ttoggle" id="timerBtn" type="button" aria-pressed="false" aria-label="Show or hide the level timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg></button><span class="clock" id="clock" hidden>0:00</span></div><div class="botrow"><button class="undo" id="undo" type="button" hidden aria-label="Undo last move">Undo</button></div><div class="thint" id="thint" hidden></div><div class="stuck" id="stuck" hidden>No moves left. Tap ↺ to try again.</div><div class="cbfx" id="cbfx" aria-hidden="true"><span class="cbsh" id="cbsh"></span><span class="cbsh" id="cbsh2"></span><span class="cbsh" id="cbsh3"></span></div><div class="done" id="done"><div class="done-in"><b>Cleared</b><span id="tapsLine" class="taps"></span><span id="timeLine" class="taps time" hidden></span><small>Continue</small><button class="replay" id="replayBtn" type="button">Replay</button></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -619,8 +655,10 @@ const TIPS={
 var TIP_AT={0:['pull'],5:['dot'],20:['pivot'],25:['link'],28:['pairdot'],30:['echo'],35:['glide'],45:['drop'],55:['lock'],58:['chain'],60:['glass'],65:['order'],90:['gfuse'],95:['fuse']}; // level index (0 = level 1) where each rule first appears
 let tipsSeen={};try{tipsSeen=JSON.parse(localStorage.getItem('pa3_tips')||'{}')}catch(e){}
 const tipBtn=document.getElementById('tipBtn'),tipSheet=document.getElementById('tipsheet');
-function setTip(){const keys=TIP_AT[levelIdx];tipBtn.hidden=!keys;if(!keys)return;
-  tipBtn.classList.toggle('new',!keys.every(k=>tipsSeen[k]));tipSheet.hidden=true}
+let tipLvl=-1; // the level whose tip button is showing, so the pop-in plays once each time the button appears (not on a retry or a mode change)
+function setTip(){const keys=TIP_AT[levelIdx];tipBtn.hidden=!keys;if(!keys){tipLvl=-1;tipBtn.classList.remove('pop','new');return}
+  if(tipLvl!==levelIdx){tipBtn.classList.remove('pop','new');void tipBtn.offsetWidth;tipBtn.classList.add('pop')} // restart the pop-in and the sparkle
+  tipBtn.classList.toggle('new',!keys.every(k=>tipsSeen[k]));tipLvl=levelIdx;tipSheet.hidden=true}
 function openTip(){const keys=TIP_AT[levelIdx];if(!keys)return;
   document.getElementById('tipTitle').textContent=keys.length>1?'Tips':'Tip: '+TIPS[keys[0]].t;
   const body=document.getElementById('tipBody');body.replaceChildren(...keys.map(k=>{const d=document.createElement('div');d.className='tipitem';
@@ -1742,23 +1780,28 @@ function pressedDot(g,color,fillC){
 /* Locks and keys are pressed into the face the same way: the symbol's shape, softened at its edges, becomes a
    shallow dent that the scene's light shades (the keyhole stays at face level, like a little island). */
 const symbolOf=deco=>{const m=/(?:^|;)(lock|unlock|key|pips\d|ripple\d)\|/.exec(deco||'');return m?m[1]:null};
+const frameOf=deco=>/(?:^|;)frameC\|/.test(deco||'')?'frameC':null; // a linked cube's frame (a pressed-in groove, see drawFrameGroove)
 const symDents={};
-function symbolDent(type){
-  if(symDents[type])return symDents[type];
+function symbolDent(type,withDot){
+  // type: one dent shape ('lock', 'pips3', 'frameC'...) or two joined by '+' (a symbol on a linked cube: its own dent and the frame's groove, each at its own depth)
+  const ck=type+(withDot?'+dot':'');if(symDents[ck])return symDents[ck];
   const s=256,cv=document.createElement('canvas');cv.width=cv.height=s;const g=cv.getContext('2d');
-  g.fillStyle='#000';g.fillRect(0,0,s,s);drawDeco(g,s,type+'|#ffffff','#000000',false);
-  const px=g.getImageData(0,0,s,s).data;let h=new Float32Array(s*s);for(let i=0;i<s*s;i++)h[i]=px[i*4]/255;
   // soften the edges (a few box blurs) so the walls of the dent slope instead of dropping straight down
   const blur=(a,r)=>{const o=new Float32Array(s*s),t=new Float32Array(s*s);
     for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const xx=x+k;if(xx>=0&&xx<s){sum+=a[y*s+xx];n++}}t[y*s+x]=sum/n}
     for(let y=0;y<s;y++)for(let x=0;x<s;x++){let sum=0,n=0;for(let k=-r;k<=r;k++){const yy=y+k;if(yy>=0&&yy<s){sum+=t[yy*s+x];n++}}o[y*s+x]=sum/n}return o};
-  h=blur(blur(h,2),2);
-  const D=type.startsWith('pips')?32:type.startsWith('ripple')?36:SYMBOL_DEPTH, // Echo ripples press in like the pips: the center dot deepest, each ring out shallower
-    _=0,img=g.createImageData(s,s),d=img.data,H=(x,y)=>-D*h[Math.min(s-1,Math.max(0,y))*s+Math.min(s-1,Math.max(0,x))];
+  const layers=type.split('+').map(t=>{ // each part: its soft height map and how deep it presses (Echo ripples press in like the pips: the center dot deepest, each ring out shallower)
+    g.fillStyle='#000';g.fillRect(0,0,s,s);drawDeco(g,s,t+'|'+(t.startsWith('frame')?'height':'#ffffff'),'#000000',false);
+    const px=g.getImageData(0,0,s,s).data;let h=new Float32Array(s*s);for(let i=0;i<s*s;i++)h[i]=px[i*4]/255;
+    return {h:blur(blur(h,2),2),D:t.startsWith('pips')?32:t.startsWith('ripple')?36:t.startsWith('frame')?30:SYMBOL_DEPTH}});
+  const _=0,img=g.createImageData(s,s),d=img.data,cl=v=>Math.min(s-1,Math.max(0,v)),
+    H0=(x,y)=>{let t=0;for(const L of layers)t-=L.D*L.h[cl(y)*s+cl(x)];return t},
+    sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t),dotH=r=>r>=DENT_R?0:r>DOT_R?-DENT_DEPTH*(1-sm((r-DOT_R)/(DENT_R-DOT_R))):-DENT_DEPTH-2.5*(1-(r/DOT_R)*(r/DOT_R)),
+    H=withDot?(x,y)=>H0(x,y)+dotH(Math.hypot(x-s/2,y-s/2)):H0; // (a dot face on a linked cube = the groove plus the pressed dot)
   for(let y=0;y<s;y++)for(let x=0;x<s;x++){
     const dx=(H(x+1,y)-H(x-1,y))/2,dy=(H(x,y+1)-H(x,y-1))/2;let nx=-dx,ny=dy,nz=1;const L=Math.hypot(nx,ny,nz);nx/=L;ny/=L;nz/=L;
     const k=(y*s+x)*4;d[k]=(nx*.5+.5)*255;d[k+1]=(ny*.5+.5)*255;d[k+2]=(nz*.5+.5)*255;d[k+3]=255}
-  g.putImageData(img,0,0);return symDents[type]=new THREE.CanvasTexture(cv);
+  g.putImageData(img,0,0);return symDents[ck]=new THREE.CanvasTexture(cv);
 }
 const SYMBOL_DEPTH=9;
 let dentTex=null;
@@ -1887,6 +1930,8 @@ function mat(skin,kind,color,deco){
     }else m=new THREE.MeshPhongMaterial({map,specular:0x000000,shininess:1}); // matte; every face of every cube is lit the same way
     if(kind==='dot'&&!isNeon){m.normalMap=dentNormals();m.normalScale.set(1,1)}
     else if(kind==='blank'&&!isNeon&&symbolOf(deco)){m.normalMap=symbolDent(symbolOf(deco));m.normalScale.set(1,1)}
+    if(!isNeon&&frameOf(deco)){ // linked cube: the frame's groove is lit like the pips; a pressed dot, a lock, a key, pips or ripples on the same face add their own dent to it
+      const sy=kind==='blank'?symbolOf(deco):null;m.normalMap=symbolDent(sy?sy+'+'+frameOf(deco):frameOf(deco),kind==='dot');m.normalScale.set(1,1)} // the linked frame's groove is lit like the pips; a dot on a linked cube gets the groove plus its pressed dot
     m.userData.kind=kind;matCache[k]=m;
   }
   return matCache[k];
@@ -1897,6 +1942,7 @@ let glow=0;
 const NEON_NEUTRAL={'#FFFFFF':'#FFFFFF','#ABABA8':'#39FF14'}; // Neon never shows gray: the gray blockers glow neon green there
 const NEON_OF={'#FF6C10':'#FF7A1A','#007C92':'#1FB8FF','#B2BB1E':'#F4FF3A','#34363A':'#B026FF'};
 // a pale tint of a fusion color, for cubes that haven't fused yet
+const FRAME_TYPE='frameC'; // linked pairs: a groove pressed into every face, with a narrow color line along its floor
 const pale=h=>'#'+hexRGB(h).map(v=>Math.round(v+(255-v)*.7).toString(16).padStart(2,'0')).join('');
 const FUSED_BRAND='#34363A'; // SmartPull: charcoal (the brand black) means "fused"
 const isFused=b=>!!(b.fuseColor&&b.group&&b.group.members.filter(m=>m.alive).length>1);
@@ -1915,7 +1961,7 @@ function decoFor(b,neon){
   // (no corner marks: a cube's fusion color shows as a pale tint of the whole cube instead)
   // a frame means "these cubes move as one": a linked pair from the start. Fused cubes show it by
   // their solid color; only in SmartPull (where every cube is already colored) do they also get a frame.
-  if(b.group&&b.group.members.filter(m=>m.alive).length>1&&!b.fuseColor&&!linkPieceOn())parts.push('frame|'+c(b.group.color||b.pairColor));
+  if(b.group&&b.group.members.filter(m=>m.alive).length>1&&!b.fuseColor&&!linkPieceOn())parts.push(FRAME_TYPE+'|'+c(b.group.color||b.pairColor));
   if(b.lockKey&&b.lockKey.alive)parts.push('lock|'+c(b.lockColor));
   else if(b.unlocking)parts.push('unlock|'+c(b.lockColor)); // just opened: the padlock shows open for a moment
   // a locked key (part of a chain) shows only its padlock; its key appears once that lock opens,
@@ -1927,6 +1973,31 @@ function decoFor(b,neon){
 }
 // frames and corner marks go on every face; padlocks and keys only on the plain sides
 const faceDeco=dc=>dc.split(';').filter(x=>x.startsWith('frame')||x.startsWith('corner')).join(';');
+/* Linked-pair frame: a groove pressed into the face. The lighting comes from the same kind of normal map the pips and
+   Echo ripples use (symbolDent('frameC'), height pass = col0 'height'); this draws the color line and the soft inner shadow on top. */
+function frameTrace(c,s){const p=28,rr=24;c.beginPath();c.moveTo(p+rr,p);c.arcTo(s-p,p,s-p,s-p,rr);c.arcTo(s-p,s-p,p,s-p,rr);c.arcTo(p,s-p,p,p,rr);c.arcTo(p,p,s-p,p,rr);c.closePath()}
+function drawFrameGroove(g,s,col0,fillC,glowing){
+  const GW=16,LINE=6;
+  if(col0==='height'){g.strokeStyle='#fff';g.lineWidth=GW;frameTrace(g,s);g.stroke();return} // the dent's shape (white = deepest)
+  const neon=fillC==='#000000';
+  const off=()=>{const oc=document.createElement('canvas');oc.width=oc.height=s;return oc};
+  if(!neon){
+    // groove floor: the cube's own color, slightly shaded, with a narrow color line along it
+    g.lineWidth=GW;g.strokeStyle='rgba(0,0,0,.07)';frameTrace(g,s);g.stroke();
+    // soft inner shadow, strongest along the top edge where the rim hides the light (like the pips' dents)
+    [[1.5,.2],[3.5,.12]].forEach(([dy,a])=>{const oc=off(),o=oc.getContext('2d');o.fillStyle='rgba(0,0,0,'+a+')';o.fillRect(0,0,s,s);
+      o.globalCompositeOperation='destination-out';o.strokeStyle='#000';o.lineWidth=GW;o.save();o.translate(0,dy);frameTrace(o,s);o.stroke();o.restore();
+      o.globalCompositeOperation='destination-in';frameTrace(o,s);o.stroke();g.drawImage(oc,0,0)});
+    g.lineWidth=LINE;g.strokeStyle=col0;frameTrace(g,s);g.stroke();
+    return}
+  // Neon: faces are unlit, so the groove is drawn: two thin violet walls (dim on top, brighter on the lower lip, like Echo's glow) around the colored floor
+  const lit=!!glowing,wl=GW+3;
+  const oc=off(),o=oc.getContext('2d');o.lineWidth=wl;o.strokeStyle='#fff';frameTrace(o,s);o.stroke();o.globalCompositeOperation='destination-out';o.lineWidth=GW-0.5;frameTrace(o,s);o.stroke();
+  o.globalCompositeOperation='source-in';const gr=o.createLinearGradient(0,28,0,s-28);gr.addColorStop(0,lit?'rgba(205,170,255,.30)':'rgba(205,170,255,.18)');gr.addColorStop(1,lit?'rgba(225,200,255,.95)':'rgba(205,170,255,.55)');o.fillStyle=gr;o.fillRect(0,0,s,s);
+  g.save();g.shadowBlur=0;
+  g.lineWidth=LINE;g.strokeStyle=col0;if(lit){g.shadowColor=col0;g.shadowBlur=9}frameTrace(g,s);g.stroke();g.shadowBlur=0;
+  g.shadowColor='rgba(190,140,255,.9)';g.shadowBlur=lit?8:0;g.drawImage(oc,0,0);g.restore();
+}
 function drawDeco(g,s,deco,fillC,glowing){
   if(!deco)return;
   if(deco.includes(';')){deco.split(';').forEach(d=>drawDeco(g,s,d,fillC,glowing));return}
@@ -1973,9 +2044,8 @@ function drawDeco(g,s,deco,fillC,glowing){
     else if(col0==='neon'&&glowing){g.shadowColor='rgba(190,140,255,.9)';g.shadowBlur=10;g.strokeStyle='rgba(205,170,255,.75)';g.lineWidth=3.5;P.forEach(([x,y])=>{g.beginPath();g.arc(x,y,14.3,0,7);g.stroke()})} // Neon: hidden until Black Light is on
   }else if(type==='num'){
     g.translate(s/2,s/2);g.font='800 132px system-ui, -apple-system, sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(deco.split('|')[2],0,8);
-  }else if(type==='frame'){
-    // a thick colored frame just inside the edge: this cube is linked to the neighbor with the same frame
-    const p=28,rr=24;g.lineWidth=14;g.beginPath();g.moveTo(p+rr,p);g.arcTo(s-p,p,s-p,s-p,rr);g.arcTo(s-p,s-p,p,s-p,rr);g.arcTo(p,s-p,p,p,rr);g.arcTo(p,p,s-p,p,rr);g.closePath();g.stroke();
+  }else if(type==='frameC'){
+    drawFrameGroove(g,s,col0==='height'?col0:col,fillC,glowing);
   }else{
     g.translate(s/2,s/2);g.lineWidth=12;
     // a symbol that barely stands out from its cube (like olive on gray) gets a thin charcoal outline
