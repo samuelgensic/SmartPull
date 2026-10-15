@@ -10,9 +10,7 @@
   --display:"Krona One", "Arial Black", system-ui, sans-serif;
   --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#191E1C; --bg2:#222926; --ink:#E9ECE6; --muted:#97A39B; --accent:#7FC0B9; --chip:#2A322F; color-scheme:dark }}
-:root[data-theme="dark"]{ --bg:#191E1C; --bg2:#222926; --ink:#E9ECE6; --muted:#97A39B; --accent:#7FC0B9; --chip:#2A322F; color-scheme:dark }
+html[data-dk]{ --bg:#191E1C; --bg2:#222926; --ink:#E9ECE6; --muted:#97A39B; --accent:#7FC0B9; --chip:#2A322F; color-scheme:dark }
 html,body{height:100%}
 body{background:radial-gradient(120% 90% at 50% 40%, var(--bg) 0%, var(--bg2) 100%); background-color:var(--bg); color:var(--ink); font-family:var(--body); overflow:hidden; -webkit-user-select:none; user-select:none}
 .app{position:relative; height:100%; display:flex; flex-direction:column}
@@ -51,7 +49,7 @@ button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 html:not(.neon) button.more[aria-expanded="true"],html:not(.neon) #sound[aria-expanded="true"],html:not(.neon) #tune[aria-expanded="true"],html:not(.neon) #paint[aria-expanded="true"]{box-shadow:0 1px 0 rgba(0,0,0,.06)!important; outline:2px solid #FF6C10; outline-offset:2px}
 html.brandtheme button.more[aria-expanded="true"],html.brandtheme #sound[aria-expanded="true"],html.brandtheme #tune[aria-expanded="true"],html.brandtheme #paint[aria-expanded="true"]{outline-width:2.2px; outline-offset:3px}
 html.neon button.more[aria-expanded="true"],html.neon #sound[aria-expanded="true"],html.neon #tune[aria-expanded="true"],html.neon #paint[aria-expanded="true"]{box-shadow:0 0 10px rgba(255,46,151,.55)!important; outline:2px solid #FF2E97; outline-offset:2px}
-@media (prefers-color-scheme: dark){html:not(.neon) button.more[aria-expanded="true"],html:not(.neon) #sound[aria-expanded="true"],html:not(.neon) #tune[aria-expanded="true"],html:not(.neon) #paint[aria-expanded="true"]{outline-color:#FD9357}}
+html[data-dk]:not(.neon) button.more[aria-expanded="true"],html[data-dk]:not(.neon) #sound[aria-expanded="true"],html[data-dk]:not(.neon) #tune[aria-expanded="true"],html[data-dk]:not(.neon) #paint[aria-expanded="true"]{outline-color:#FD9357}
 .tools button{box-shadow:0 4px 12px rgba(0,0,0,.14); transition:transform .32s cubic-bezier(.3,1.3,.5,1), opacity .2s ease}
 .tools button:nth-child(1){--i:1} .tools button:nth-child(2){--i:2} .tools button:nth-child(3){--i:3} .tools button:nth-child(4){--i:4}
 .controls.open .tools button{transition-delay:calc((var(--i) - 1) * 35ms)}
@@ -135,7 +133,7 @@ button.lvl .lvsub{font-family:var(--body); font-size:10.5px; font-weight:700; le
 /* the chapter name takes a color from the mode: teal in Classic, orange in SmartPull, pink in Neon */
 html.brandtheme button.lvl .lvsub{color:#FF6C10} /* same orange as Pulls (was label orange #EB5D07 until Oct 12) */
 html.neon button.lvl .lvsub{color:#39FF14} /* the chapter name is the Pulls color in every mode (Neon was pink until Oct 12) */
-@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) button.lvl .lvsub{color:#54BED0} html.brandtheme button.lvl .lvsub{color:#FD9357}}
+html[data-dk]:not(.neon):not(.brandtheme) button.lvl .lvsub{color:#54BED0}html[data-dk].brandtheme button.lvl .lvsub{color:#FD9357}
 button.lvl[aria-expanded="true"] .lvtxt{opacity:0; transform:translateX(-6px)}
 .panel.levels{width:min(300px,calc(100% - 32px)); background:transparent; box-shadow:none; padding:0; top:72px; left:18px}
 /* scrub ruler: drag sideways on the level button and a ruler slides out under it; the needle reads the level.
@@ -201,17 +199,13 @@ button.trlv.samp{border-style:dashed}
 html:not(.neon):not(.brandtheme) .med.cur .disc{box-shadow:0 0 0 2px #FF6C10}
 html:not(.neon):not(.brandtheme) button.trlv.now{border-width:1.5px; border-color:rgba(0,0,0,.14); outline:2px solid #FF6C10; outline-offset:2px}
 html:not(.neon):not(.brandtheme) button.trlv.now.clr{border-color:var(--c,var(--accent)); color:#fff}
-@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) .med.cur .disc{box-shadow:0 0 0 2px #FD9357}
-  html:not(.neon):not(.brandtheme) button.trlv.now{border-color:rgba(255,255,255,.18); outline-color:#FD9357}
-  html:not(.neon):not(.brandtheme) button.trlv.now.clr{border-color:var(--c,var(--accent)); color:var(--bg)}} /* dark screens: the fill is light teal, so the number stays dark like the other cleared pills */
+html[data-dk]:not(.neon):not(.brandtheme) .med.cur .disc{box-shadow:0 0 0 2px #FD9357}html[data-dk]:not(.neon):not(.brandtheme) button.trlv.now{border-color:rgba(255,255,255,.18); outline-color:#FD9357}html[data-dk]:not(.neon):not(.brandtheme) button.trlv.now.clr{border-color:var(--c,var(--accent)); color:var(--bg)} /* dark screens: the fill is light teal, so the number stays dark like the other cleared pills */
 /* SmartPull: the current chapter and level get an orange ring on a wider cream gap, so it still reads against the orange pills
    and ring segments (option S7, Samuel, Oct 14); a cleared current pill shows its number in white */
 html.brandtheme button.trlv.now{border:1.5px solid rgba(0,0,0,.14); box-shadow:0 0 0 3px var(--chip),0 0 0 5.2px #FF6C10}
 html.brandtheme button.trlv.now.clr{border-color:var(--c,var(--accent)); color:#fff}
 html.brandtheme .med.cur .disc{inset:9px; box-shadow:0 0 0 2.5px var(--chip),0 0 0 4.5px #FF6C10}
-@media (prefers-color-scheme: dark){html.brandtheme button.trlv.now{border-color:rgba(255,255,255,.18); box-shadow:0 0 0 3px var(--chip),0 0 0 5.2px #FD9357}
-  html.brandtheme button.trlv.now.clr{border-color:var(--c,var(--accent)); color:var(--bg)}
-  html.brandtheme .med.cur .disc{box-shadow:0 0 0 2.5px var(--chip),0 0 0 4.5px #FD9357}}
+html[data-dk].brandtheme button.trlv.now{border-color:rgba(255,255,255,.18); box-shadow:0 0 0 3px var(--chip),0 0 0 5.2px #FD9357}html[data-dk].brandtheme button.trlv.now.clr{border-color:var(--c,var(--accent)); color:var(--bg)}html[data-dk].brandtheme .med.cur .disc{box-shadow:0 0 0 2.5px var(--chip),0 0 0 4.5px #FD9357}
 /* Neon: the current chapter and the current level are marked in that chapter's own neon color (Samuel, Oct 14). The medallion gets a glowing ring set inside its progress ring;
    the level pill gets a ring with a small gap (like Classic's) and a slow, gentle glow breath. SmartPull keeps its ink outline. */
 html.neon .med.cur .disc{box-shadow:0 0 0 2px var(--c),0 0 10px var(--c)}
@@ -307,7 +301,7 @@ button.tipbtn svg{width:20px; height:20px; stroke-width:2.2}
 button.tipbtn{--halo:62,124,120; --sh:0 2px 8px rgba(0,0,0,.12)}
 html.brandtheme button.tipbtn{--halo:255,108,16}
 html.neon button.tipbtn{--halo:255,46,151; --sh:0 0 0 1.5px rgba(244,236,255,.28)}
-@media (prefers-color-scheme: dark){html:not(.neon):not(.brandtheme) button.tipbtn{--halo:127,192,185} html.brandtheme button.tipbtn{--halo:253,147,87}}
+html[data-dk]:not(.neon):not(.brandtheme) button.tipbtn{--halo:127,192,185}html[data-dk].brandtheme button.tipbtn{--halo:253,147,87}
 button.tipbtn.pop{animation:tipPop .8s cubic-bezier(.34,1.5,.64,1) backwards} /* (backwards, not both: once it has landed, the win screen can still fade the button out) */
 button.tipbtn.pop.new{animation:tipPop .8s cubic-bezier(.34,1.5,.64,1) backwards,tipRing 3.4s ease-in-out 1.1s infinite}
 @keyframes tipPop{0%{opacity:0; transform:scale(.55)} 55%{opacity:1} 100%{opacity:1; transform:scale(1)}}
@@ -315,7 +309,7 @@ button.tipbtn.pop.new{animation:tipPop .8s cubic-bezier(.34,1.5,.64,1) backwards
 button.tipbtn svg.spark{position:absolute; top:-7px; right:-7px; width:15px; height:15px; margin:0; stroke:none; fill:currentColor; color:#FF6C10; opacity:0; pointer-events:none}
 html:not(.neon):not(.brandtheme) button.tipbtn svg.spark{color:var(--accent)}
 html.neon button.tipbtn svg.spark{color:#F4FF3A; filter:drop-shadow(0 0 4px #F4FF3A)}
-@media (prefers-color-scheme: dark){html.brandtheme button.tipbtn svg.spark{color:#FD9357}}
+html[data-dk].brandtheme button.tipbtn svg.spark{color:#FD9357}
 button.tipbtn.pop svg.spark{animation:tipTwinkle 1.1s ease-out .3s both}
 @keyframes tipTwinkle{0%{opacity:0; transform:scale(.2) rotate(-40deg)} 40%{opacity:1; transform:scale(1.15) rotate(0)} 100%{opacity:0; transform:scale(.6) rotate(25deg)}}
 @media (prefers-reduced-motion: reduce){button.tipbtn.pop,button.tipbtn.pop.new{animation:none} button.tipbtn svg.spark{display:none} button.tipbtn.new{box-shadow:var(--sh),0 0 0 3px rgba(var(--halo),.22)}}
@@ -355,11 +349,7 @@ html.neon .done small{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.
 /* Scorecard button takes the theme's color: accent in Classic and SmartPull, a pink outline in Neon */
 #scoreOpen{background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12)}
 html.brandtheme #scoreOpen{background:#FF6C10}
-@media (prefers-color-scheme: dark){
-  html.brandtheme .done small,html.brandtheme #scoreOpen{background:#FD9357}
-  html:not(.neon) .done small,html:not(.neon) #scoreOpen,html:not(.neon) button.trlv.clr{color:var(--bg)}
-  .tapc{color:#FD9357}
-}
+html[data-dk].brandtheme .done small,html[data-dk].brandtheme #scoreOpen{background:#FD9357}html[data-dk]:not(.neon) .done small,html[data-dk]:not(.neon) #scoreOpen,html[data-dk]:not(.neon) button.trlv.clr{color:var(--bg)}html[data-dk] .tapc{color:#FD9357}
 html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5px #FF2E97, 0 0 12px rgba(255,46,151,.4)}
 /* Continue and Replay pull into place like a cube coming the other way: from behind you, big and close, shrinking back into
    the screen and settling with a tiny overshoot. Once settled they hold still (no fading). Every ~4 s Continue gives a small
@@ -452,7 +442,7 @@ html.neon .pstick{filter:drop-shadow(0 0 7px rgba(57,255,20,.5))}
 /* Par: a solid, button-style pill (light text), with its words on the same line as Moves and Best */
 .done .parrow{align-items:baseline}
 .done .parpill{background:var(--c); color:#fff; box-shadow:none; padding:6px 13px}
-@media (prefers-color-scheme: dark){html:not(.neon) .done .parpill{color:var(--bg)}}
+html[data-dk]:not(.neon) .done .parpill{color:var(--bg)}
 html.neon .done .parpill{background:var(--chip); color:var(--c); box-shadow:inset 0 0 0 1.5px var(--c), 0 0 10px color-mix(in srgb, var(--c) 55%, transparent)}
 .done .parpill{opacity:0} /* Par is a 3D block now (Oct 13): the pill stays as its invisible placeholder (layout, colors, label) */
 .done .parpill{display:inline-grid; place-items:center; box-sizing:border-box; height:37px; padding:0 16px; font-size:12px; white-space:nowrap} /* the Par block: as tall as Continue, but only as wide as "Par" and its number need (Samuel, Oct 13) */
@@ -499,6 +489,24 @@ header button.more svg{width:22px; height:22px}
 .tools{right:4px}
 header .topspace{padding-right:54px} header .hleft{margin-right:54px} html.neon header .topspace{padding-right:100px}
 @media (max-width:400px){header .topspace{padding-right:54px} header .hleft{margin-right:54px} html.neon header .topspace{padding-right:96px} .tools{right:6px}}
+/* Top bar circles (Samuel, Oct 15): the level button's medallion, the menu button and Neon's Black Light bulb are all one size, 42 px at every width,
+   a little smaller than before (46) so the top bar stays compact, but still clearly bigger than the 38 px tool buttons that drop out of the menu.
+   All round, icons 20 px, level with each other. */
+button.lvl{height:42px!important; border-radius:21px}
+.lvDisc{width:42px!important; height:42px!important}
+.lvDisc svg{width:20px!important; height:20px!important}
+header button.more{width:42px!important; height:42px!important}
+header button.more svg{width:20px!important; height:20px!important}
+header .hleft{align-self:center}
+header .blacklight,header .blbox .blacklight{width:42px!important; height:42px!important; border-radius:50%!important}
+header .blacklight .flash{width:20px; height:20px}
+header .topspace{padding-right:50px!important} header .hleft{margin-right:50px!important} html.neon header .topspace{padding-right:92px!important}
+/* the menu button's three dots: larger (radius 1.3 to 1.9) and in the brand colors, orange, teal, olive (Samuel, Oct 15);
+   softened in dark mode like the rest of the UI, and Neon's own orange, blue and yellow in Neon */
+button.more .dots circle{r:1.9px} /* (1.3 originally; 1.6, then 1.9 per Samuel, Oct 15) */
+button.more .dots circle:nth-child(1){fill:#FF6C10} button.more .dots circle:nth-child(2){fill:#007C92} button.more .dots circle:nth-child(3){fill:#B2BB1E}
+html[data-dk]:not(.neon) button.more .dots circle:nth-child(1){fill:#FD9357} html[data-dk]:not(.neon) button.more .dots circle:nth-child(2){fill:#54BED0} html[data-dk]:not(.neon) button.more .dots circle:nth-child(3){fill:#C9D543}
+html.neon button.more .dots circle:nth-child(1){fill:#FF7A1A} html.neon button.more .dots circle:nth-child(2){fill:#1FB8FF} html.neon button.more .dots circle:nth-child(3){fill:#F4FF3A}
 </style>
 
 <div class="app">
@@ -511,7 +519,7 @@ header .topspace{padding-right:54px} header .hleft{margin-right:54px} html.neon 
       <button id="paint" aria-label="Modes" aria-expanded="false"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="#B2BB1E" stroke="none"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="#007C92" stroke="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="#FF6C10" stroke="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="#ABABA8" stroke="none"/></svg></button>
       <button id="reset" aria-label="Restart level"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button>
       </div>
-      <button id="more" class="more" type="button" aria-expanded="false" aria-controls="tools" aria-label="Show buttons"><svg viewBox="0 0 24 24"><g class="dots"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></g><path class="x" d="M7 7l10 10M17 7L7 17"/></svg></button>
+      <button id="more" class="more" type="button" aria-expanded="false" aria-controls="tools" aria-label="Show buttons"><svg viewBox="0 0 24 24"><g class="dots"><circle cx="5.5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18.5" cy="12" r="1.6"/></g><path class="x" d="M7 7l10 10M17 7L7 17"/></svg></button>
     </div>
     <div class="levelnav">
       <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Levels: tap for the chapter menu, or drag sideways to scrub through levels"><span class="lvDisc"><span class="lvGlyph" id="lvGlyph"></span><svg class="lvX" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="lvtxt"><span class="lvnum">1</span><span class="lvsub">Pull</span></span></button>
@@ -534,6 +542,7 @@ header .topspace{padding-right:54px} header .hleft{margin-right:54px} html.neon 
   </div>
   <div class="panel" id="panel" hidden>
     <div class="prow"><div class="plab">Undo</div><div class="opts" id="optUndo"></div></div>
+    <div class="prow"><div class="plab">Appearance</div><div class="opts" id="optDark"></div></div>
     <div class="prow" id="tierRow"><div class="plab">Version (preview)</div><div class="opts" id="optTier"></div></div>
     <div class="prow"><div class="plab">Developer Mode</div><div class="opts" id="optDev"></div></div>
     <div class="prow" id="devFloor" hidden><div class="plab">Gravity floor</div><div class="opts" id="optFloor"></div></div>
@@ -1860,7 +1869,11 @@ function arrowGlyph(g,glideK,ordN){
   g.lineWidth=lw}
 // dark mode check (used by the cubes and the UI palette) and the toned-down cube orange for dark mode
 const CUBE_ORANGE_DARK='#D96B30';
-const darkMode=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}};
+const sysDark=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}};
+let themePref='auto';try{const v=localStorage.getItem('pa4_theme');if(v==='light'||v==='dark')themePref=v}catch(e){}
+const darkMode=()=>themePref==='dark'||(themePref==='auto'&&sysDark());
+function applyTheme(){document.documentElement.toggleAttribute('data-dk',darkMode())}
+applyTheme();
 function faceTex(fillC,kind,color,deco){
   // dark mode: orange on the cubes (whole cubes and orange dots) is toned down to match the soft dark-mode palette (Oct 12)
   if(darkMode()){const so=c=>String(c).toUpperCase()==='#FF6C10'?CUBE_ORANGE_DARK:c;fillC=so(fillC);color=so(color);if(deco)deco=deco.replace(/#ff6c10/gi,CUBE_ORANGE_DARK)}
@@ -2469,12 +2482,12 @@ let cheerColorIdx=0;
    orange #FF6C10 → #FD9357, teal #007C92 → #54BED0, olive #B2BB1E → #C9D543, gray → #C9CBC6. Use these, never the bright ones, for UI in dark mode. */
 const SOFT={'#FF6C10':'#FD9357','#EB5D07':'#FD9357','#E45900':'#FD9357','#007C92':'#54BED0','#B2BB1E':'#C9D543','#979F19':'#C9D543','#82881A':'#C9D543','#ABABA8':'#C9CBC6','#34363A':'#C9CBC6'};
 const uiCol=c=>darkMode()&&SOFT[c]||c;
-function cheerPalette(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
+function cheerPalette(){const dark=darkMode();
   if(theme==='neon')return NEONS;
   if(theme==='brand')return dark?['#FD9357','#54BED0','#C9D543','#C9CBC6']:['#FF6C10','#007C92','#979F19','#34363A'];
   return dark?['#54BED0','#FD9357','#C9D543','#E9ECE6']:['#007C92','#E45900','#82881A','#34363A']}
 // the "Moves" total on the level-complete message has its own theme color (different from the "Best" note)
-function movesColor(){let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
+function movesColor(){const dark=darkMode();
   return theme==='neon'?'#1FB8FF':theme==='brand'?(dark?'#54BED0':'#007C92'):(dark?'#FD9357':'#E45900')}
 /* Best (New best) takes the theme's spare color: Neon's purple (unused on the win screen), and in Classic/SmartPull the Taps color,
    which is free on levels without dots; it uses the stat palette, so it softens in dark mode like the counts */
@@ -2553,7 +2566,7 @@ const STAT_COLORS={
   brand:{light:{blocks:'#34363A',pulls:'#FF6C10',taps:'#007C92',bumps:'#82881A'},dark:{blocks:'#C9CBC6',pulls:'#FD9357',taps:'#54BED0',bumps:'#C9D543'}},
   neon:{light:{blocks:'#1FB8FF',pulls:'#39FF14',taps:'#F4FF3A',bumps:'#FF2E97'}}};
 function statColors(){const t=STAT_COLORS[theme]||STAT_COLORS.plain;
-  let dark=false;try{dark=matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
+  const dark=darkMode();
   return (dark&&t.dark)||t.light}
 /* Pulls (in play): counts down how many pulls the board still needs. A linked pair or fused piece is one pull, echo twins leave on one pull,
    and each glass pane counts as one from the start (it takes a tap to break, or drops off early if cubes shatter it), so the number only ever goes down */
@@ -4311,7 +4324,8 @@ function recolorWin(){const box=document.getElementById('done');if(!box||!box.cl
   q('[data-role="perfectstk"]').forEach(e=>{e.style.setProperty('--pc',perfectColor());e.style.setProperty('--pt',perfectInk())});
   q('[data-role="perfectsw"]').forEach(e=>e.style.setProperty('--pp',ppColor()))}
 // the phone switching between light and dark while playing: recolor the cubes (dark-mode orange), the corner counts and any win screen
-try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{for(const b of blocks)if(b.mesh)b.mesh.material=materialsFor(b);updateLeft();recolorWin()})}catch(e){}
+function refreshTheme(){applyTheme();for(const b of blocks)if(b.mesh)b.mesh.material=materialsFor(b);updateLeft();recolorWin()}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themePref==='auto')refreshTheme()})}catch(e){}
 
 /* Perfect Pull: a round badge (a colored disc with a white sticker margin), tilted a little, centered above the win line.
    It flies in from close to the screen and glides back to rest, slowing all the way down (no bounce), with a faint papery whoosh
@@ -5151,6 +5165,12 @@ document.getElementById('undo').hidden=!undoOn;
     b.setAttribute('aria-pressed',undoOn===val?'true':'false');
     b.onclick=()=>{uiSfx('undo',val);undoOn=val;try{localStorage.setItem('pa4_undo',val?'1':'0')}catch(e){}
       box.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));document.getElementById('undo').hidden=!val};
+    box.appendChild(b)})})();
+(function(){const box=document.getElementById('optDark');
+  [['Auto','auto'],['Light','light'],['Dark','dark']].forEach(([label,val])=>{const b=document.createElement('button');b.className='opt';b.textContent=label;
+    b.setAttribute('aria-pressed',themePref===val?'true':'false');
+    b.onclick=()=>{themePref=val;try{localStorage.setItem('pa4_theme',val)}catch(e){}
+      box.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));refreshTheme()};
     box.appendChild(b)})})();
 document.getElementById('devJump').addEventListener('submit',e=>{e.preventDefault();
   const n=Math.max(1,Math.min(NLEV,Math.floor(+document.getElementById('devLevel').value)||1));
