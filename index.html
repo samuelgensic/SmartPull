@@ -114,10 +114,9 @@ button.lv.more{background:transparent; box-shadow:inset 0 0 0 1.5px var(--muted)
 .scnote{font-size:12px; color:var(--muted)} .scclose{align-self:center; padding:0 22px}
 .upsmall{margin:0; font-size:12px; line-height:1.5; color:var(--muted)}
 button.upclose{align-self:center}
-/* the level name doubles as a button that opens the level picker */
-/* the level button, as in the prototype: a round medallion with the current chapter's symbol (an X while the menu is open),
-   then the level number large and the chapter name small beneath it. Tap for the menu; drag sideways to scrub. */
-button.lvl{width:auto; height:46px; padding:0 18px 0 0; background:transparent; box-shadow:none; color:var(--ink); display:inline-flex; align-items:center; gap:12px; border-radius:23px}
+/* The Chapter Menu button (top left, Oct 17): a round medallion with the current chapter's symbol; tap it for the chapter menu
+   (it turns into an X while the menu is open). The level number and chapter name now sit on their own at the top center (.lvlab). */
+button.lvl{width:46px; min-width:0; height:46px; padding:0; background:transparent; box-shadow:none; color:var(--ink); display:inline-flex; align-items:center; justify-content:center; border-radius:50%}
 .lvDisc{position:relative; width:46px; height:46px; flex:none; border-radius:50%; background:var(--chip); color:var(--ink); display:grid; place-items:center;
   box-shadow:0 1px 0 rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.06); transition:transform .2s}
 html.neon .lvDisc{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
@@ -127,22 +126,29 @@ html.neon .lvDisc{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
 button.lvl[aria-expanded="true"] .lvGlyph{display:none}
 button.lvl[aria-expanded="true"] .lvX{display:block}
 button.lvl:active .lvDisc{transform:scale(.94)}
-button.lvl .lvtxt{align-items:flex-start; gap:3px; transition:opacity .25s,transform .25s}
-button.lvl .lvnum{font-family:var(--display); font-weight:400; font-size:20px; letter-spacing:.04em; line-height:1}
-button.lvl .lvsub{font-family:var(--body); font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#007C92; margin-top:0}
-/* the chapter name takes a color from the mode: teal in Classic, orange in SmartPull, pink in Neon */
-html.brandtheme button.lvl .lvsub{color:#FF6C10} /* same orange as Pulls (was label orange #EB5D07 until Oct 12) */
-html.neon button.lvl .lvsub{color:#39FF14} /* the chapter name is the Pulls color in every mode (Neon was pink until Oct 12) */
-html[data-dk]:not(.neon):not(.brandtheme) button.lvl .lvsub{color:#54BED0}html[data-dk].brandtheme button.lvl .lvsub{color:#FD9357}
-button.lvl[aria-expanded="true"] .lvtxt{opacity:0; transform:translateX(-6px)}
+/* The level number and chapter name: top center, halfway between the Chapter Menu button and the menu button (Oct 17).
+   It is the handle for the scrub ruler: tap it to open the ruler below it, or drag sideways on it to scrub straight away. */
+header .lvmid{grid-column:2; grid-row:1; justify-self:center; align-self:start; display:flex}
+button.lvlab{width:auto; min-width:86px; height:46px; padding:0 10px; background:transparent; box-shadow:none; border-radius:14px; color:var(--ink);
+  display:grid; place-items:center; touch-action:none; white-space:nowrap; -webkit-tap-highlight-color:transparent}
+button.lvlab .lvtxt{align-items:center; gap:3px; transition:transform .15s ease-out}
+button.lvlab:active .lvtxt{transform:scale(.96)}
+button.lvlab .lvnum{font-family:var(--display); font-weight:400; font-size:20px; letter-spacing:.04em; line-height:1}
+button.lvlab .lvsub{font-family:var(--body); font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#007C92; margin-top:0}
+/* the chapter name takes the Pulls color of the mode: teal in Classic, orange in SmartPull, green in Neon */
+html.brandtheme button.lvlab .lvsub{color:#FF6C10} /* same orange as Pulls (was label orange #EB5D07 until Oct 12) */
+html.neon button.lvlab .lvsub{color:#39FF14} /* the chapter name is the Pulls color in every mode (Neon was pink until Oct 12) */
+html[data-dk]:not(.neon):not(.brandtheme) button.lvlab .lvsub{color:#54BED0}html[data-dk].brandtheme button.lvlab .lvsub{color:#FD9357}
 .panel.levels{width:min(300px,calc(100% - 32px)); background:transparent; box-shadow:none; padding:0; top:72px; left:18px}
-/* scrub ruler: drag sideways on the level button and a ruler slides out under it; the needle reads the level.
+/* scrub ruler (Oct 17): a wide band just below the top bar, centered, with its needle straight under the level number, so the number
+   reads as the needle's label. It unfolds downward out of the number and folds back up into it.
    One tick per level, a taller tick and the chapter symbol at each chapter start; cleared ticks fill with the chapter color. */
-.ruler{position:absolute; top:66px; left:12px; width:min(320px,calc(100% - 24px)); height:62px; z-index:6; border-radius:20px; background:var(--chip);
-  box-shadow:0 10px 28px rgba(0,0,0,.14); opacity:0; transform:translateY(-10px) scaleY(.5); transform-origin:top left; pointer-events:none; overflow:hidden;
-  transition:opacity .18s,transform .32s cubic-bezier(.3,1.5,.5,1)}
+.ruler{--rw:min(440px,calc(100% - 2 * var(--edge,12px))); position:absolute; top:68px; left:50%; width:var(--rw); margin-left:calc(var(--rw) / -2); height:62px; z-index:6; border-radius:20px; background:var(--chip);
+  box-shadow:0 10px 28px rgba(0,0,0,.14); opacity:0; transform:translateY(-22px) scale(.3,.2); transform-origin:50% 0; pointer-events:none; overflow:hidden;
+  transition:opacity .16s ease-in .06s,transform .24s cubic-bezier(.5,0,.75,.4)}
 html.neon .ruler{box-shadow:0 0 0 1px rgba(244,236,255,.16),0 10px 28px rgba(0,0,0,.5)}
-.ruler.on{opacity:1; transform:none}
+.ruler.on{opacity:1; transform:none; transition:opacity .12s ease-out,transform .34s cubic-bezier(.2,1,.3,1.04)}
+@media (prefers-reduced-motion: reduce){.ruler,.ruler.on{transform:none; transition:opacity .15s}}
 .rfade{position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg,var(--chip),transparent 24%,transparent 76%,var(--chip))}
 .rneedle{position:absolute; left:50%; top:9px; bottom:9px; width:2px; margin-left:-1px; border-radius:2px; background:var(--accent)}
 html.neon .rneedle{box-shadow:0 0 8px var(--accent)}
@@ -220,7 +226,6 @@ html.neon button.trlv.cln::after{box-shadow:inset 0 0 0 2px var(--c),0 0 6px var
 .med .lockBadge.strk{width:auto; min-width:16px; padding:0 4px; border-radius:8px; color:var(--accent); font:700 9px var(--body); font-variant-numeric:tabular-nums}
 button.unlockPill{width:auto; display:inline-flex; align-items:center; gap:5px; border:0; box-shadow:none; border-radius:14px; height:28px; padding:0 10px; background:none; color:var(--muted); font:700 10.5px var(--body); cursor:pointer; flex:none}
 button.unlockPill svg{width:10px; height:10px}
-button.lvl{touch-action:none; overflow:visible; white-space:nowrap; justify-content:flex-start}
 .lvtxt{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1.1; transition:transform .12s ease-out}
 .wic{width:16px; height:16px; flex:none; margin-right:8px; opacity:.7}
 .lvgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); gap:6px}
@@ -408,12 +413,13 @@ header .blacklight::after{content:attr(data-tip); position:absolute; top:50%; ri
 header .blacklight:focus-visible::after{opacity:1}
 /* narrow Neon phones: the tip button drops to its own row under the controls instead of crowding column 1, which the level picker now occupies */
 @media (max-width:400px){header .blacklight{width:34px; height:34px} header .hleft{margin-right:42px} html.neon header .topspace{padding-right:84px}}
-/* The SMART·PULL wordmark and credit stay at the bottom center on every device (Samuel, Oct 17) */
+/* The SMART·PULL wordmark always sits at the bottom center, on every device and browser, with Undo above it (Oct 17; until then a computer
+   moved it into the top bar, which now holds the level number) */
 /* Replay: a quieter outlined button under Continue on the win screen; it appears with Continue (Oct 13) */
 .done .replay{width:auto; height:auto; margin-top:-4px; padding:9px 22px; border-radius:var(--cubeR,8px); background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--muted);
   font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:0; pointer-events:none}
 /* Continue and Replay sit at the bottom of the screen, in thumb reach, just above the SMART·PULL wordmark (Samuel, Oct 14); 20px apart.
-   On a computer the wordmark is in the top bar, so they sit lower. A short window (landscape) keeps them under the stats instead. */
+   A short window (landscape) keeps them under the stats instead. */
 .done small,.done .replay{position:absolute; margin:0}
 /* side by side, as in the lab's Quick card (Samuel, Oct 17): Replay on the left, Continue on the right, 10px apart, a little smaller than before */
 .done small{left:calc(50% + 5px); transform:none; padding:9px 18px; font-size:11px; max-width:calc(50vw - 29px)}
@@ -471,13 +477,13 @@ html.brandtheme .done .tile.k-taps,html.neon .done .tile.k-taps{--tf:#007C92; --
 html.brandtheme .done .tile.k-bumps,html.neon .done .tile.k-bumps{--tf:#B2BB1E; --tk:#34363A}
 .done .tile.k-par{background:transparent; color:var(--wi); box-shadow:inset 0 0 0 2px var(--wi)}
 .done.stats .tile{transform:none; opacity:1}
-.done .tile .chk{position:absolute; top:-9px; right:-9px; width:22px; height:22px; border-radius:50%; background:#FF6C10; color:#34363A; display:grid; place-items:center; transform:scale(0); transition:transform .35s .7s cubic-bezier(.3,1.6,.5,1)}
+.done .tile .chk{position:absolute; top:-9px; right:-9px; width:22px; height:22px; border-radius:50%; background:#FF6C10; color:#34363A; display:grid; place-items:center; transform:scale(0); transition:transform .3s cubic-bezier(.3,1.6,.5,1)} /* no delay of its own: the pp timer pops it together with its chime */
 .done .tile .chk svg{width:12px; height:12px; stroke:currentColor; fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round}
 .done.pp .tile .chk{transform:scale(1)}
 .done .mbrow{display:flex; flex-direction:column; align-items:center; gap:5px; opacity:0; transition:opacity .3s .4s; margin-top:8px} /* Moves centered, Best right under it (Oct 17) */
 .done.stats .mbrow{opacity:1}
 .done .mbw{opacity:.72}
-.done .ppearn{display:block; text-align:center; font:400 9px/1 var(--display); letter-spacing:.12em; text-transform:uppercase; white-space:pre; color:var(--wi); margin-top:12px; opacity:0; transition:opacity .4s .8s} /* in the tiles' label type, Krona One small capitals (Samuel, Oct 17: not the old Quicksand) */
+.done .ppearn{display:block; text-align:center; font:400 9px/1 var(--display); letter-spacing:.12em; text-transform:uppercase; white-space:pre; color:var(--wi); margin-top:12px; opacity:0; transition:opacity .4s .15s} /* in the tiles' label type, Krona One small capitals (Samuel, Oct 17: not the old Quicksand) */
 .done.pp .ppearn{opacity:.72}
 .done .badges{opacity:0; transition:opacity .3s .5s} .done.stats .badges{opacity:1}
 .done .badge{background:#007C92; color:#F5F5DC; box-shadow:none} /* New best: a solid teal tag with cream words, in every mode */
@@ -501,7 +507,7 @@ header .topspace{padding-right:54px} header .hleft{margin-right:54px} html.neon 
 /* Top bar circles (Samuel, Oct 15): the level button's medallion, the menu button and Neon's Black Light bulb are all one size, 42 px at every width,
    a little smaller than before (46) so the top bar stays compact, but still clearly bigger than the 38 px tool buttons that drop out of the menu.
    All round, icons 20 px, level with each other. */
-button.lvl{height:42px!important; border-radius:21px}
+button.lvl{width:42px!important; height:42px!important; border-radius:21px}
 .lvDisc{width:42px!important; height:42px!important}
 .lvDisc svg{width:20px!important; height:20px!important}
 header button.more{width:42px!important; height:42px!important}
@@ -528,7 +534,6 @@ header{padding-left:var(--edge)!important; padding-right:var(--edge)!important}
 .blstack{left:var(--edge)!important}
 .timebox,button.fsbtn{right:var(--edge)!important}
 .app:has(#fsBtn:not([hidden])) .timebox{right:calc(var(--edge) + 48px)!important}
-.ruler{left:calc(var(--edge) - 4px)}
 /* level arrows (Samuel, Oct 15): a bare chevron on each side of the play area, vertically centered, no circle or background.
    Quiet in the mode's muted ink; brighter on hover or press. Right opens the next level once it's unlocked, left the previous one.
    At either end the arrow nearly vanishes. They step aside while the win screen or a menu is up. */
@@ -589,8 +594,9 @@ button.tipbtn{transition:opacity .4s,transform .3s cubic-bezier(.3,1.5,.5,1)}
       <button id="more" class="more" type="button" aria-expanded="false" aria-controls="tools" aria-label="Show buttons"><svg viewBox="0 0 24 24"><g class="dots"><circle cx="5.5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18.5" cy="12" r="1.6"/></g><path class="x" d="M7 7l10 10M17 7L7 17"/></svg></button>
     </div>
     <div class="levelnav">
-      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Levels: tap for the chapter menu, or drag sideways to scrub through levels"><span class="lvDisc"><span class="lvGlyph" id="lvGlyph"></span><svg class="lvX" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span><span class="lvtxt"><span class="lvnum">1</span><span class="lvsub">Pull</span></span></button>
+      <button class="lvl" id="lvl" aria-haspopup="true" aria-expanded="false" aria-label="Chapter menu"><span class="lvDisc"><span class="lvGlyph" id="lvGlyph"></span><svg class="lvX" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span></button>
     </div>
+    <div class="lvmid"><button class="lvlab" id="lvLab" type="button" aria-expanded="false" aria-controls="ruler" aria-label="Level 1, Pull. Tap or drag sideways to choose a level"><span class="lvtxt"><span class="lvnum">1</span><span class="lvsub">Pull</span></span></button></div>
     <div class="topspace"><div class="blbox"></div></div>
   </header>
   <div class="tryPill" id="tryPill" hidden><i></i><span></span></div>
@@ -722,9 +728,9 @@ const ICONS={
   Soon:'<circle cx="12" cy="12" r="8.5"/><path d="M9.2 9.3a2.8 2.8 0 1 1 4.3 2.4c-1 .6-1.5 1.1-1.5 2.3"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/>'
 };
 const chapterIcon=name=>`<svg class="wic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.Soon}</svg>`;
-function lvLabel(i){const b=document.getElementById('lvl');if(!b)return;
-  b.querySelector('.lvnum').textContent=i+1;b.querySelector('.lvsub').textContent=groupOf(i);
-  const g=document.getElementById('lvGlyph');if(g)g.innerHTML=ICONS[groupOf(i)]?chapterIcon(groupOf(i)):''}
+function lvLabel(i){const b=document.getElementById('lvLab');if(!b)return; // the level number and chapter name, top center
+  b.querySelector('.lvnum').textContent=i+1;b.querySelector('.lvsub').textContent=groupOf(i);b.setAttribute('aria-label',`Level ${i+1}, ${groupOf(i)}. Tap or drag sideways to choose a level`);
+  const g=document.getElementById('lvGlyph'),ch=groupOf(i);if(g&&g.dataset.ch!==ch){g.dataset.ch=ch;g.innerHTML=ICONS[ch]?chapterIcon(ch):''}} // (only redrawn when the chapter changes, so a tap that lands on the symbol as the ruler closes still counts)
 /* ---------- tips: the first time a new rule shows up, a small tip button appears on that level ----------
    It shows no text until tapped; tapping opens a short explanation. It keeps a soft pulse until you've opened it once. */
 const TIP_ICON={
@@ -2648,6 +2654,7 @@ function menuSound(open){if(!soundOn)return;const a=audio();if(!a)return;const t
   if(theme==='neon'){tone(a,'sine',open?500:900,open?900:400,t,.09,.05,.002);return}
   tone(a,'sine',open?520:760,open?760:440,t,.1,.05,.003);hiss(a,'bandpass',2200,1600,3,t,.03,.04,.001)}
 function setTools(open){
+  if(open&&typeof cancelRuler==='function')cancelRuler(); // the tools column and the ruler never show together
   ctrlBox.classList.toggle('open',open);document.documentElement.classList.toggle('toolsopen',open);
   moreBtn.setAttribute('aria-expanded',String(open));moreBtn.setAttribute('aria-label',open?'Hide buttons':'Show buttons');
   if(open)toolsBox.removeAttribute('inert');else{toolsBox.setAttribute('inert','');
@@ -4630,7 +4637,7 @@ function stickPerfect(on,isNew){const done=document.getElementById('done');
   const tiles=[...done.querySelectorAll('.tile')],t=done.querySelector('.tile.k-par')||tiles[tiles.length-1];
   if(t){const c=document.createElement('span');c.className='chk';c.setAttribute('role','img');c.setAttribute('aria-label','Perfect Pull');c.innerHTML='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3 5 8.6 9.5 3.6"/></svg>';t.append(c)}
   if(isNew){const er=document.createElement('div');er.className='ppearn';er.textContent='+1 SmartPull  ·  '+smartPulls()+' Total';const mb=done.querySelector('.mbrow');mb?mb.after(er):done.querySelector('#tapsLine').append(er)}}
-function ppSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
+function ppSound(){if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD+.06; // (+.06: the check's pop peaks about then)
   const g=.4; // the same soft chime as before (40% of its first level), now as the check pops on; every note fades to silence
   tone(a,'sine',1175,1175,t,1,.05*g,.003);tone(a,'sine',1175*2.76,1175*2.76,t,.4,.012*g,.002);
   tone(a,'sine',1568,1568,t+.06,1.1,.06*g,.003);tone(a,'sine',1568*2.76,1568*2.76,t+.06,.45,.014*g,.002)}
@@ -4689,7 +4696,6 @@ function win(){
   tm.hidden=!showTimer;
   tm.replaceChildren(bestBit('Time '+fmtTime(ms),pt===undefined?'':tBest?'  ·  New best time!':'  ·  Best '+fmtTime(pt)));
   tm.classList.remove('best');
-  chime(.4); // lands as the message fades in
   clearing=true;
   // a daily or sampler preview only marks itself as played; it never moves your real progress
   if(previewMode){if(previewKey&&!sampled.has(previewKey)){sampled.add(previewKey);saveSampled()}}
@@ -4701,13 +4707,14 @@ function win(){
   // the message stays until the player taps or clicks anywhere
   // the message and stats appear first; the continue button joins after a pause so there's time to read them
   winCenter();
-  setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('show');cbShow()}},450); // the cheeky line, alone (the blocks' clock starts here)
+  setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('show');cbShow();chime(SFX_LEAD)}},450); // the cheeky line, alone, and the win chime with it (same timer, so they can't drift apart)
   winRead=WIN_READ; // Continue is ready 1.1 s after the line appears, a Perfect Pull or not (Oct 17)
   clearTimeout(statsTimer);statsTimer=setTimeout(()=>{if(clearing)document.getElementById('done').classList.add('stats')},450+WIN_STATS*1000); // the line shows alone for 0.5 s, then the tiles flip in
-  clearTimeout(ppTimer);if(perfect)ppTimer=setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('pp');ppSound()}},450+(WIN_STATS+.7)*1000); // the check pops on with its chime
+  clearTimeout(ppTimer);if(perfect)ppTimer=setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('pp');ppSound()}},450+(WIN_STATS+WIN_CHK(l1.childElementCount))*1000); // the check pops on with its chime, right as the Par tile finishes landing
   clearTimeout(readyTimer);readyTimer=setTimeout(()=>{if(clearing){document.getElementById('done').classList.add('ready');waiting=true}},450+(WIN_STATS+winRead)*1000); // Continue and Replay are ready
 }
 let waiting=false,readyTimer=0,statsTimer=0,ppTimer=0,winRead=1.15;
+const WIN_CHK=n=>.12+.07*(n-1)+.45+.02; // n = how many tiles the win screen has. Tile i waits .12+.07*i s, then flips for .45 s (the CSS above), so the last tile (the Par tile; on a level with no par, the one the check sits on) has landed .12+.07*(n-1)+.45 s after the tiles start: .71 s with 3 tiles, .78 s with 4. The check and its chime come .02 s after that, so sound and picture line up on every level (Oct 17)
 const WIN_STATS=.5,WIN_READ=1.1,WIN_GO=WIN_READ-.6; // the line shows alone for 0.5 s, then the tiles; Continue is ready 1.1 s after the line, and its block (a .6 s rise) rises with the tiles (Oct 17)
 // The cheeky line sits at the middle of the screen (Samuel, Oct 17): the column gets top padding equal to what's under the line,
 // so the line itself is centered and the stats hang below it, never running into Continue and Replay. A short window keeps the plain stack.
@@ -5013,7 +5020,7 @@ const touches=new Map();let pinchDist=0,pinched=false;
 const fingerGap=()=>{const [a,b]=[...touches.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
 let menuTap=false; // a tap on the dimmed puzzle while a menu is open only closes the menu (Oct 16); it never turns or pulls anything
 el.addEventListener('pointerdown',e=>{
-  if(document.getElementById('stage').classList.contains('dim')){menuTap=true;down=null;return}
+  if(document.getElementById('stage').classList.contains('dim')||scrubEat){scrubEat=false;menuTap=true;down=null;return}
   startTimer(); // the clock starts with the first touch on the puzzle, not when the level appears
   audio();touches.set(e.pointerId,{x:e.clientX,y:e.clientY});el.setPointerCapture(e.pointerId);
   if(touches.size===2){pinchDist=fingerGap();pinched=true;dragging=true;return} // second finger: start pinching
@@ -5161,10 +5168,10 @@ document.getElementById('timerBtn').addEventListener('click',e=>{e.stopPropagati
   try{localStorage.setItem('pa2_showtimer',showTimer?'1':'0')}catch(err){}updateLeft();uiSfx('timer',showTimer)});
 ['pointerdown','pointerup'].forEach(ev=>document.getElementById('timerBtn').addEventListener(ev,e=>e.stopPropagation()));
 showTotal();
-/* ---------- level picker, two ways (both on, to compare) ----------
-   1. Swipe: drag up or down on "Level #" and it rolls through your unlocked levels like a dial.
-   2. Menu: tap "Level #" to open the chapter list; tap a chapter to expand it, then tap a level number. */
-const lvBtn=document.getElementById('lvl'),lvPanel=document.getElementById('levels');
+/* ---------- level picker, two ways (Oct 17) ----------
+   1. Chapter Menu button (the round medallion, top left): tap it for the chapter list; tap a chapter to expand it, then tap a level number.
+   2. Scrub ruler: tap the level number (top center) to open a ruler under it, or drag sideways on the number to scrub at once. */
+const lvBtn=document.getElementById('lvl'),lvLab=document.getElementById('lvLab'),lvPanel=document.getElementById('levels');
 function tick(){ // the tiniest click as the dial passes each level
   if(!soundOn)return;const a=audio();if(!a)return;const t=a.currentTime+SFX_LEAD;
   hiss(a,'bandpass',3200,3200,4,t,.018,.05,.001);
@@ -5243,6 +5250,7 @@ function ringSvg(s,locked,c){const C=2*Math.PI*19,sg=C/5;let o='';
     o+=`<circle${cls} cx="21" cy="21" r="19" stroke-dasharray="${sg-4} ${C-sg+4}" stroke-dashoffset="${-k*sg-2}"/>`}
   return `<svg class="ring" viewBox="0 0 42 42" style="--c:${c}">${o}</svg>`}
 function openLevels(){
+  cancelRuler(); // the chapter menu and the ruler never show together
   clearTimeout(lvCloseT);lvPanel.classList.remove('closing');
   panel.hidden=true;document.getElementById('tune').setAttribute('aria-expanded','false');
   themesPanel.hidden=true;paintBtn.setAttribute('aria-expanded','false');
@@ -5294,10 +5302,12 @@ document.addEventListener('pointerdown',e=>{if(lvOpen()&&!lvPanel.contains(e.tar
 // the level menu's own box is much bigger than its medallions, so a tap on its empty part (over the dimmed puzzle) closes it too (Oct 16).
 // That one waits for the click, so a drag that scrolls the medallions never closes it.
 lvPanel.addEventListener('click',e=>{if(lvOpen()&&!e.target.closest('.med,.tray,button'))closeLevels()});
-// scrub ruler on the level button: drag sideways and a ruler slides out; every 11px is one level.
-// Dragging left moves forward. The number, chapter name and symbol roll along, with a soft click per level
-// and a firmer one at each new chapter. It stops at your furthest open level with a little rubber band.
-// Let go to open that level; a quick short flick moves just one level. A tap without dragging opens the menu.
+// scrub ruler (Oct 17): it lives just below the top bar, its needle under the level number (top center); every 11px is one level.
+// Open it by tapping the number (it stays open) or by dragging sideways on the number (it scrubs at once).
+// Dragging left moves forward. The number, chapter name and the Chapter Menu button's symbol roll along, with a soft click per level
+// and a firmer one at each new chapter. It stops at your furthest open level with a little rubber band; a flick glides and settles on a tick.
+// After you lift, it stays open on that level (no countdown, Oct 17): tap a tick to open it, tap the number to open the needle's level, or tap outside to close.
+// Tapping the number again, tapping anywhere outside it, or opening a menu folds it back up without changing the level.
 const STEP=11,ruler=document.getElementById('ruler'),rtrack=document.getElementById('rtrack');
 let drag=null;
 let lastScrubClick=0;
@@ -5309,18 +5319,25 @@ function scrubClick(firm){
   const t=a.currentTime+SFX_LEAD;if(!firm&&t-lastScrubClick<.03)return;lastScrubClick=t;
   tone(a,'sine',firm?1250:1900,firm?700:1000,t,.045,firm?.055:.032,.004);
 }
-function openRuler(){
+function openRuler(v){
+  if(lvOpen())closeLevels();if(ctrlBox.classList.contains('open'))setTools(false);
   let h='';
   for(let i=0;i<NLEV;i++){const k=Math.floor(i/5),c=chColor(k),st=i<best?' clr':(chLocked(i)?' lock':''),ch=i%5===0;
     h+=`<i class="rtk${ch?' ch':''}${st}" style="left:${i*STEP}px;--c:${c}"></i>`;
     if(ch)h+=`<span class="rchg${k*5<best?' clr':''}${chLocked(i)?' lock':''}" style="left:${i*STEP}px;--c:${c}">${chapterIcon(GROUPS[k][1])}</span>`}
-  rtrack.innerHTML=h;setTrack(drag.cur);ruler.classList.add('on');document.documentElement.classList.add('scrub');
+  rtrack.style.transition='';rtrack.innerHTML=h;setTrack(v);ruler.classList.add('on');document.documentElement.classList.add('scrub');lvLab.setAttribute('aria-expanded','true');
 }
-function closeRuler(){ruler.classList.remove('on');document.documentElement.classList.remove('scrub')}
-function setTrack(v){rtrack.style.transform=`translateX(${ruler.clientWidth/2-v*STEP}px)`}
+function closeRuler(){ruler.classList.remove('on');document.documentElement.classList.remove('scrub');lvLab.setAttribute('aria-expanded','false')}
+const rulerOn=()=>ruler.classList.contains('on');
+// close without changing level: fold the ruler back up into the number, which returns to the level you're on
+let committing=false; // a level was chosen and is about to open: nothing cancels it now
+function cancelRuler(){if(committing||(!rulerOn()&&scrubAt==null))return;
+  stopGlide();clearTimeout(scrubHold);scrubHold=0;scrubAt=null;drag=null;closeRuler();lvLabel(levelIdx)}
+let trackPos=0,scrubEat=false; // trackPos: the level (fractional while moving) under the needle
+function setTrack(v){trackPos=v;rtrack.style.transform=`translateX(${ruler.clientWidth/2-v*STEP}px)`}
 function showScrub(n,dir){
   const st=drag||glide;if(!st||n===st.cur)return;const newCh=Math.floor(n/5)!==Math.floor(st.cur/5);st.cur=n;lvLabel(n);
-  const num=lvBtn.querySelector('.lvnum');
+  const num=lvLab.querySelector('.lvnum');
   try{num.animate([{transform:`translateY(${dir*45}%)`,opacity:.2},{transform:'none',opacity:1}],{duration:150,easing:'ease-out'})}catch(e){}
   if(newCh){try{lvBtn.querySelector('.lvDisc').animate([{transform:'scale(.82)'},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.3,1.6,.5,1)'})}catch(e){}}
   scrubClick(newCh);
@@ -5333,13 +5350,15 @@ function scrubTo(dx){
 function commitScrub(n){
   stopGlide();clearTimeout(scrubHold);scrubHold=0;scrubAt=null;
   rtrack.style.transition='transform .25s cubic-bezier(.3,1.4,.5,1)';setTrack(n);
-  setTimeout(()=>{rtrack.style.transition='';closeRuler();if(n!==levelIdx){pageTurn();load(n)}else lvLabel(levelIdx)},230);
+  committing=true;setTimeout(()=>{committing=false;rtrack.style.transition='';closeRuler();if(n!==levelIdx){pageTurn();load(n)}else lvLabel(levelIdx)},230);
 }
 // after you lift your thumb the ruler waits a moment, so you can put it back down (on the ruler or the level button)
 // and keep scrubbing from where you left off. It only opens the level once you've let go for a beat.
 const SCRUB_HOLD=1800;
 let scrubHold=0,scrubAt=null; // scrubAt = the level the ruler is resting on between drags
-function holdScrub(n){clearTimeout(scrubHold);scrubAt=n;scrubHold=setTimeout(()=>commitScrub(n),SCRUB_HOLD)}
+// No countdown (Samuel, Oct 17, Slider Lab option D): after you lift, the ruler just waits on the needle's level until you tap a tick,
+// tap the number (opens the needle's level; on your own level that simply closes it), or tap outside (closes, level unchanged).
+function holdScrub(n){clearTimeout(scrubHold);scrubHold=0;scrubAt=n}
 function startDrag(e,el){
   if(drag)return;stopGlide(); // a touch while the ruler is still gliding catches it where it is
   try{el.setPointerCapture(e.pointerId)}catch(_){}
@@ -5367,7 +5386,7 @@ function startGlide(pos,vel,cur){ // pos in levels, vel in levels per ms
 function moveDrag(e){
   if(!drag)return;const dx=e.clientX-drag.x;
   if(!drag.scrub){if(Math.abs(dx)>6&&Math.abs(dx)>Math.abs(e.clientY-drag.y)){
-      drag.scrub=true;drag.x=e.clientX;drag.t=performance.now();if(lvOpen())closeLevels();openRuler()}return}
+      drag.scrub=true;drag.x=e.clientX;drag.t=performance.now();openRuler(drag.cur)}return}
   drag.samples.push([e.clientX,performance.now()]);if(drag.samples.length>12)drag.samples.shift();
   scrubTo(dx);
 }
@@ -5376,9 +5395,9 @@ function endDrag(e,fromRuler){
   if(e.type==='pointercancel'){if(d.scrub)holdScrub(d.cur);return}
   const dx=e.clientX-d.x,dt=performance.now()-d.t;
   if(!d.scrub||(d.resume&&Math.abs(dx)<=6)){
-    // a tap: on the level button it opens the level now (mid-scrub) or toggles the menu; on the ruler it just keeps it up
-    if(d.resume){if(fromRuler)holdScrub(d.cur);else commitScrub(d.cur);return}
-    if(e.type==='pointerup')(d.menuWasOpen?closeLevels():openLevels());return}
+    // a tap: on a tick it opens that level right away; on the number it opens the ruler and keeps it open, or folds it away if it's open
+    if(fromRuler){tapTick(e,d);return}
+    if(d.resume)commitScrub(scrubAt!=null?scrubAt:d.cur);else openRest();return}
   if(dt<240&&Math.abs(dx)<30&&!d.resume){const n=Math.max(0,Math.min(topLevel(),d.start+(dx<0?1:-1)));drag=d;showScrub(n,n>d.start?1:-1);drag=null;
     rtrack.style.transition='transform .25s cubic-bezier(.3,1.4,.5,1)';setTrack(n);setTimeout(()=>{rtrack.style.transition=''},260);holdScrub(n);return}
   // a swipe that's still moving when you let go keeps gliding
@@ -5388,14 +5407,27 @@ function endDrag(e,fromRuler){
   rtrack.style.transition='transform .2s cubic-bezier(.3,1.4,.5,1)';setTrack(d.cur);setTimeout(()=>{rtrack.style.transition=''},220);
   holdScrub(d.cur);
 }
-lvBtn.addEventListener('pointerdown',e=>startDrag(e,lvBtn));
-lvBtn.addEventListener('pointermove',moveDrag);
-lvBtn.addEventListener('pointerup',e=>endDrag(e,false));lvBtn.addEventListener('pointercancel',e=>endDrag(e,false));
-ruler.addEventListener('pointerdown',e=>{if(scrubAt!=null)startDrag(e,ruler)});
+// a tap on the number: the ruler unfolds under it and rests on your level, waiting (no timer) until you scrub, tap a tick or close it
+function openRest(){const v=Math.min(levelIdx,topLevel());stopGlide();clearTimeout(scrubHold);scrubHold=0;scrubAt=v;openRuler(v);tick()}
+// a tap on the ruler: the tick nearest the finger opens at once (past your furthest open level, the needle stops there and waits as usual)
+function tapTick(e,d){const r=ruler.getBoundingClientRect(),L=topLevel();
+  const i=Math.max(0,Math.min(NLEV-1,Math.round(trackPos+(e.clientX-r.left-r.width/2)/STEP))),n=Math.min(i,L);
+  if(n!==d.cur){drag=d;showScrub(n,n>d.cur?1:-1);drag=null}
+  if(i>L){rtrack.style.transition='transform .25s cubic-bezier(.3,1.4,.5,1)';setTrack(n);setTimeout(()=>{rtrack.style.transition=''},260);holdScrub(n);return}
+  commitScrub(n)}
+// the Chapter Menu button only opens and closes the chapter menu
+lvBtn.addEventListener('click',()=>{lvOpen()?closeLevels():openLevels()});
+lvLab.addEventListener('pointerdown',e=>startDrag(e,lvLab));
+lvLab.addEventListener('pointermove',moveDrag);
+lvLab.addEventListener('pointerup',e=>endDrag(e,false));lvLab.addEventListener('pointercancel',e=>endDrag(e,false));
+lvLab.addEventListener('click',e=>{if(e.detail===0)(rulerOn()?cancelRuler():openRest())}); // keyboard (Enter or Space)
+ruler.addEventListener('pointerdown',e=>{if(rulerOn())startDrag(e,ruler)});
 ruler.addEventListener('pointermove',moveDrag);
 ruler.addEventListener('pointerup',e=>endDrag(e,true));ruler.addEventListener('pointercancel',e=>endDrag(e,true));
-// tapping anywhere else while the ruler waits opens the level right away
-document.addEventListener('pointerdown',e=>{if(scrubAt!=null&&!drag&&!e.target.closest('#ruler,#lvl'))commitScrub(scrubAt)},true);
+// a tap anywhere else folds the ruler away without changing the level; on the blurred puzzle that tap does nothing else
+document.addEventListener('pointerdown',e=>{if(!rulerOn()&&scrubAt==null)return;if(drag||e.target.closest('#ruler,#lvLab'))return;
+  if(e.target.tagName==='CANVAS'&&e.target.closest('#stage'))scrubEat=true;cancelRuler()},true);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&rulerOn())cancelRuler()});
 /* upgrade screen: shows the paid versions you don't have yet */
 const upPanel=document.getElementById('upgrade');
 function openUpgrade(){
