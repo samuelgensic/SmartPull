@@ -314,6 +314,8 @@ button.tipbtn.pop svg.spark{animation:tipTwinkle 1.1s ease-out .3s both}
 @keyframes tipTwinkle{0%{opacity:0; transform:scale(.2) rotate(-40deg)} 40%{opacity:1; transform:scale(1.15) rotate(0)} 100%{opacity:0; transform:scale(.6) rotate(25deg)}}
 @media (prefers-reduced-motion: reduce){button.tipbtn.pop,button.tipbtn.pop.new{animation:none} button.tipbtn svg.spark{display:none} button.tipbtn.new{box-shadow:var(--sh),0 0 0 3px rgba(var(--halo),.22)}}
 html.neon button.tipbtn{color:#FF2E97}
+/* On every level except the ones that bring in a new rule (Oct 17) the tip button is a quiet one: the same round button, in the muted ink instead of the mode's accent. */
+button.tipbtn.quiet,html.neon button.tipbtn.quiet{color:var(--muted)}
 html.neon .controls button,html.neon .levelnav button:not(.lvl),html.neon button.fsbtn,html.neon button.ttoggle,html.neon button.tipbtn{box-shadow:0 0 0 1.5px rgba(244,236,255,.28)}
 html.neon button.more[aria-expanded="true"]{box-shadow:0 0 0 2px var(--accent)}
 .tipitem{display:flex; gap:14px; align-items:flex-start}
@@ -406,10 +408,7 @@ header .blacklight::after{content:attr(data-tip); position:absolute; top:50%; ri
 header .blacklight:focus-visible::after{opacity:1}
 /* narrow Neon phones: the tip button drops to its own row under the controls instead of crowding column 1, which the level picker now occupies */
 @media (max-width:400px){header .blacklight{width:34px; height:34px} header .hleft{margin-right:42px} html.neon header .topspace{padding-right:84px}}
-/* Where the SMART·PULL wordmark goes (Oct 13): iPhone, iPad and touch phones keep it at the bottom center (Undo above it);
-   web on a computer moves it into the top bar, centered between the level button and the menu (html.logotop, set in script) */
-html.logotop header .brandbox.foot{position:static; transform:none; grid-column:2; grid-row:1; align-self:center; justify-self:center}
-html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
+/* The SMART·PULL wordmark and credit stay at the bottom center on every device (Samuel, Oct 17) */
 /* Replay: a quieter outlined button under Continue on the win screen; it appears with Continue (Oct 13) */
 .done .replay{width:auto; height:auto; margin-top:-4px; padding:9px 22px; border-radius:var(--cubeR,8px); background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--muted);
   font-family:var(--display); font-weight:500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:0; pointer-events:none}
@@ -419,7 +418,7 @@ html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
 /* side by side, as in the lab's Quick card (Samuel, Oct 17): Replay on the left, Continue on the right, 10px apart, a little smaller than before */
 .done small{left:calc(50% + 5px); transform:none; padding:9px 18px; font-size:11px; max-width:calc(50vw - 29px)}
 .done .replay{right:calc(50% + 5px); left:auto; transform:none; padding:9px 18px; font-size:11px; box-sizing:border-box}
-.done small,.done .replay{bottom:96px} html.logotop .done small,html.logotop .done .replay{bottom:48px}
+.done small,.done .replay{bottom:96px}
 @media (max-height:600px){.done small,.done .replay{position:static; transform:none; max-width:none} .done small{margin-top:6px} .done .replay{margin-top:6px}}
 .done.ready .replay{pointer-events:auto}
 /* Continue and Replay are flat buttons again (Samuel, Oct 17: no more 3D blocks, no slide-off), built like the stat tiles: a solid brand-color
@@ -738,26 +737,36 @@ const TIP_ICON={
   chain:'<svg viewBox="0 0 24 24"><circle cx="7" cy="12" r="3.5"/><path d="M10.5 12H21M17.5 12v3M20.5 12v2.5"/></svg>',
   fuse:'<svg viewBox="0 0 24 24"><path d="M5 5h7v7h7v7H5z" fill="currentColor" stroke="none" opacity=".85"/></svg>'};
 const TIPS={
-  pull:{t:'Pull',x:'Tap an arrow to slide its cube out that way. It can only leave if nothing is in its path. Drag to turn the puzzle and find hidden arrows.'},
+  pull:{t:'Pull',x:'Tap an arrow to pull its cube out that way. It can only leave if nothing is in its path. Drag to turn the puzzle and find hidden arrows.'},
   dot:{t:'Dot',x:'Tap the dot to turn its cube a quarter turn. The arrow turns with it, so turn it until the arrow points somewhere clear, then tap the arrow.'},
-  link:{t:'Linked cubes',x:'Cubes with matching colored frames are linked. Tap either arrow and both slide out together, so both paths need to be clear.'},
+  link:{t:'Linked cubes',x:'Cubes with matching colored frames are linked. Tap either arrow and both pull out together, so both paths need to be clear.'},
   pairdot:{t:'Dot Pair',x:'A dot on the end of a linked pair turns both cubes together, like rolling one piece. Both arrows turn at once.'},
   drop:{t:'Gravity',x:'This puzzle sits on a floor. When a cube leaves, the cubes above it drop down. Plan your order so nothing ends up stuck.'},
   lock:{t:'Locks and keys',x:'A cube with a padlock can\'t move until the cube with the matching key is gone. Free the key first.'},
   chain:{t:'Locked keys',x:'Some padlock cubes also hold a key. Unlock one and its key appears, ready to open the next lock.'},
   fuse:{t:'Fusion',x:'Cubes come in three colors. When cubes of the same color land against each other, they fuse into one piece that moves and falls together. White and gray cubes never fuse; they\'re blockers to work around.'}};
 var TIP_AT={100:['orbit'],0:['pull'],5:['dot'],20:['pivot'],25:['link'],28:['pairdot'],30:['echo'],35:['glide'],45:['drop'],55:['lock'],58:['chain'],60:['glass'],65:['order'],90:['gfuse'],95:['fuse']}; // level index (0 = level 1) where each rule first appears
+const TIP_FROM={};Object.keys(TIP_AT).forEach(i=>TIP_AT[i].forEach(k=>TIP_FROM[k]=+i));
+const TIP_ORDER=Object.keys(TIP_FROM).sort((a,b)=>TIP_FROM[a]-TIP_FROM[b]); // the rules in the order the game teaches them
 let tipsSeen={};try{tipsSeen=JSON.parse(localStorage.getItem('pa3_tips')||'{}')}catch(e){}
 const tipBtn=document.getElementById('tipBtn'),tipSheet=document.getElementById('tipsheet');
 let tipLvl=-1; // the level whose tip button is showing, so the pop-in plays once each time the button appears (not on a retry or a mode change)
-function setTip(){const keys=TIP_AT[levelIdx];tipBtn.hidden=!keys;if(!keys){tipLvl=-1;tipBtn.classList.remove('pop','new');return}
+// The tip is on every level (Samuel, Oct 17). On a level that brings in a new rule it is the loud one (pop-in, sparkle, halo until read) and its card
+// explains just that rule; on every other level it is a quiet button, and its card lists the rules that level uses, newest first.
+function setTip(){const keys=TIP_AT[levelIdx];tipBtn.hidden=false;tipBtn.classList.toggle('quiet',!keys);
+  if(!keys){tipLvl=-1;tipBtn.classList.remove('pop','new');tipSheet.hidden=true;return}
   if(tipLvl!==levelIdx){tipBtn.classList.remove('pop','new');void tipBtn.offsetWidth;tipBtn.classList.add('pop')} // restart the pop-in and the sparkle
   tipBtn.classList.toggle('new',!keys.every(k=>tipsSeen[k]));tipLvl=levelIdx;tipSheet.hidden=true}
-function openTip(){const keys=TIP_AT[levelIdx];if(!keys)return;
+function tipKeysNow(){const intro=TIP_AT[levelIdx];if(intro)return intro;
+  const has=f=>blocks.some(f),gl=has(b=>b.glide);
+  const on={pull:1,dot:has(b=>b.axis),link:has(b=>b.partner),pairdot:has(b=>b.pairDot),drop:gravity,lock:has(b=>b.lock!=null),chain:has(b=>b.lock!=null&&b.isKey),
+    echo:has(b=>b.echo!=null),pivot:has(b=>b.pivot),glass:has(b=>b.glass),glide:gl,order:has(b=>b.num),gfuse:gl&&has(b=>b.fuseColor),fuse:fusion,orbit:has(b=>b.orbit)};
+  const ks=TIP_ORDER.filter(k=>on[k]&&TIP_FROM[k]<=levelIdx&&TIPS[k]).reverse();return ks.length?ks:['pull']}
+function openTip(){const keys=tipKeysNow();
   document.getElementById('tipTitle').textContent=keys.length>1?'Tips':TIPS[keys[0]].t;document.getElementById('tipMed').innerHTML=TIP_ICON[keys[0]]||'';
   const body=document.getElementById('tipBody');body.replaceChildren(...keys.map(k=>{const d=document.createElement('div');d.className='tipitem';
     d.innerHTML='<div class="tipicon">'+(TIP_ICON[k]||'')+'</div><div><b></b><p></p></div>';if(keys.length>1)d.querySelector('b').textContent=TIPS[k].t;else d.querySelector('b').remove();d.querySelector('p').textContent=TIPS[k].x;return d}));
-  showTip(tipBtn);keys.forEach(k=>tipsSeen[k]=1);try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}tipBtn.classList.remove('new');
+  showTip(tipBtn);if(TIP_AT[levelIdx]){keys.forEach(k=>tipsSeen[k]=1);try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}tipBtn.classList.remove('new')} // only a level's own new rule counts as read
   tipSound()}
 // the first time you switch to Neon, a short tip explains the Black Light button (once only)
 function blackLightTip(){if(tipsSeen.blacklight)return;tipsSeen.blacklight=1;try{localStorage.setItem('pa3_tips',JSON.stringify(tipsSeen))}catch(e){}
@@ -810,7 +819,7 @@ function pipFaceFor(T,b){const occ=new Set(T.blocks.map(o=>o.c.join(',')));const
   return order.find(f=>!occ.has([b.c[0]+f[0],b.c[1]+f[1],b.c[2]+f[2]].join(',')))||order[0]}
 const pipOnly=(dc,b,n)=>b.pipFace&&dot(n,b.pipFace)===1?dc:dc.split(';').filter(x=>!x.startsWith('pips')).join(';');
 TIPS.pivot={t:'Pivot',x:'A cube with a gear on top is a pivot. Tap the gear and every cube around it, the gear cube too, turns a quarter turn in its own spot. Their arrows turn with them, so keep turning until the arrows you need point somewhere clear.'};TIPS.echo={t:'Echo',x:'Twin cubes share the same ripple pressed into their plain sides: a dot with one, two or three rings. Turn the puzzle so the light catches them. In Neon, the ripples only show under Black Light. Pull one and its twin leaves at the same moment, each the way its own arrow points, so both paths need to be clear.'};TIPS.glass={t:'Glass',x:'Glass blocks cubes like any other cube, but it can break. A cube that bumps into glass cracks it. Bump it again from a different side and it shatters. Glass has no arrow of its own: if glass is all that\'s left, tap it to break it.'};TIP_ICON.pivot='<svg viewBox="0 0 24 24"><path d="M18.65 9.24 L18.99 10.25 L21.47 10.42 L21.47 13.58 L18.99 13.75 L18.65 14.76 L18.17 15.70 L19.81 17.58 L17.58 19.81 L15.70 18.17 L14.76 18.65 L13.75 18.99 L13.58 21.47 L10.42 21.47 L10.25 18.99 L9.24 18.65 L8.30 18.17 L6.42 19.81 L4.19 17.58 L5.83 15.70 L5.35 14.76 L5.01 13.75 L2.53 13.58 L2.53 10.42 L5.01 10.25 L5.35 9.24 L5.83 8.30 L4.19 6.42 L6.42 4.19 L8.30 5.83 L9.24 5.35 L10.25 5.01 L10.42 2.53 L13.58 2.53 L13.75 5.01 L14.76 5.35 L15.70 5.83 L17.58 4.19 L19.81 6.42 L18.17 8.30Z"/><circle cx="12" cy="12" r="2.6"/></svg>';TIP_ICON.echo='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="5.6"/><circle cx="12" cy="12" r="9" opacity=".55"/></svg>';TIP_ICON.glass='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M13 4l-3 6.5 4 2.5-3 7"/></svg>';
-TIPS.glide={t:'Glide',x:'A Chevron (the hollow arrow) means the cube glides: it slides until it bumps into another cube and stops right there. If nothing is in the way, it leaves like any other cube. Use glides to move cubes out of the way.'};TIPS.order={t:'Order',x:'Some cubes have small dents like dice pips on one of their plain sides. They must leave in order: one pip first, then two, then three. Cubes without pips can go any time. In Neon, the pips only show under Black Light.'};TIP_ICON.glide='<svg viewBox="0 0 24 24"><path d="M8.5 4.5Q12 8 15.5 12Q12 16 8.5 19.5" stroke-width="5"/><path d="M8.5 4.5Q12 8 15.5 12Q12 16 8.5 19.5" stroke="var(--bg2)" stroke-width="1.8"/></svg>';TIP_ICON.order='<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.6" fill="currentColor" stroke="none"/></svg>';TIPS.gfuse={t:'Meld',x:'When a glide cube slides up against a cube of the same color, they fuse into one piece, just like regular fuse. Different colors just bump. Tap any arrow on a fused piece and the whole piece slides that way, so every part needs a clear path. A fused piece no longer glides.'};TIP_ICON.gfuse=TIP_ICON.fuse;let curLv=null,silWall=null,silBox=null;
+TIPS.glide={t:'Glide',x:'A Chevron (the hollow arrow) means the cube glides: it slides until it bumps into another cube and stops right there. If nothing is in the way, it leaves like any other cube. Use glides to move cubes out of the way.'};TIPS.order={t:'Order',x:'Some cubes have small dents like dice pips on one of their plain sides. They must leave in order: one pip first, then two, then three. Cubes without pips can go any time. In Neon, the pips only show under Black Light.'};TIP_ICON.glide='<svg viewBox="0 0 24 24"><path d="M8.5 4.5Q12 8 15.5 12Q12 16 8.5 19.5" stroke-width="5"/><path d="M8.5 4.5Q12 8 15.5 12Q12 16 8.5 19.5" stroke="var(--bg2)" stroke-width="1.8"/></svg>';TIP_ICON.order='<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.6" fill="currentColor" stroke="none"/></svg>';TIPS.gfuse={t:'Meld',x:'When a glide cube slides up against a cube of the same color, they fuse into one piece, just like regular fuse. Different colors just bump. Tap any arrow on a fused piece and the whole piece pulls out that way, so every part needs a clear path. A fused piece no longer glides.'};TIP_ICON.gfuse=TIP_ICON.fuse;let curLv=null,silWall=null,silBox=null;
 TIPS.orbit={t:'Orbit',x:'A cube with an orbit mark on top is a hub. Tap the mark and every cube in its layer, the hub too, swings a quarter turn around the hub. Cubes change places and their arrows turn with them, so turn the layer until the cubes above and below line up with a clear way out.'};TIP_ICON.orbit='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><path d="M12 3.2A8.8 8.8 0 1 0 20.8 12"/><path d="M16.4 3.6L20.8 4l-.9 4.3"/></svg>';
 const NUM_COL='#007C92';
 function silInfo(){const all=curLv.allCells,xs=all.map(c=>c[0]),ys=all.map(c=>c[1]);
@@ -5121,13 +5130,6 @@ function closeScorecard(){document.getElementById('scorecard').hidden=true}
 document.getElementById('scoreOpen').onclick=()=>{uiSfx('score');openScorecard()};document.getElementById('scClose').onclick=()=>{uiSfx('dismiss');closeScorecard()};
 document.getElementById('scorecard').addEventListener('click',e=>{if(e.target.id==='scorecard')closeScorecard()});
 // full screen: offered on computers and other web browsers, never on iPhone or iPad (iPads report themselves as Macs, so touch gives them away)
-// logo placement: bottom center on iPhone / iPad / touch phones; in the top bar for web on a computer, when the window is wide enough
-(function(){const ua=navigator.userAgent,ios=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&(navigator.maxTouchPoints>1||'ontouchend' in document));
-  const mobile=ios||/Android|Mobile/.test(ua)||(matchMedia('(pointer: coarse)').matches&&!matchMedia('(hover: hover)').matches);
-  const box=document.querySelector('.brandbox.foot'),stage=document.getElementById('stage'),head=document.querySelector('.app>header');if(!box||!stage||!head)return;
-  const place=()=>{const top=!mobile&&innerWidth>=600;document.documentElement.classList.toggle('logotop',top);
-    if(top&&box.parentNode!==head)head.appendChild(box);else if(!top&&box.parentNode!==stage)stage.insertBefore(box,stage.firstChild)};
-  place();addEventListener('resize',place)})();
 (function(){const btn=document.getElementById('fsBtn');if(!btn)return;
   const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&(navigator.maxTouchPoints>1||'ontouchend' in document));
   const de=document.documentElement,req=de.requestFullscreen||de.webkitRequestFullscreen,
@@ -5560,7 +5562,7 @@ function frame(now){
   {const cur=tweens;tweens=[];const keep=cur.filter(tw=>{if(tw.dead)return false;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur);tw.step(k);if(k>=1){tw.end&&tw.end();return false}return true});tweens=keep.concat(tweens)}
   coastStep(dt);renderer.render(scene,camera);if(cb.on)cbRender(dt);requestAnimationFrame(frame);
 }
-window.__test={win,setCounts:(p,t,b)=>{pulls=p;taps=t;bumps=b},cheerExtras,pinnedLine,CHEERS,SASS,TV,tvNode,pivot:()=>pivot,COAST:()=>COAST,cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
+window.__test={tipKeys:()=>tipKeysNow(),tipIntro:i=>!!TIP_AT[i],win,setCounts:(p,t,b)=>{pulls=p;taps=t;bumps=b},cheerExtras,pinnedLine,CHEERS,SASS,TV,tvNode,pivot:()=>pivot,COAST:()=>COAST,cb:()=>cb,cbShow,cbLayout,buildLevel,firstHit,DIRS,turn,K,woosh,thump,audio,load,cheerPool,pickLine,cubes:()=>startBlocks,
   blocks:()=>blocks,slide,spin,pivotTurn,orbitTurn,S5,faceTex,neonTex,orbitDent,beadSync,dotSync,cam:()=>camera,glassTap,prepShatter,shards:()=>shardsLive,S4,solveTest,liveSpec,solverFor,settle,rayBlocked,levelSig,pullsLeft,par:()=>curPar,grav:()=>gravity,counts:()=>({pulls,taps,bumps}),src:()=>curLv&&curLv.src,state:()=>({levelIdx,clearing,best,busy:blocks.some(b=>b.busy)})};
 const start=data=>{load(data&&data.level!=null?data.level:levelIdx);requestAnimationFrame(frame)};
 window.claude?.hot?.snapshot?.(()=>({level:levelIdx}));
