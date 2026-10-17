@@ -502,7 +502,7 @@ header .blacklight .flash{width:20px; height:20px}
 header .topspace{padding-right:50px!important} header .hleft{margin-right:50px!important} html.neon header .topspace{padding-right:92px!important}
 /* the menu button's three dots: larger (radius 1.3 to 1.9) and in the brand colors, orange, teal, olive (Samuel, Oct 15);
    softened in dark mode like the rest of the UI, and Neon's own orange, blue and yellow in Neon */
-button.more .dots circle{r:1.9px} /* (1.3 originally; 1.6, then 1.9 per Samuel, Oct 15) */
+button.more .dots circle{r:3px} button.more .dots circle:nth-child(1){cx:4.5px} button.more .dots circle:nth-child(3){cx:19.5px} /* (1.3 originally; 1.6, then 1.9 per Samuel, Oct 15; 3 and spread a little wider, Oct 16: "the 3 color dots need to be larger") */
 button.more .dots circle:nth-child(1){fill:#FF6C10} button.more .dots circle:nth-child(2){fill:#007C92} button.more .dots circle:nth-child(3){fill:#B2BB1E}
 html[data-dk]:not(.neon) button.more .dots circle:nth-child(1){fill:#FD9357} html[data-dk]:not(.neon) button.more .dots circle:nth-child(2){fill:#54BED0} html[data-dk]:not(.neon) button.more .dots circle:nth-child(3){fill:#B2BB1E}
 html.neon button.more .dots circle:nth-child(1){fill:#FF7A1A} html.neon button.more .dots circle:nth-child(2){fill:#1FB8FF} html.neon button.more .dots circle:nth-child(3){fill:#F4FF3A}
@@ -893,7 +893,7 @@ function graphTest(L,opts={}){const {start,key,moves}=expandT(L,opts);const adj=
 // the board as the solvers see it: every cube still in play, with its current arrow, dot, glide, pips, gear, glass and echo twin
 const solverFor=()=>(curLv.src.mech||'')==='orbit'?S5solve:['pivot','echo','glass'].includes((curLv.src.mech||''))?S4.solve:solveTest;
 function liveSpec(){const alive=blocks.filter(b=>b.alive);
-  return {fuse:!!curLv.fuse,blocks:alive.map(b=>{const t=curLv.src.blocks[b.id];let af=(curLv.src.mech||'')==='orbit'?worldAF(b):t.arrowFace;
+  return {fuse:!!curLv.fuse,blocks:alive.map(b=>{const t=curLv.src.blocks[b.id];let af=['orbit','pivot'].includes(curLv.src.mech||'')&&!t.axis?worldAF(b):t.arrowFace; // a gear or orbit turns cubes, so read each arrow's face as it is now (Oct 16: a turned layer showed a false "No way to finish")
     if(t.axis){for(let k=0;k<4;k++){let d=t.d;for(let j=0;j<k;j++)d=turn(d,t.axis);if(d.join()===b.d.join()){for(let j=0;j<k;j++)af=turn(af,t.axis);break}}}
     return {c:b.c.slice(),d:b.d.slice(),arrowFace:af,glide:b.glide,num:b.num,axis:t.axis||null,dotFace:t.dotFace||null,col:t.col,pivot:!!t.pivot,orbit:!!t.orbit,glass:!!t.glass,crack:b.crack||'',echo:b.echo!=null&&blocks[b.echo].alive?alive.indexOf(blocks[b.echo]):null,g:b.group?Math.min(...b.group.members.map(m=>m.id)):b.id}})};
 }
@@ -5012,7 +5012,9 @@ const el=renderer.domElement;
 // every finger currently on the screen, so two fingers can pinch to zoom
 const touches=new Map();let pinchDist=0,pinched=false;
 const fingerGap=()=>{const [a,b]=[...touches.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
+let menuTap=false; // a tap on the dimmed puzzle while a menu is open only closes the menu (Oct 16); it never turns or pulls anything
 el.addEventListener('pointerdown',e=>{
+  if(document.getElementById('stage').classList.contains('dim')){menuTap=true;down=null;return}
   startTimer(); // the clock starts with the first touch on the puzzle, not when the level appears
   audio();touches.set(e.pointerId,{x:e.clientX,y:e.clientY});el.setPointerCapture(e.pointerId);
   if(touches.size===2){pinchDist=fingerGap();pinched=true;dragging=true;return} // second finger: start pinching
@@ -5062,6 +5064,7 @@ function liftFinger(e){
 }
 el.addEventListener('pointercancel',e=>{liftFinger(e);if(!touches.size)down=null});
 el.addEventListener('pointerup',e=>{
+  if(menuTap){menuTap=false;return}
   if(liftFinger(e))return;
   if(down&&!dragging){
     const r=el.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
@@ -5296,6 +5299,9 @@ document.getElementById('lvcol').addEventListener('click',e=>{
     if(openRow!=null&&openRow!==was)traySfx(true)} // only the slide-out has a sound (a slide-in sound competed with it when switching chapters)
 });
 document.addEventListener('pointerdown',e=>{if(lvOpen()&&!lvPanel.contains(e.target)&&!e.target.closest('#lvl'))closeLevels()});
+// the level menu's own box is much bigger than its medallions, so a tap on its empty part (over the dimmed puzzle) closes it too (Oct 16).
+// That one waits for the click, so a drag that scrolls the medallions never closes it.
+lvPanel.addEventListener('click',e=>{if(lvOpen()&&!e.target.closest('.med,.tray,button'))closeLevels()});
 // scrub ruler on the level button: drag sideways and a ruler slides out; every 11px is one level.
 // Dragging left moves forward. The number, chapter name and symbol roll along, with a soft click per level
 // and a firmer one at each new chapter. It stops at your furthest open level with a little rubber band.
@@ -5580,5 +5586,7 @@ document.documentElement.style.touchAction='manipulation'})();</script>
 const scrolls=el=>{for(;el&&el!==document.body&&el!==document.documentElement;el=el.parentElement){if(el.matches&&el.matches('input,textarea,select'))return true;
   const st=getComputedStyle(el);if((/(auto|scroll)/.test(st.overflowY)&&el.scrollHeight>el.clientHeight+1)||(/(auto|scroll)/.test(st.overflowX)&&el.scrollWidth>el.clientWidth+1)){el.style.overscrollBehavior='contain';return true}}return false};
 document.addEventListener('touchmove',e=>{if(e.touches.length>1||!scrolls(e.target))e.preventDefault()},{passive:false})})();</script>
+
+
 
 </body></html>
