@@ -352,7 +352,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
    wobble to draw the eye, then rests. (Oct 13) */
 @keyframes pullInBtn{0%{opacity:0;transform:perspective(500px) translateZ(330px)} 30%{opacity:1} 78%{transform:perspective(500px) translateZ(-12px)} 100%{opacity:1;transform:perspective(500px) translateZ(0)}}
 .done:not(.ready) small{animation:none; opacity:0}
-.done.ready small{opacity:0; animation:none}
+.done.ready small{animation:none}
 /* Continue and Replay are 3D blocks now (script: cb...). The HTML buttons stay as invisible placeholders: they keep the layout (nothing moves),
    the colors, the labels and the tap areas. The blocks land the same way (from close up, a tiny overshoot), swivel in a slight figure 8, turn when
    dragged and slide off when tapped. Their soft shadows are .cbsh, in .cbfx (so they can travel with a block as it leaves). */
@@ -364,7 +364,7 @@ html.neon #scoreOpen{background:transparent; color:#FF2E97; box-shadow:0 0 0 1.5
 @media (prefers-reduced-motion: reduce){.cbfx.on .cbsh{animation:none}}
 html.neon .cbsh{display:none}
 .done.leaving{opacity:0; pointer-events:none}
-.done.ready .replay:focus-visible{opacity:1; background:transparent; color:transparent; box-shadow:none; outline:2px solid var(--accent); outline-offset:3px}
+
 .done b{max-width:18ch; padding-inline:16px; text-align:center; text-wrap:balance; line-height:1.2; font-family:var(--display); font-weight:500; font-size:clamp(26px,6.4vw,40px); letter-spacing:.04em; color:var(--ink)} /* the cheeky line: white on dark screens (ink on light), a bit larger so it stands out (Oct 12) */
 @media (prefers-reduced-motion: reduce){.hint,.done{transition:none}}
 /* Text buttons and badges share the cubes' rounded corners instead of a full round pill (Samuel, Oct 12).
@@ -421,7 +421,25 @@ html.logotop .botrow{bottom:14px} html.logotop .stuck{bottom:62px}
 .done .replay{right:calc(50% + 5px); left:auto; transform:none; padding:9px 18px; font-size:11px; box-sizing:border-box}
 .done small,.done .replay{bottom:96px} html.logotop .done small,html.logotop .done .replay{bottom:48px}
 @media (max-height:600px){.done small,.done .replay{position:static; transform:none; max-width:none} .done small{margin-top:6px} .done .replay{margin-top:6px}}
-.done.ready .replay{opacity:0; pointer-events:auto} /* (invisible placeholder: the Replay block is drawn over it) */
+.done.ready .replay{pointer-events:auto}
+/* Continue and Replay are flat buttons again (Samuel, Oct 17: no more 3D blocks, no slide-off), built like the stat tiles: a solid brand-color
+   face with the cubes' corners and a 3px darker lip underneath, Krona One capitals and a small chevron. They flip in like the tiles when Continue
+   is ready (Replay a beat later), press down when tapped, and the screen simply fades to the next level. Colors kept from the blocks:
+   Continue teal with cream words in Classic, orange with charcoal words in SmartPull and Neon; Replay gray #ABABA8 with charcoal words, every mode. */
+#done small,#done .replay{--bf:#007C92; --bk:#F5F5DC; display:inline-flex; align-items:center; justify-content:center; gap:7px; box-sizing:border-box; min-width:132px; min-height:36px; height:auto; padding:8px 16px;
+  border-radius:var(--cubeR,8px); background:var(--bf); color:var(--bk); font-family:var(--display); font-weight:400; font-size:11px; letter-spacing:.08em; text-transform:uppercase; white-space:normal; text-align:center; line-height:1.25;
+  box-shadow:0 3px 0 color-mix(in srgb,var(--bf) 72%,#34363A),0 8px 14px rgba(0,0,0,.12); cursor:pointer;
+  opacity:0; transform:perspective(520px) rotateX(-95deg); transform-origin:50% 100%; transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .2s; animation:none}
+#done .replay{--bf:#ABABA8; --bk:#34363A; flex-direction:row-reverse}
+html.brandtheme #done small,html.neon #done small{--bf:#FF6C10; --bk:#34363A}
+#done.ready small,#done.ready .replay{opacity:1; transform:perspective(520px) rotateX(0)}
+#done.ready .replay{transition-delay:.07s}
+#done small::after,#done .replay::after{content:''; width:6px; height:6px; flex:none; border:solid currentColor; border-width:2.2px 2.2px 0 0; border-radius:1px; transform:rotate(45deg); margin-right:2px}
+#done .replay::after{transform:rotate(-135deg); margin:0 0 0 2px}
+#done.ready small:active,#done.ready .replay:active{transform:perspective(520px) translateY(2px); box-shadow:0 1px 0 color-mix(in srgb,var(--bf) 72%,#34363A),0 4px 8px rgba(0,0,0,.1); transition-duration:.08s; transition-delay:0s}
+html[data-dk] #done small,html[data-dk] #done .replay,html.neon #done small,html.neon #done .replay{box-shadow:0 3px 0 color-mix(in srgb,var(--bf) 72%,#000)}
+#done small:focus-visible,#done.ready .replay:focus-visible{outline:2px solid var(--wi); outline-offset:3px}
+@media (prefers-reduced-motion: reduce){#done small,#done .replay{transform:none!important; transition:opacity .2s}}
 html.neon .done .replay{box-shadow:inset 0 0 0 1.5px rgba(244,236,255,.4)} /* with the logo up top, Undo sits on the bottom row */
 
 
@@ -460,8 +478,8 @@ html.brandtheme .done .tile.k-bumps,html.neon .done .tile.k-bumps{--tf:#B2BB1E; 
 .done .mbrow{display:flex; flex-direction:column; align-items:center; gap:5px; opacity:0; transition:opacity .3s .4s; margin-top:8px} /* Moves centered, Best right under it (Oct 17) */
 .done.stats .mbrow{opacity:1}
 .done .mbw{opacity:.72}
-.done .ppearn{display:block; text-align:center; font:700 11px/1 "Quicksand",var(--body); letter-spacing:.04em; color:var(--wi); margin-top:10px; opacity:0; transition:opacity .4s .8s}
-.done.pp .ppearn{opacity:.85}
+.done .ppearn{display:block; text-align:center; font:400 9px/1 var(--display); letter-spacing:.12em; text-transform:uppercase; white-space:pre; color:var(--wi); margin-top:12px; opacity:0; transition:opacity .4s .8s} /* in the tiles' label type, Krona One small capitals (Samuel, Oct 17: not the old Quicksand) */
+.done.pp .ppearn{opacity:.72}
 .done .badges{opacity:0; transition:opacity .3s .5s} .done.stats .badges{opacity:1}
 .done .badge{background:#007C92; color:#F5F5DC; box-shadow:none} /* New best: a solid teal tag with cream words, in every mode */
 @media (prefers-reduced-motion: reduce){.done .tile,.done .mbrow,.done .badges,.done .ppearn,.done .tile .chk{transition:none!important}}
@@ -4687,7 +4705,10 @@ const WIN_STATS=.5,WIN_READ=1.1,WIN_GO=WIN_READ-.6; // the line shows alone for 
 function winCenter(){const d=document.getElementById('done'),di=d&&d.querySelector('.done-in');if(!di)return;di.style.paddingTop='';
   if(innerHeight<=600)return;const b=di.querySelector('b'),g=d.querySelector('small');if(!b||!g)return;
   const r=di.getBoundingClientRect(),under=r.bottom-b.getBoundingClientRect().bottom,room=2*(g.getBoundingClientRect().top-18-r.bottom);
-  const P=Math.max(0,Math.min(under,room));if(P)di.style.paddingTop=P+'px'}
+  const P=Math.max(0,Math.min(under,room));if(P)di.style.paddingTop=P+'px';
+  // then nudge the column so the line's middle sits exactly at the middle of the screen (the win screen's box starts under the top bar)
+  const br=b.getBoundingClientRect(),dy=innerHeight/2-(br.top+br.height/2),gr=g.getBoundingClientRect(),rr=di.getBoundingClientRect();
+  const lim=Math.min(dy,(gr.top-16-rr.bottom));if(Math.abs(lim)>1)di.style.paddingTop=Math.max(0,P+2*lim)+'px'} // (the column is centered, so 2 px of padding moves it 1 px; a transform would drag the buttons along)
 addEventListener('resize',()=>{if(clearing)winCenter()});
 // Replay: play the level you just cleared again from the start (a daily or sampler stays a preview)
 document.getElementById('replayBtn').addEventListener('click',e=>{e.stopPropagation();if(cb.suppress||!waiting)return;waiting=false;
@@ -4818,7 +4839,9 @@ function cbPaint(it){ // colors and label come from the HTML placeholder (Replay
   it.mats.forEach(m=>{if(m.map)m.map.dispose();m.dispose()});
   it.mats=[...new Set(mats)];it.mesh.material=mats;it.lastO=-1;
 }
+const CB_OFF=true; // Oct 17: Samuel retired the 3D Continue and Replay blocks; the flat buttons are the real thing now (the block code below is unused)
 function cbShow(){ // called as the win screen fades in
+  if(CB_OFF){cbHide();return}
   cbSetup();const c=cb;c.t=0;c.leave=null;c.calm=true;
   for(const it of c.items){if(it.id==='go')it.delay=WIN_GO;if(it.id==='re')it.delay=WIN_GO+.14}
   for(const it of c.items){cbRest(it);it.key='';it.lastO=-1;it.grp.visible=false;it.blk.quaternion.copy(c.restQ);
@@ -5553,7 +5576,6 @@ document.documentElement.style.touchAction='manipulation'})();</script>
 const scrolls=el=>{for(;el&&el!==document.body&&el!==document.documentElement;el=el.parentElement){if(el.matches&&el.matches('input,textarea,select'))return true;
   const st=getComputedStyle(el);if((/(auto|scroll)/.test(st.overflowY)&&el.scrollHeight>el.clientHeight+1)||(/(auto|scroll)/.test(st.overflowX)&&el.scrollWidth>el.clientWidth+1)){el.style.overscrollBehavior='contain';return true}}return false};
 document.addEventListener('touchmove',e=>{if(e.touches.length>1||!scrolls(e.target))e.preventDefault()},{passive:false})})();</script>
-
 
 
 </body></html>
